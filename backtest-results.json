@@ -1,0 +1,96 @@
+{
+  "XAUUSD": [
+    {
+      "date": "3/13/2026, 2:00:00 AM",
+      "direction": "LONG",
+      "entry": "5099.10",
+      "tp": "5153.45",
+      "sl": "5038.65",
+      "score": 0,
+      "rr": "0.90",
+      "outcome": "LOSS"
+    },
+    {
+      "date": "3/13/2026, 1:00:00 PM",
+      "direction": "LONG",
+      "entry": "5094.30",
+      "tp": "5153.45",
+      "sl": "5042.40",
+      "score": 0,
+      "rr": "1.14",
+      "outcome": "LOSS"
+    },
+    {
+      "date": "3/16/2026, 4:00:00 AM",
+      "direction": "LONG",
+      "entry": "5030.40",
+      "tp": "5100.50",
+      "sl": "4949.51",
+      "score": 0,
+      "rr": "0.87",
+      "outcome": "LOSS"
+    },
+    {
+      "date": "3/18/2026, 8:00:00 PM",
+      "direction": "LONG",
+      "entry": "4891.20",
+      "tp": "4952.60",
+      "sl": "4823.98",
+      "score": 15,
+      "rr": "0.91",
+      "outcome": "LOSS"
+    },
+    {
+      "date": "3/19/2026, 10:00:00 PM",
+      "direction": "LONG",
+      "entry": "4625.80",
+      "tp": "4777.20",
+      "sl": "4500.97",
+      "score": 0,
+      "rr": "1.21",
+      "outcome": "LOSS"
+    },
+    {
+      "date": "3/23/2026, 12:00:00 PM",
+      "direction": "LONG",
+      "entry": "4251.70",
+      "tp": "4550.85",
+      "sl": "4071.19",
+      "score": 15,
+      "rr": "1.66",
+      "outcome": "WIN"
+    },
+    {
+      "date": "3/30/2026, 1:00:00 AM",
+      "direction": "SHORT",
+      "entry": "4521.30",
+      "tp": "4474.60",
+      "sl": "4610.10",
+      "score": 0,
+      "rr": "0.53",
+      "outcome": "WIN"
+    }
+  ],
+  "AAPL": [
+    {
+      "date": "3/16/2026, 12:00:00 PM",
+      "direction": "LONG",
+      "entry": "250.60",
+      "tp": "247.87",
+      "sl": "246.31",
+      "score": 15,
+      "rr": "0.64",
+      "outcome": "WIN"
+    },
+    {
+      "date": "4/2/2026, 3:00:00 PM",
+      "direction": "SHORT",
+      "entry": "252.81",
+      "tp": "245.72",
+      "sl": "255.17",
+      "score": 15,
+      "rr": "3.00",
+      "outcome": "LOSS"
+    }
+  ]
+}
