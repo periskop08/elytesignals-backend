@@ -1108,7 +1108,7 @@ async function analyzeCoin(symbolInfo) {
         }
         
         // Elliot filter output parsing mapping
-        const ewResult = analyzeElliottWaves(klines, symbol);
+        const ewResult = analyzeElliottWaves(klines, sym);
         
         let rr = risk > 0 ? (reward / risk) : 0;
         breakdown.rr = parseFloat(rr.toFixed(2));
