@@ -750,6 +750,7 @@ async function analyzeCoin(symbolInfo) {
         }
         if (hasOB) {
             qualityScore += 25;
+            warnings.push('Order Block (+25)');
             breakdown.ob = true;
         }
 
@@ -764,6 +765,7 @@ async function analyzeCoin(symbolInfo) {
         }
         if (hasFVG) {
             qualityScore += 15;
+            warnings.push('FVG Confirmed (+15)');
             breakdown.fvg = true;
         } else if (CONFIG.fvgRequired) {
             return null; // Eğer mutlaka FVG istersen
@@ -777,6 +779,7 @@ async function analyzeCoin(symbolInfo) {
         breakdown.rvol = parseFloat(rvolRatio.toFixed(2));
         if (rvolRatio >= 1.2) {
             qualityScore += 15;
+            warnings.push('High Volume Spike (+15)');
         }
 
         // 4. ADX REJİMİ
@@ -1115,9 +1118,12 @@ async function analyzeCoin(symbolInfo) {
 
         if (rr >= 2.0) {
             qualityScore += 25; // Base 15 + R:R Bonus 10
-            warnings.push('High R:R Bonus (+10)');
+            warnings.push('High R:R Bonus (+25)');
         }
-        else if (rr >= 1.2) qualityScore += 5;
+        else if (rr >= 1.2) {
+            qualityScore += 5;
+            warnings.push('Good R:R Bonus (+5)');
+        }
         
         if (rr < CONFIG.minRR) return null; // Sert RR süzgeci (örneğin 1.2 altı ise kesin çöpe)
         if (rr >= 1.0 && rr < 1.5) warnings.push(`Low RR (${breakdown.rr})`);
