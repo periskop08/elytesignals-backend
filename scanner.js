@@ -2,7 +2,6 @@ const axios = require('axios');
 const cron = require('node-cron');
 const db = require('./database');
 const { ATR, SMA, ADX, EMA, IchimokuCloud, StochasticRSI } = require('technicalindicators');
-const { analyzeElliottWaves } = require('./elliott');
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const { appendToSheet } = require('./google-api');
@@ -1110,8 +1109,6 @@ async function analyzeCoin(symbolInfo) {
             }
         }
         
-        // Elliot filter output parsing mapping
-        const ewResult = analyzeElliottWaves(klines, sym);
         
         let rr = risk > 0 ? (reward / risk) : 0;
         breakdown.rr = parseFloat(rr.toFixed(2));
