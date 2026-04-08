@@ -674,11 +674,21 @@ async function analyzeCoin(symbolInfo) {
         const currentRSI = rsiRes.length > 0 ? rsiRes[rsiRes.length - 1] : 50;
 
         if (direction === 'LONG' && currentRSI > 75) {
-            qualityScore -= 10;
-            warnings.push('RSI Overbought for LONG (-10)');
+            if (symbolInfo && symbolInfo.isAsset) {
+                qualityScore += 5;
+                warnings.push('Aşırı Alım Değil, Güçlü Değerleme Trendi (RSI > 75) (+5)');
+            } else {
+                qualityScore -= 10;
+                warnings.push('RSI Overbought for LONG (-10)');
+            }
         } else if (direction === 'SHORT' && currentRSI < 25) {
-            qualityScore -= 10;
-            warnings.push('RSI Oversold for SHORT (-10)');
+            if (symbolInfo && symbolInfo.isAsset) {
+                qualityScore += 5;
+                warnings.push('Aşırı Satım Değil, Güçlü Ayı Trendi Desteği (RSI < 25) (+5)');
+            } else {
+                qualityScore -= 10;
+                warnings.push('RSI Oversold for SHORT (-10)');
+            }
         }
 
         // 5. RSI Hidden Divergence (Gizli Uyumsuzluk) Bonusu
@@ -900,9 +910,17 @@ async function analyzeCoin(symbolInfo) {
         if (stochRSIRes && stochRSIRes.length > 0) {
             const lastStoch = stochRSIRes[stochRSIRes.length - 1];
             if (direction === 'LONG' && lastStoch.k > 80) {
-                qualityScore -= 10; warnings.push('StochRSI Overbought (-10)');
+                if (symbolInfo && symbolInfo.isAsset) {
+                    qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
+                } else {
+                    qualityScore -= 10; warnings.push('StochRSI Overbought (-10)');
+                }
             } else if (direction === 'SHORT' && lastStoch.k < 20) {
-                qualityScore -= 10; warnings.push('StochRSI Oversold (-10)');
+                if (symbolInfo && symbolInfo.isAsset) {
+                    qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
+                } else {
+                    qualityScore -= 10; warnings.push('StochRSI Oversold (-10)');
+                }
             }
         }
 
