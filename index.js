@@ -963,6 +963,16 @@ app.post('/api/favorites/toggle', async (req, res) => {
                     console.log(`[MANUEL TRADER - ADMIN] ${telegramId} kullanıcısı ${signal.symbol} için işlemi başlatıyor...`);
                     orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
                     console.log(`[MANUEL TRADER - ADMIN] İşlem Başarılı! BingX Order ID: ${orderId}`);
+                    
+                    // Otopilot takip döngüsüne (user_trades) manuel islemi dahil et
+                    const checkActiveTrade = await db.get("SELECT id FROM user_trades WHERE telegramId = ? AND signalId = ? AND status = 'ACTIVE'", [telegramId, signalId]);
+                    if (!checkActiveTrade && orderId) {
+                         await db.run(
+                             "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
+                             [telegramId, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
+                         );
+                         console.log(`[MANUEL TRADER - ADMIN] İşlem Otopilot (user_trades) takibine de başarıyla eklendi!`);
+                    }
                 } catch (tradeErr) {
                     console.error("[MANUEL TRADER - ADMIN] İşlem Açılamadı:", tradeErr.message);
                     return res.status(500).json({ error: 'Borsada işlem açılamadı: ' + tradeErr.message });

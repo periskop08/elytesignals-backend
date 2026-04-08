@@ -1288,14 +1288,15 @@ async function runScan() {
                         if (activeCount >= CONFIG.maxActiveTrades) {
                             console.log(`[AUTO-TRADE] Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal ${signal.symbol} havuza eklendi.`);
                         } else {
-                            // Aynı gün içinde aynı coine girildi mi?
+                            // Aynı gün içinde aynı coine girildi mi? (Sinyal 2. veya 3. kez mi düşüyor?)
                             const todayStr = new Date().toISOString().split('T')[0];
-                            const existingTrade = await db.all(
-                                "SELECT id FROM user_trades WHERE symbol = ? AND date(createdAt) = ?",
+                            const existingSignalsToday = await db.all(
+                                "SELECT id FROM signals WHERE symbol = ? AND date(createdAt) = ?",
                                 [signal.symbol, todayStr]
                             );
 
-                            if (existingTrade.length === 0) {
+                            // Şu anki sinyali havuza yeni attığımız için ilk sinyalin length'i 1 olur. 1'den büyükse 2. veya 3. kez geliyordur.
+                            if (existingSignalsToday.length <= 1) {
                                 console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol}`);
                                 try {
                                     const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
@@ -1316,7 +1317,7 @@ async function runScan() {
                                     console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                 }
                             } else {
-                                console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden girilmiş bir emir var.`);
+                                console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
                             }
                         }
                     } catch (e) {
