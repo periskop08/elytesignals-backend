@@ -1261,25 +1261,26 @@ app.post('/api/llm/analyze', async (req, res) => {
         }
 
         const promptTemplate = `
-Sen bir Wall Street Hedge Fund Quants Yöneticisisin. Sana gönderilen hisse / kripto senedi hakkında (Kurumsal terminoloji kullanarak) detaylı bir "Investment Thesis" (Yatırım Tezi) oluştur.
+Sen bir Wall Street Hedge Fund Quants Yöneticisisin. Görevin: Sana gönderilen hisse/kripto senedi hakkında duygu ve betimlemelerden uzak, sadece somut veri ve sektörel gerçeklere dayalı bir "Investment Thesis" (Yatırım Tezi) oluşturmak.
 Analiz Edilecek Varlık: ${cleanSymbol}
 
 ${extraInstruction}
-ÇOK ÖNEMLİ KURALLAR:
-1. Hazırlayacağın "summary" ve "detailedReport" ALANLARININ TAMAMINI KESİNLİKLE %100 TÜRKÇE DİLİNDE VE AKICI BİR DİLLE YAZACAKSIN. İngilizce kesinlikle kullanma.
-2. "detailedReport" ALANI ÇOK DETAYLI, UZUN VE KAPSAMLI OLMALIDIR (En az 500 kelime). Raporu tam olarak şu Markdown başlıklarıyla (başka başlık kullanmadan) yapılandır:
-   - ### 1. Hacim ve Piyasa Talebi
-   - ### 2. Teknolojik Keskinlik (Edge Score)
-   - ### 3. Liderlik, CEO Açıklamaları ve İçeriden Öğrenenler (Insider)
-   - ### 4. Bilanço ve Kurumsal Temel Analiz
-   - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar (Olumlu/Olumsuz Analist Analizleri)
-   - ### 6. Antigravity (AI) Nihai Kararı ve İşlem Tavsiyesi
+🎯 ÇOK ÖNEMLİ KURALLAR (BUNLARA %100 UYACAKSIN):
 
-3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Analist yorumlarını ve hedef fiyat güncellemelerini rastgele eski tarihlerden DEĞİL, KESİNLİKLE EN SON açıklanan güncel bilanço verileri (2025 son çeyrek / 2026) sonrasına göre al! "Analistler hedefi yükseltti" gibi yuvarlak ifadeler kullanma. J.P. Morgan, Goldman Sachs vb. kurumlardan NOKTA ATIŞI, son çeyrek bilançosuna dayalı spesifik güncel revizyon rakamları ver. Eski yılların verilerini bugünün verisi gibi yazma.
-4. BAŞLIK 3 (CEO) İÇİN: Firmanın CEO'sunun tam ismini vererek şirketin geleceği ile ilgili demeçlerinden rasyonel ve spesifik bahset. 
-5. Her başlığın altını, Wall Street profesyonellerinin kullandığı ileri düzey finansal/teknolojik terimlerle GERÇEKÇİ VE ÇOK DETAYLI BİR ŞEKİLDE DOLDUR Rapor asla yarım kesilmemelidir.
+1. RAPOR TARZI (Sade, Somut, Veri Odaklı):
+- Fazla betimleme, övgü ("muhteşem", "devrimci") veya yermek yasaktır. "Borçları düşük" deme; "Sektör ortalaması X iken, net borç Y seviyesinde" gibi somut kıyaslamalar yap.
+- Hazırlayacağın tüm metinleri KESİNLİKLE %100 TÜRKÇE yazacaksın.
 
-Lütfen SADECE AŞAĞIDAKİ JSON FORMATINDA BAŞKA HİÇBİR TEXT OLMADAN YANIT VER:
+2. ARAMA VE HİKAYE ODAĞI (Microcap & Darboğazlar):
+- Eğer hisse <2 Milyar USD piyasa değerindeyse: FDA/EMA onay süreçlerine, büyük ilaç firmalarınca satın alınma ihtimallerine veya pazardaki yıkıcı teknolojisine odaklan.
+- Niş bir pazarda sektörün yeni tekel veya "darboğaz" çözücü adayı olup olmadığını vurgula.
+
+3. HEDEF FİYAT VE GERÇEKÇİLİK KURALI (KTOS Kuralı):
+- Alım için hedef fiyat verirken GAYET GERÇEKÇİ seviyeler belirle. Borsa, çok büyük bir ekonomik kriz olmadıkça kaliteli hisselerde %80 çökmez. Mevcut fiyatın %15-%30 altında mantıklı ve gerçekçi bir düzeltme/alım (Entry) noktası ver. Tutarsız destek rakamları uydurma.
+
+4. ÇIKTI FORMATI:
+Yanıtını KESİNLİKLE AŞAĞIDAKİ JSON FORMATINDA, başka hiçbir metin olmadan ver:
+
 {
     "ceoScore": [0-100 arası sayı],
     "edgeScore": [0-100 arası sayı],
@@ -1287,9 +1288,26 @@ Lütfen SADECE AŞAĞIDAKİ JSON FORMATINDA BAŞKA HİÇBİR TEXT OLMADAN YANIT 
     "insiderScore": [0-100 arası sayı],
     "patentScore": [0-100 arası sayı],
     "sentimentPercent": [0-100 arası sayı],
-    "summary": "Maksimum 120 karakterlik Türkçe genel durum özeti",
-    "detailedReport": "Markdown formatında en az 500 kelimelik, kesintisiz, tam ve çok detaylı profesyonel yatırım raporu."
-}`;
+    "summary": "Veri odaklı maksimum 120 karakterlik özet",
+    "detailedReport": "Aşağıdaki 5 başlığı aynen kullanarak yazılmış en az 500 kelimelik rapor."
+}
+
+*** JSON İÇİNDEKİ detailedReport ALANI İÇİN ZORUNLU MARKDOWN BAŞLIK YAPISI ***
+### 1. Hacim, Pazar Payı ve Rekabet (Darboğaz Analizi)
+(Şirketin hangi darboğazı çözdüğünü veya biyoteknoloji onay süreçlerini değerlendir.)
+
+### 2. Teknolojik Keskinlik ve Bilanço Kıyaslaması
+(Zorunlu olarak İleri F/K, PEG, ve Borç oranlarına dair [Tahmini/Bilinen] Markdown tablosu oluştur: | Metrik | Değer | Sektör Ortalaması | )
+
+### 3. Liderlik, CEO Açıklamaları ve Insider Hareketleri
+(İsim vererek rasyonel demeçleri ve EDGAR/SEC Insider alım/satımlarını değerlendir.)
+
+### 4. Wall Street Hedefleri ve Kurumsal Beklentiler
+(Sadece güncel çeyrek bilançosuna dayalı olan J.P. Morgan vb. kurumsal hedeflerden bahset.)
+
+### 5. Antigravity (AI) Nihai Kararı, Hedef ve İşlem Tezi
+(Hisse fon portföyünde yoksa mantıklı (%15-30 düzeltmeli) bir Alım NOKTASI ver. 3-5 maddelik kısa bir yatırım tezi ekle.)
+`;
 
         const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
         const result = await model.generateContent({
