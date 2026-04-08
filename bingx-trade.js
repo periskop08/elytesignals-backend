@@ -11,6 +11,12 @@ function getSignature(queryString, secret) {
 
 function resolveBingxSymbol(rawSymbol) {
     if (!rawSymbol) return rawSymbol;
+    
+    // Dinamik Tercüman Kontrolü (scanner.js üzerinden gelen RAM Haritası)
+    if (global.BINGX_SYMBOL_MAP && global.BINGX_SYMBOL_MAP[rawSymbol]) {
+        return global.BINGX_SYMBOL_MAP[rawSymbol];
+    }
+
     const ASSET_MAP = {
         'XAUUSD': 'NCCOGOLD2USD-USDT',
         'XAGUSD': 'NCCOXAG2USD-USDT',

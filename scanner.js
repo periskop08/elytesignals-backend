@@ -9,14 +9,25 @@ const { placeOrder, getPosition, updateStopLoss } = require('./bingx-trade');
 const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
 
-const ASSET_SYMBOLS = [
-    { symbol: 'XAUUSD', isAsset: true, fetchId: 'GC=F', bingxSymbol: 'NCCOGOLD2USD-USDT' }, // Gold
-    { symbol: 'XAGUSD', isAsset: true, fetchId: 'SI=F', bingxSymbol: 'NCCOXAG2USD-USDT' }, // Silver
-    { symbol: 'EURUSD', isAsset: true, fetchId: 'EURUSD=X', bingxSymbol: 'NCFXEUR2USD-USDT' },
-    { symbol: 'AAPL', isAsset: true, fetchId: 'AAPL', bingxSymbol: 'NCSKAAPL2USD-USDT' },
-    { symbol: 'TSLA', isAsset: true, fetchId: 'TSLA', bingxSymbol: 'NCSKTSLA2USD-USDT' },
-    { symbol: 'NASDAQ', isAsset: true, fetchId: '^IXIC', bingxSymbol: 'NCSINASDAQ1002USD-USDT' }
-];
+// Otopilot İçin Canlı Tercüman Haritası
+global.BINGX_SYMBOL_MAP = {};
+
+const ASSET_MAPPING = {
+    // Commodities
+    'NCCOGOLD': { fetchId: 'GC=F' },
+    'NCCOXAG': { fetchId: 'SI=F' },
+    'NCCO724OILBRENT': { fetchId: 'BZ=F' },
+    'NCCO724OILWTI': { fetchId: 'CL=F' },
+    'NCCOXPT': { fetchId: 'PL=F' },
+    
+    // Indices
+    'NCSINASDAQ100': { fetchId: '^IXIC' },
+    'NCSI724NASDAQ100': { fetchId: '^IXIC' },
+    'NCSISP500': { fetchId: '^GSPC' },
+    'NCSIDOWJONES': { fetchId: '^DJI' },
+    'NCSIEWJ': { fetchId: 'EWJ' },
+    'NCSIEWY': { fetchId: 'EWY' }
+};
 
 // KAMA kaldirildi (Perplexity optimizasyonu, Ichimoku ile cakistigi icin silindi)
 
@@ -248,25 +259,79 @@ async function analyzeGlobalMarket() {
 }
 // --- GLOBAL MARKET SENSOR END ---
 
-async function getUsdtPairs() {
+async function getUsdtPairsAndAssets() {
     try {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
         const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT'];
-        const usdtPairs = symbols.filter(s =>
-            s.symbol.endsWith('-USDT') &&
-            !s.symbol.startsWith('NC') && // Sentetik Varlıkları (NC) kriptolardan ayır
-            !ignoredStables.includes(s.symbol) && // Stabil coinleri ele
-            parseFloat(s.quoteVolume) > 3000000 // Hacim barajı tekrar 3M'ye çekildi
-        );
-        // BingX "BTC-USDT" kurgusunu "BTCUSDT" yap ve Dual Liquidity için volume bilgisini taşı
-        return usdtPairs.map(s => ({
-            symbol: s.symbol.replace('-', ''),
-            volume: parseFloat(s.quoteVolume)
-        }));
+        
+        let cryptoPairs = [];
+        let tradFiAssets = [];
+        let freshMap = {};
+
+        symbols.forEach(s => {
+            if (!s.symbol.endsWith('-USDT') || ignoredStables.includes(s.symbol)) return;
+
+            const vol = parseFloat(s.quoteVolume);
+            
+            if (s.symbol.startsWith('NC')) {
+                // TradFi (Sentetikler) İçin Hacim Barajı (500k USD)
+                if (vol > 500000) {
+                    const bingxSymbol = s.symbol;
+                    let cleanSymbol = bingxSymbol.replace('2USD-USDT', '').replace('-USDT', '');
+                    let fetchId = cleanSymbol;
+
+                    if (bingxSymbol.startsWith('NCSK')) {
+                         fetchId = cleanSymbol.replace('NCSK', ''); // AAPL, NVDA
+                         cleanSymbol = fetchId;
+                    } else if (bingxSymbol.startsWith('NCFX')) {
+                         let fx = cleanSymbol.replace('NCFX', ''); // EUR2CHF
+                         cleanSymbol = fx.replace('2', ''); // EURCHF
+                         fetchId = cleanSymbol + '=X'; // EURCHF=X
+                    } else {
+                         // NCCO veya NCSI Endeksler ve Emtialar
+                         let baseCode = cleanSymbol.replace('NCCO', '').replace('NCSI', '').replace('724', '');
+                         if (baseCode === 'OILBRENT') baseCode = 'BRENT';
+                         if (baseCode === 'OILWTI') baseCode = 'WTI';
+                         
+                         if (ASSET_MAPPING[cleanSymbol]) {
+                             fetchId = ASSET_MAPPING[cleanSymbol].fetchId;
+                         } else {
+                             fetchId = baseCode; // Fallback
+                         }
+                         cleanSymbol = baseCode;
+                    }
+
+                    const finalSymbol = cleanSymbol === 'GOLD' ? 'XAUUSD' : (cleanSymbol === 'XAG' ? 'XAGUSD' : cleanSymbol);
+                    
+                    freshMap[finalSymbol] = bingxSymbol;
+
+                    tradFiAssets.push({
+                        symbol: finalSymbol,
+                        isAsset: true,
+                        fetchId: fetchId,
+                        bingxSymbol: bingxSymbol,
+                        volume: vol
+                    });
+                }
+            } else {
+                // Kripto Pariteler (3 Milyon USD Barajı)
+                if (vol > 3000000) {
+                   const cleanCrypto = s.symbol.replace('-', '');
+                   freshMap[cleanCrypto] = s.symbol; // BTCUSDT -> BTC-USDT
+                   cryptoPairs.push({
+                       symbol: cleanCrypto,
+                       volume: vol
+                   });
+                }
+            }
+        });
+
+        global.BINGX_SYMBOL_MAP = freshMap; // Tercümanı hafızaya kaydet
+        return { cryptoPairs, tradFiAssets };
     } catch (error) {
         console.error('BingX Ticker Error:', error.message);
-        return [];
+        return { cryptoPairs: [], tradFiAssets: [] };
     }
 }
 
@@ -1222,13 +1287,27 @@ async function runScan() {
     try {
         console.log('[SCANNER] Starting BingX pairs scan for new signals...');
 
-        // 2. Yeni pariteleri tara
-        const cryptoPairs = await getUsdtPairs();
-        const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6;
-        const assetsToScan = isWeekend ? [] : ASSET_SYMBOLS; // Hafta sonu varlıklara istek atma
+        // 2. Yeni pariteleri tara (Kripto + TradFi Dynamic Engine)
+        const { cryptoPairs, tradFiAssets } = await getUsdtPairsAndAssets();
+        
+        // Akıllı Mesai Kalkanı (Istanbul Timezone: 15:30 - 23:00)
+        const istanbulTimeStr = new Date().toLocaleString("en-US", { timeZone: "Europe/Istanbul" });
+        const istDate = new Date(istanbulTimeStr);
+        const day = istDate.getDay();
+        const hour = istDate.getHours();
+        const minute = istDate.getMinutes();
+        
+        const isWeekend = day === 0 || day === 6;
+        const timeInMinutes = hour * 60 + minute;
+        // 15:30 -> 15*60 + 30 = 930
+        // 23:00 -> 23*60 = 1380
+        const isInstitutionalHours = timeInMinutes >= 930 && timeInMinutes <= 1380;
+        
+        const isActiveTradFiSession = !isWeekend && isInstitutionalHours;
+        const assetsToScan = isActiveTradFiSession ? tradFiAssets : [];
 
         const allPairs = [...cryptoPairs, ...assetsToScan];
-        console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan.`);
+        console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan${!isActiveTradFiSession ? ' (TradFi Sleep Mode)' : ''}.`);
 
         let signalCount = 0;
 

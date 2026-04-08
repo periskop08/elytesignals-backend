@@ -1169,22 +1169,30 @@ app.post('/api/user-trades/close', async (req, res) => {
 // --- ELYTE ASSET PRICE PROXY ---
 app.get('/api/prices/assets', async (req, res) => {
     try {
-        const ASSET_BINGX_MAP = {
-            'NCCOGOLD2USD-USDT': 'XAUUSD',
-            'NCCOXAG2USD-USDT': 'XAGUSD',
-            'NCFXEUR2USD-USDT': 'EURUSD',
-            'NCSKAAPL2USD-USDT': 'AAPL',
-            'NCSKTSLA2USD-USDT': 'TSLA',
-            'NCSINASDAQ1002USD-USDT': 'NASDAQ',
-            'NCSISP5002USD-USDT': 'SP500',
-            'NCSIDJI2USD-USDT': 'DOW'
-        };
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const prices = {};
         if (response.data && response.data.data) {
+            
+            // global.BINGX_SYMBOL_MAP -> { "SP500": "NCSISP5002USD-USDT" }
+            // Ters Çevir -> { "NCSISP5002USD-USDT": "SP500" }
+            const reverseMap = {};
+            if (global.BINGX_SYMBOL_MAP) {
+                Object.keys(global.BINGX_SYMBOL_MAP).forEach(k => {
+                   reverseMap[global.BINGX_SYMBOL_MAP[k]] = k;
+                });
+            }
+
+            // Eğer scanner.js henüz çalışmadıysa fallback için statik bir iki harita
+            const FALLBACK_BINGX_MAP = {
+                'NCCOGOLD2USD-USDT': 'XAUUSD',
+                'NCCOXAG2USD-USDT': 'XAGUSD'
+            };
+
             response.data.data.forEach(t => {
-                 if (ASSET_BINGX_MAP[t.symbol]) {
-                     prices[ASSET_BINGX_MAP[t.symbol]] = parseFloat(t.lastPrice);
+                 if (reverseMap[t.symbol]) {
+                     prices[reverseMap[t.symbol]] = parseFloat(t.lastPrice);
+                 } else if (FALLBACK_BINGX_MAP[t.symbol]) {
+                     prices[FALLBACK_BINGX_MAP[t.symbol]] = parseFloat(t.lastPrice);
                  }
             });
         }
