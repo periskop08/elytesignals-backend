@@ -1275,7 +1275,7 @@ ${extraInstruction}
    - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar (Olumlu/Olumsuz Analist Analizleri)
    - ### 6. Antigravity (AI) Nihai Kararı ve İşlem Tavsiyesi
 
-3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: "Analistler hedefi yükseltti" gibi yuvarlak ifadeler KESİNLİKLE KULLANMA. J.P. Morgan, Goldman Sachs, Morgan Stanley, Bank of America gibi en az 3 banka veya aracı kurumun ismini ver ve "Goldman Sachs son bilançodan sonra hedef fiyatını 950$'dan 1100$'a revize etti" gibi NOKTA ATIŞI, SPESİFİK RAKAMSAL HEDEF FİYAT TAHMİNLERİ YAZ. (Yılın 2026 olduğunu unutma ve son bilançolara yönelik olası fiyatları uydurman gerekse bile mutlaka spesifik bir sayı ver.)
+3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Analist yorumlarını ve hedef fiyat güncellemelerini rastgele eski tarihlerden DEĞİL, KESİNLİKLE EN SON açıklanan güncel bilanço verileri (2025 son çeyrek / 2026) sonrasına göre al! "Analistler hedefi yükseltti" gibi yuvarlak ifadeler kullanma. J.P. Morgan, Goldman Sachs vb. kurumlardan NOKTA ATIŞI, son çeyrek bilançosuna dayalı spesifik güncel revizyon rakamları ver. Eski yılların verilerini bugünün verisi gibi yazma.
 4. BAŞLIK 3 (CEO) İÇİN: Firmanın CEO'sunun tam ismini vererek şirketin geleceği ile ilgili demeçlerinden rasyonel ve spesifik bahset. 
 5. Her başlığın altını, Wall Street profesyonellerinin kullandığı ileri düzey finansal/teknolojik terimlerle GERÇEKÇİ VE ÇOK DETAYLI BİR ŞEKİLDE DOLDUR Rapor asla yarım kesilmemelidir.
 

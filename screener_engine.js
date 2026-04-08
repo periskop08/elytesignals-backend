@@ -92,7 +92,7 @@ BİLGİ: Bu varlık (${symbol}) henüz portföyümüzde DEĞİL. Bu hissenin yü
    - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar
    - ### 6. Antigravity (AI) Nihai Kararı ve İşlem Tavsiyesi
 
-3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Mutlaka spesifik kurumsal analist (Goldman Sachs, Morgan Stanley vb.) fiyat tahminleri yaz (yılın 2026 olduğunu unutma).
+3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Analist yorumlarını ve hedef fiyatlarını eski verilerden DEĞİL, KESİNLİKLE en son açıklanan güncel (2025 son çeyrek / 2026) bilanço verilerine göre al! Mutlaka spesifik kurumsal analist (Goldman Sachs, Morgan Stanley vb.) güncel fiyat tahminleri yaz (yılın 2026 olduğunu unutma). Eski verileri kopyalama.
 4. Her başlığın altını, yatırım jargonlarıyla çok detaylı doldur. Rapor yarım kesilmemelidir.
 
 Lütfen SADECE JSON FORMATINDA YANIT VER:
