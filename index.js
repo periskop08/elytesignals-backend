@@ -1154,6 +1154,35 @@ app.post('/api/user-trades/close', async (req, res) => {
     }
 });
 
+// --- ELYTE ASSET PRICE PROXY ---
+app.get('/api/prices/assets', async (req, res) => {
+    try {
+        const ASSET_BINGX_MAP = {
+            'NCCOGOLD2USD-USDT': 'XAUUSD',
+            'NCCOXAG2USD-USDT': 'XAGUSD',
+            'NCFXEUR2USD-USDT': 'EURUSD',
+            'NCSKAAPL2USD-USDT': 'AAPL',
+            'NCSKTSLA2USD-USDT': 'TSLA',
+            'NCSINASDAQ1002USD-USDT': 'NASDAQ',
+            'NCSISP5002USD-USDT': 'SP500',
+            'NCSIDJI2USD-USDT': 'DOW'
+        };
+        const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
+        const prices = {};
+        if (response.data && response.data.data) {
+            response.data.data.forEach(t => {
+                 if (ASSET_BINGX_MAP[t.symbol]) {
+                     prices[ASSET_BINGX_MAP[t.symbol]] = parseFloat(t.lastPrice);
+                 }
+            });
+        }
+        res.json(prices);
+    } catch (e) {
+        console.error("Asset price proxy error:", e.message);
+        res.status(500).json({error: 'Failed to fetch asset prices from BingX'});
+    }
+});
+
 app.get('/api/macro', (req, res) => {
     const scanner = require('./scanner');
     const state = scanner.getGlobalMarketState();
