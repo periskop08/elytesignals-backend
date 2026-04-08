@@ -722,12 +722,9 @@ You are an Intent and Context Extractor. Your task is to look at the chat histor
 Return ONLY a valid JSON format! NO other characters.
 Example return: {"symbol": "XRP", "intent": "SPOT", "language": "TR", "leverage": 10}`;
             
-            const intentResponse = await ai.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [{ role: "system", content: intentPrompt }],
-                response_format: { type: "json_object" }
-            });
-            let text = intentResponse.choices[0].message.content.trim();
+            const intentModel = ai.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
+            const intentResponse = await intentModel.generateContent(intentPrompt);
+            let text = intentResponse.response.text().trim();
             const parsed = JSON.parse(text);
             
             baseSymbol = parsed.symbol ? parsed.symbol.replace('USDT', '') : baseSymbol;
@@ -774,10 +771,12 @@ Example return: {"symbol": "XRP", "intent": "SPOT", "language": "TR", "leverage"
 User's Intent/Question: "${prompt}"
 
 Below is the SHORT-TERM (4H and 1H) Price Action data for ${baseSymbol}. You MUST apply the strict "Periskop Modeli" methodology:
-- Periskop Modeli relies on advanced Price Action (PA), Dynamic ATR-based Elliott Waves, and Fibonacci extensions.
-- Wait for proper Elliott Wave structural rules (Wave 2 cannot overlap Wave 1 start, Wave 3 is never the shortest, Wave 4 cannot overlap Wave 1 peak).
-- If ADX < 20 (Range Regime), look for 0.618 - 0.786 Fibonacci retracement fakeouts.
-- If ADX > 30 (Strong Trend), look for Wave 3 or 5 trend continuation pullbacks using Volume/POC.
+- Periskop Modeli relies on strict constraints, liquidity traps (Sweep, Order Blocks, FVG) and robust Risk Management.
+- Volume Constraint: Check Volume. If Volume is too low, note that it is extremely risky.
+- Trend Constraint (200 SMA): Price must optimally be aligned with 200 SMA. If against the trend, note it as risky.
+- Risk/Reward (R:R) Constraint: Calculate expected R:R. If R:R is below 1.0, you MUST reject the setup and state it is invalid. Do not tolerate poor R:R.
+- Order Block (OB) and FVG: If you see OBs or FVGs, mention them as they increase the safety score by 15-25 points.
+- If the R:R is broken or it goes against the trend but looks tempting, you can say "Riskli ama denenebilir" as a flex allowance, but warn heavily.
 
 [ MINI 4H & 1H ANALYSIS FOR ${baseSymbol} ]
 - 4H Structure: Support ${results[0].rangeLow.toLocaleString('en-US',{maximumFractionDigits:4})} / Resistance ${results[0].rangeHigh.toLocaleString('en-US',{maximumFractionDigits:4})}
@@ -818,7 +817,7 @@ OUTPUT STRICTLY THIS FORMAT (Do NOT add anything else):
              finalPromptTemplate = `You are "PeriskopAI", the official Analyst AI for Crypto and Assets. If the user's prompt is in Turkish, address them as "Dostum" in a friendly, warm tone. If it is in English, address them as "mate". DO NOT mix languages. Apply the specific rules of the Periskop Modeli. Do NOT use the term SMC.
 User's Intent / Question: "${prompt}"
 
-Below is the synchronous technical data for ${baseSymbol} from High Timeframe (1w, 1d) down to Low (4h, 1h). Wait for optimal accumulation inside historical price action zones using dynamic ATR and Elliott Wave principles.
+Below is the synchronous technical data for ${baseSymbol} from High Timeframe (1w, 1d) down to Low (4h, 1h). Apply the strict "Periskop Modeli" constraints (Volume check, SMA200 alignment, R:R > 1.0, Order Blocks/FVG) as you would for Futures, but adapt for Spot holding.
 
 `;
             results.forEach(res => {
@@ -855,7 +854,7 @@ OUTPUT STRICTLY THIS FORMAT (Do NOT add anything else):
         // --- GEMINI ARAMASI ---
         if (ai) {
             try {
-                const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
+                const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
                 const result = await model.generateContent(finalPromptTemplate);
                 const responseTextGen = result.response.text();
                 if (responseTextGen) {
@@ -1238,7 +1237,7 @@ Lütfen SADECE AŞAĞIDAKİ JSON FORMATINDA BAŞKA HİÇBİR TEXT OLMADAN YANIT 
     "detailedReport": "Markdown formatında en az 500 kelimelik, kesintisiz, tam ve çok detaylı profesyonel yatırım raporu."
 }`;
 
-        const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
+        const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: promptTemplate }] }],
             generationConfig: { responseMimeType: "application/json" }

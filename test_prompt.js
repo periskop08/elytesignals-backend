@@ -17,7 +17,7 @@ Lütfen SADECE AŞAĞIDAKİ JSON FORMATINDA BAŞKA HİÇBİR TEXT OLMADAN YANIT 
     "summary": "Maksimum 120 karakterlik Türkçe genel durum özeti",
     "detailedReport": "Markdown formatında en az 500 kelimelik, kesintisiz, tam ve çok detaylı profesyonel yatırım raporu."
 }`;
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
     const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: promptTemplate }] }],
         generationConfig: { responseMimeType: "application/json" }
