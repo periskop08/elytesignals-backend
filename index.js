@@ -404,16 +404,52 @@ function parsePrompt(prompt) {
 
 async function fetchIntervalData(symbol, interval) {
     let bybitInterval = '60';
-    if (interval === '15m') bybitInterval = '15';
-    else if (interval === '1h') bybitInterval = '60';
-    else if (interval === '4h') bybitInterval = '240';
-    else if (interval === '1d') bybitInterval = 'D';
-    else if (interval === '1w') bybitInterval = 'W';
+    let bingxInterval = '1h';
+    if (interval === '15m') { bybitInterval = '15'; bingxInterval = '15m'; }
+    else if (interval === '1h') { bybitInterval = '60'; bingxInterval = '1h'; }
+    else if (interval === '4h') { bybitInterval = '240'; bingxInterval = '4h'; }
+    else if (interval === '1d') { bybitInterval = 'D'; bingxInterval = '1d'; }
+    else if (interval === '1w') { bybitInterval = 'W'; bingxInterval = '1w'; }
 
-    const response = await axios.get(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${bybitInterval}&limit=100`);
-    const klines = response.data.result.list.reverse();
-    
-    const closes = klines.map(kline => parseFloat(kline[4]));
+    let klines = [];
+    try {
+        const response = await axios.get(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${bybitInterval}&limit=100`);
+        if (response.data && response.data.result && response.data.result.list && response.data.result.list.length > 0) {
+            let list = response.data.result.list.reverse();
+            klines = list.map(k => ({
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4]),
+                volume: parseFloat(k[5])
+            }));
+        }
+    } catch (e) {
+        console.log("Bybit fetch error:", e.message);
+    }
+
+    if (klines.length === 0) {
+        try {
+            const bingxSymbol = symbol.replace('USDT', '-USDT');
+            const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${bingxSymbol}&interval=${bingxInterval}&limit=100`);
+            if (res.data && res.data.data && res.data.data.length > 0) {
+                // BingX klines are already in {open, close, high, low, volume} format
+                klines = res.data.data.map(k => ({
+                    open: parseFloat(k.open),
+                    high: parseFloat(k.high),
+                    low: parseFloat(k.low),
+                    close: parseFloat(k.close),
+                    volume: parseFloat(k.volume)
+                }));
+            } else {
+                throw new Error("No data from BingX either");
+            }
+        } catch(e) {
+            throw new Error(`Data fetch failed for ${symbol}`);
+        }
+    }
+
+    const closes = klines.map(k => k.close);
     const currentPrice = closes[closes.length - 1];
 
     const rsiInput = { values: closes, period: 14 };
@@ -424,8 +460,8 @@ async function fetchIntervalData(symbol, interval) {
     const smaResult = SMA.calculate(smaInput);
     const currentMA50 = smaResult.length > 0 ? smaResult[smaResult.length - 1] : currentPrice;
 
-    const highs = klines.map(k => parseFloat(k[2]));
-    const lows = klines.map(k => parseFloat(k[3]));
+    const highs = klines.map(k => k.high);
+    const lows = klines.map(k => k.low);
     
     const rangeHigh = Math.max(...highs);
     const rangeLow = Math.min(...lows);
@@ -446,7 +482,7 @@ async function fetchIntervalData(symbol, interval) {
     const tepeDeviation = recentHighs.some(h => h >= rangeHigh * 0.99) && currentPrice < rangeHigh;
 
     // RVOL
-    const volumes = klines.map(kline => parseFloat(kline[5]));
+    const volumes = klines.map(k => k.volume);
     const vol20 = volumes.slice(-21, -1);
     const avgVol = vol20.reduce((a, b) => a + b, 0) / 20;
     const recentVol = Math.max(...volumes.slice(-3));
