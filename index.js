@@ -798,7 +798,7 @@ Below is the SHORT-TERM (4H and 1H) Price Action data for ${baseSymbol}. You MUS
 - Periskop Modeli relies on strict constraints, liquidity traps (Sweep, Order Blocks, FVG) and robust Risk Management.
 - Volume Constraint: Check Volume. If Volume is too low, note that it is extremely risky.
 - Trend Constraint (200 SMA): Price must optimally be aligned with 200 SMA. If against the trend, note it as risky.
-- Risk/Reward (R:R) Constraint: Calculate expected R:R. If R:R is below 1.0, you MUST reject the setup and state it is invalid. Do not tolerate poor R:R.
+${isAssetData ? '- KURUMSAL VALUATION SHIFT (TRADFI): For equities/assets, do NOT penalize RSI Overbought (>75). Treat extreme RSI or structural resistance breakouts as structural growth or earning shifts, NOT as immediate dump/sell signals! Wait for consolidation instead.' : '- Risk/Reward (R:R) Constraint: Calculate expected R:R. If R:R is below 1.0, you MUST reject the setup and state it is invalid. Do not tolerate poor R:R.'}
 - Order Block (OB) and FVG: If you see OBs or FVGs, mention them as they increase the safety score by 15-25 points.
 - If the R:R is broken or it goes against the trend but looks tempting, you can say "Riskli ama denenebilir" as a flex allowance, but warn heavily.
 
@@ -840,7 +840,9 @@ NEW SETUP TEMPLATE (Only use if requested a new trade):
              finalPromptTemplate = `You are "PeriskopAI", the official Analyst AI for Crypto and Assets. If the user's prompt is in Turkish, address them as "Dostum" in a friendly, warm tone. If it is in English, address them as "mate". DO NOT mix languages. Apply the specific rules of the Periskop Modeli. Do NOT use the term SMC.
 User's Intent / Question: "${prompt}"
 
-Below is the synchronous technical data for ${baseSymbol} from High Timeframe (1w, 1d) down to Low (4h, 1h). Apply the strict "Periskop Modeli" constraints (Volume check, SMA200 alignment, R:R > 1.0, Order Blocks/FVG) as you would for Futures, but adapt for Spot holding.
+Below is the synchronous technical data for ${baseSymbol} from High Timeframe (1w, 1d) down to Low (4h, 1h). Apply the strict "Periskop Modeli" constraints (Volume check, SMA200 alignment, order blocks) as you would for Futures, but adapt for Spot holding.
+${isAssetData ? 'CRITICAL TRADFI RULE: Since this is a traditional Asset/Equity, DO NOT view overbought RSI (>75) or major resistance hits as direct sell/dump signals! Instead, interpret technical "overbought" stages as a "Valuation Shift" and structural growth due to earnings/contracts. View old resistance as new concrete support, predicting consolidation instead of reversal.' : 'Do not tolerate R:R below 1.0.'}
+
 
 `;
             results.forEach(res => {
@@ -1250,10 +1252,12 @@ app.post('/api/llm/analyze', async (req, res) => {
         const existingAsset = await db.get("SELECT * FROM portfolio_assets WHERE symbol = ?", [cleanSymbol]);
         
         let extraInstruction = `ŞU ANKİ TARİH: 06-04-2026. Meta'nın geçmişteki vizyonsuz Metaverse birimlerini kapattığını/küçülttüğünü, tüm big-tech şirketlerinin yapay zekaya (AI) abandığını bil. 2022-2023 konularından bahsetme.\n`;
+        extraInstruction += `\n🎯 KURUMSAL HAK EDİŞ (VALUATION SHIFT) KURALI: Varlıkların teknik analizindeki 'RSI Aşırı Alım (>75)' veya fibonacci direnç kırılımlarını sıradan bir 'Düzeltme/SATIŞ' sinyali olarak YORUMLAMA. Şirketin bilançosu, ihaleleri veya yapısal büyümesi güçlüyse, fiyattaki bu ralliyi bir balon olarak değil, şirketin yeni 'Adil Değerine' (Fair Value) çıkışı olarak değerlendir. Ayı/satış sinyalleri aramak yerine, fiyatın o bölgede konsolide olmasını tavsiye et.\n`;
+        
         if (existingAsset) {
             extraInstruction += ` BİLGİ: Bu varlık (${cleanSymbol}) halihazırda fonumuzun portföyünde (Watchlist/Assets) yer almaktadır. Bu yüzden raporu mevcut durumu koruma veya ekleme minvalinde yorumlayabilirsin.`;
         } else {
-            extraInstruction += ` BİLGİ: Bu varlık (${cleanSymbol}) fon portföyümüzde YOKTUR. Bu nedenle rapora MUTLAKA teknik analize (destek/direnç, FVG, vs.) veya makro döngülere dayanarak tahmini bir "Optimal Alım Fiyatı (Entry Price) ve Kademeli Alım Bölgesi" ÖNERMENİ İSTİYORUM. Bu alım tavsiyesini raporun bir alt başlığı olarak ekle.`;
+            extraInstruction += ` BİLGİ: Bu varlık (${cleanSymbol}) fon portföyümüzde YOKTUR. Bu nedenle rapora MUTLAKA teknik analize veya makro döngülere dayanarak tahmini bir "Optimal Alım Fiyatı (Entry Price)" ÖNERMENİ İSTİYORUM. Bu alım tavsiyesini raporun bir alt başlığı olarak ekle.`;
         }
 
         const promptTemplate = `
