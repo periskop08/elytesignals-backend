@@ -252,7 +252,7 @@ async function getUsdtPairs() {
     try {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
-        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT'];
+        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT'];
         const usdtPairs = symbols.filter(s =>
             s.symbol.endsWith('-USDT') &&
             !s.symbol.startsWith('NC') && // Sentetik Varlıkları (NC) kriptolardan ayır
