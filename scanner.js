@@ -1148,6 +1148,8 @@ async function analyzeCoin(symbolInfo) {
 
         let requiredReward = risk * requiredRR;
 
+        let organicRR = risk > 0 ? (reward / risk) : 0; // Doğal hedef R:R'si
+
         // 3. Mevcut analiz (EQ, FVG) hedefi, requiredReward'ın altındaysa hedefi esnet/uzat
         if (reward < requiredReward) {
             reward = requiredReward;
@@ -1156,20 +1158,21 @@ async function analyzeCoin(symbolInfo) {
             warnings.push(`Target Extended to ${requiredRR}R`);
         }
 
-        let rr = risk > 0 ? (reward / risk) : 0;
-        breakdown.rr = parseFloat(rr.toFixed(2));
+        let finalRR = risk > 0 ? (reward / risk) : 0;
+        breakdown.rr = parseFloat(finalRR.toFixed(2));
 
-        if (rr >= 2.0) {
+        // Puanlamalar SUNİ değil, DOĞAL/ORGANİK RR üzerinden yapılmalı
+        if (organicRR >= 2.0) {
             qualityScore += 25; // Base 15 + R:R Bonus 10
             warnings.push('High R:R Bonus (+25)');
         }
-        else if (rr >= 1.5) {
+        else if (organicRR >= 1.5) {
             qualityScore += 5;
             warnings.push('Good R:R Bonus (+5)');
         }
 
         // Genel RR filtresi (Safety Check)
-        if (rr < requiredRR) return null; 
+        if (finalRR < requiredRR) return null; 
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
         if (direction === 'LONG' && qualityScore < 55) {
