@@ -1484,5 +1484,6 @@ module.exports = {
     startScanner,
     sendNightlyReport,
     backfillTrades,
+    setBot: (b) => telegramBot = b,
     getGlobalMarketState: () => globalMarketState
 };
