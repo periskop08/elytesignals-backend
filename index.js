@@ -735,15 +735,16 @@ FOCUS ON THE USER'S LATEST MESSAGE OR CONTEXT: "${prompt}"
 
 You are an Intent and Context Extractor. Your task is to look at the chat history and the latest message, and ANSWER THESE 4 QUESTIONS:
 1. Which Asset/Cryptocurrency is mentioned? (If none, write BTC. Write the ticker SADECE: AAPL, SOL, TSLA, XRP, ETH, DOGE etc.)
-2. What is the User's Trading Timeframe/Intent? (Only pick ONE of 3 options: "SPOT", "FUTURES", "UNCLEAR")
-   - SPOT: Accumulating, holding long term, buying the dip, or broad questions like "Where will it go, will it pump". For stocks (AAPL, TSLA vs) heavily favor SPOT unless explicitly leveraging.
+3. What is the User's Trading Timeframe/Intent? (Only pick ONE of 4 options: "SPOT", "FUTURES", "CONVERSATION", "UNCLEAR")
+   - SPOT: Accumulating, holding long term, explicit buying the dip for spot.
    - FUTURES: Explicitly mentioning "Long, Short, Leverage, Breakout, Liquidation, Stop Loss".
-   - UNCLEAR: If the very first message is too generic.
-3. What is the language of the User's latest message? (Provide ISO code like "TR", "EN", "DE", "ES" etc.)
-4. Does the user specify a leverage amount for FUTURES? (If they write "10x", "20x", return that number. If none, return 10).
+   - CONVERSATION: If the user is asking about an existing trade, asking for a market review, where to add margin, or chatting generically.
+   - UNCLEAR: If the message is completely unintelligible.
+4. What is the language of the User's latest message? (Provide ISO code like "TR", "EN", "DE", "ES" etc.)
+5. Does the user specify a leverage amount for FUTURES? (If they write "10x", "20x", return that number. If none, return 10).
 
 Return ONLY a valid JSON format! NO other characters.
-Example return: {"symbol": "XRP", "intent": "SPOT", "language": "TR", "leverage": 10}`;
+Example return: {"symbol": "XRP", "intent": "CONVERSATION", "language": "TR", "leverage": 10}`;
             
             const intentModel = ai.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
             const intentResponse = await intentModel.generateContent(intentPrompt);
@@ -775,7 +776,7 @@ Example return: {"symbol": "XRP", "intent": "SPOT", "language": "TR", "leverage"
     // --- UNCLEAR ---
     if (intent === "UNCLEAR") {
         return {
-            text: `Dostum, stratejini tam anlayamadım. Uzun vadeli Spot mu düşünüyorsun, yoksa kısa vadeli (Long/Short) Futures/Kaldıraçlı bir işlem mi? Lütfen net bir şekilde belirt ki sana nokta atışı bir rota çizeyim!`,
+            text: `Dostum, ne demek istediğini tam anlayamadım. Hedeflediğin coin veya işlemi daha net yazar mısın?`,
             chartData: null
         };
     }
@@ -813,12 +814,11 @@ Below is the SHORT-TERM (4H and 1H) Price Action data for ${baseSymbol}. You MUS
 
 YOUR TASK AND FORMATTING RULES:
 0. MUST write your ENTIRE response in the language: ${language}.
-1. Provide ONLY the final setup using EXACTLY the template below. 
-2. DO NOT write paragraphs. DO NOT write "Executive Summary". Just fill the template math.
-3. Math rules for Futures: Base Bankroll = $500, Risk per trade = 2% ($10). Use the percentage differences from your Entry to your Stop/TP to calculate the dollar amounts relative to ${leverage}x leverage assuming the trade hits Stop-Loss at exactly -$10 loss.
+1. If the user explicitly asks for a brand new futures setup, provide ONLY the final setup using EXACTLY the template below. 
+2. If the user is asking about an existing trade, an entry review, or chatting, IGNORE THE TEMPLATE and talk to them conversationally like a professional trading analyst. Explain WHY their entry was good/bad (e.g. "Choch yoktu, likidite almamıştı"), identify optimal zones to add margin or exit using the provided data, and ask clarifying questions if needed.
+3. Math rules for New Futures Setups: Base Bankroll = $500, Risk per trade = 2% ($10). Use the percentage differences from your Entry to your Stop/TP to calculate the dollar amounts relative to ${leverage}x leverage assuming the trade hits Stop-Loss at exactly -$10 loss.
 
-OUTPUT STRICTLY THIS FORMAT (Do NOT add anything else):
-
+NEW SETUP TEMPLATE (Only use if requested a new trade):
 ⚡ ${baseSymbol} ${leverage}X KALDIRAÇ ⚡
 
 💰 GİRİŞ: {Ideal Entry Price}$
@@ -856,12 +856,10 @@ Below is the synchronous technical data for ${baseSymbol} from High Timeframe (1
 
             finalPromptTemplate += `YOUR TASK AND FORMATTING RULES:
 0. MUST write your ENTIRE response in the language: ${language}.
-1. Provide ONLY the final setup using EXACTLY the template below.
-2. DO NOT write paragraphs. DO NOT write "Executive Summary". Just fill the template.
-3. Math rules for Spot: Calculate simple profit percentage differences from the entry price.
+1. If the user explicitly asks for a brand new spot setup, provide ONLY the final setup using EXACTLY the template below.
+2. If the user is asking about an existing trade, dipping zones, or a review, IGNORE THE TEMPLATE and talk to them organically like a professional analyst. Mention specific technicals (order blocks, sweeps, AVWAP) in your explanation.
 
-OUTPUT STRICTLY THIS FORMAT (Do NOT add anything else):
-
+NEW SETUP TEMPLATE (Only use if explicitly requested a new setup):
 🔥 ${baseSymbol} SPOT SİNYALİ 🔥
 
 💰 AL: {Ideal Entry Price}$

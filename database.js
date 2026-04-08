@@ -29,6 +29,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 db.run("ALTER TABLE signals ADD COLUMN reachedTwoPercent INTEGER DEFAULT 0", () => {});
                 db.run("ALTER TABLE signals ADD COLUMN qualityScore INTEGER DEFAULT 0", () => {});
                 db.run("ALTER TABLE signals ADD COLUMN warnings TEXT DEFAULT '[]'", () => {});
+                db.run("ALTER TABLE signals ADD COLUMN rvol TEXT DEFAULT '-'", () => {});
             }
         });
 
