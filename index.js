@@ -440,7 +440,7 @@ async function fetchIntervalData(symbol, interval) {
                     low: parseFloat(k.low),
                     close: parseFloat(k.close),
                     volume: parseFloat(k.volume)
-                }));
+                })).reverse();
             } else {
                 throw new Error("No data from BingX either");
             }
@@ -913,7 +913,7 @@ OUTPUT STRICTLY THIS FORMAT (Do NOT add anything else):
 
     } catch (error) {
         console.error("Analysis Error:", error.message);
-        let errorMsg = `Dostum, "${baseSymbol}" paritesine ulaşırken bir hata oluştu. Bybit veritabanında böyle bir parite bulunmuyor olabilir. Lütfen coin/varlık adını kontrol et!`;
+        let errorMsg = `Dostum, "${baseSymbol}" paritesine ulaşırken bir hata oluştu. Hem Bybit hem de BingX veritabanlarında böyle bir parite bulunamadı veya veriler güncelleniyor. Lütfen coin/varlık adını kontrol et!`;
         if (isAssetData || error.message.includes("paused or closed")) {
              errorMsg = `Dostum, "${baseSymbol}" varlık verisine ulaşılırken hata oluştu. Geleneksel piyasalar (Borsa/Hisse) şu an kapalı veya duraklatılmış olabilir (Hafta sonu/Mesai dışı).`;
         }
