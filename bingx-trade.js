@@ -9,6 +9,22 @@ function getSignature(queryString, secret) {
     return crypto.createHmac('sha256', secret).update(queryString).digest('hex');
 }
 
+function resolveBingxSymbol(rawSymbol) {
+    if (!rawSymbol) return rawSymbol;
+    const ASSET_MAP = {
+        'XAUUSD': 'NCCOGOLD2USD-USDT',
+        'XAGUSD': 'NCCOXAG2USD-USDT',
+        'EURUSD': 'NCFXEUR2USD-USDT',
+        'AAPL': 'NCSKAAPL2USD-USDT',
+        'TSLA': 'NCSKTSLA2USD-USDT',
+        'NASDAQ': 'NCSINASDAQ1002USD-USDT',
+        'SP500': 'NCSISP5002USD-USDT',
+        'DOW': 'NCSIDJI2USD-USDT'
+    };
+    if (ASSET_MAP[rawSymbol]) return ASSET_MAP[rawSymbol];
+    return rawSymbol.replace('USDT', '-USDT');
+}
+
 async function makePrivateRequest(method, endpoint, params = {}) {
     if (!API_KEY || !API_SECRET) {
         console.warn("[BINGX] API Keys not found in .env.");
@@ -74,8 +90,8 @@ async function getInstrumentInfo(symbol) {
 
 // 2. Place Order mapping
 async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPrice) {
-    // rawSymbol: 'BTCUSDT' -> Format to BingX 'BTC-USDT'
-    const symbol = rawSymbol.replace('USDT', '-USDT');
+    // rawSymbol: 'BTCUSDT' -> Format to BingX 'BTC-USDT' or 'NCCOXAG2USD-USDT' for assets
+    const symbol = resolveBingxSymbol(rawSymbol);
     
     const info = await getInstrumentInfo(symbol);
     if (!info) throw new Error("Instrument info not found for " + symbol);
@@ -135,7 +151,7 @@ async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPri
 
 // 3. Get Active Position
 async function getPosition(rawSymbol) {
-    const symbol = rawSymbol.replace('USDT', '-USDT');
+    const symbol = resolveBingxSymbol(rawSymbol);
     const response = await makePrivateRequest('GET', '/openApi/swap/v2/user/positions', {
         symbol: symbol
     });
@@ -150,7 +166,7 @@ async function getPosition(rawSymbol) {
 
 // 4. Force Close (Market)
 async function closePosition(rawSymbol, direction) {
-    const symbol = rawSymbol.replace('USDT', '-USDT');
+    const symbol = resolveBingxSymbol(rawSymbol);
     const pos = await getPosition(rawSymbol);
     if (!pos) throw new Error("Açık pozisyon bulunamadı veya kapandı.");
 
@@ -174,7 +190,7 @@ async function closePosition(rawSymbol, direction) {
 
 // 5. Update Stop Loss (Breakeven / Trailing)
 async function updateStopLoss(rawSymbol, newStopLoss, currentTargetPrice) {
-    const symbol = rawSymbol.replace('USDT', '-USDT');
+    const symbol = resolveBingxSymbol(rawSymbol);
     const pos = await getPosition(rawSymbol);
     if (!pos || parseFloat(pos.positionAmt) === 0) throw new Error("Açık pozisyon yok, StopLoss güncellenemez.");
     
@@ -240,7 +256,7 @@ async function updateStopLoss(rawSymbol, newStopLoss, currentTargetPrice) {
 // 6. Get Net Income (Realized PnL + Funding + Fees)
 async function getNetIncome(rawSymbol, startTimeStr) {
     // rawSymbol: 'BTCUSDT'
-    const symbol = rawSymbol.replace('USDT', '-USDT');
+    const symbol = resolveBingxSymbol(rawSymbol);
     // Convert SQL Datetime to UNIX timestamp (MS)
     let startTimeMs = new Date(startTimeStr + 'Z').getTime(); // Assuming UTC
     if (isNaN(startTimeMs)) {
