@@ -26,69 +26,69 @@ async function analyzeOptionsFlow(fetchId, currentPrice) {
         const YF = require('yahoo-finance2').default;
         const result = await YF.options(fetchId);
         if (!result || !result.options || result.options.length === 0) return null;
-        
+
         const nearestChain = result.options[0];
         const calls = nearestChain.calls || [];
         const puts = nearestChain.puts || [];
-        
+
         let totalCallOI = 0, totalPutOI = 0;
         let maxCallOI = 0, maxPutOI = 0;
         let callWallStrike = 0, putWallStrike = 0;
         let allStrikes = new Set();
-        
+
         calls.forEach(c => {
             const oi = c.openInterest || 0;
             totalCallOI += oi;
             if (oi > maxCallOI) { maxCallOI = oi; callWallStrike = c.strike; }
             allStrikes.add(c.strike);
         });
-        
+
         puts.forEach(p => {
             const oi = p.openInterest || 0;
             totalPutOI += oi;
             if (oi > maxPutOI) { maxPutOI = oi; putWallStrike = p.strike; }
             allStrikes.add(p.strike);
         });
-        
+
         const pcr = totalCallOI > 0 ? totalPutOI / totalCallOI : 1;
-        
+
         let minPainValue = Infinity;
         let maxPainStrike = 0;
-        const strikeArray = Array.from(allStrikes).sort((a,b)=>a-b);
-        
+        const strikeArray = Array.from(allStrikes).sort((a, b) => a - b);
+
         strikeArray.forEach(strike => {
             let totalPain = 0;
             calls.forEach(c => { if (strike > c.strike) totalPain += (strike - c.strike) * (c.openInterest || 0); });
             puts.forEach(p => { if (strike < p.strike) totalPain += (p.strike - strike) * (p.openInterest || 0); });
             if (totalPain <= minPainValue && totalPain > 0) { minPainValue = totalPain; maxPainStrike = strike; }
         });
-        
+
         return { pcr, callWall: callWallStrike, putWall: putWallStrike, maxPain: maxPainStrike };
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
 async function fetchCandles(symbolInfo, intervalMinutes, limit) {
     try {
         const interval = intervalMinutes === 60 ? '1h' : (intervalMinutes + 'm');
         let fetchSym = '';
-        
+
         if (typeof symbolInfo === 'string') {
             // Crypto
             fetchSym = symbolInfo.endsWith('USDT') ? symbolInfo.replace('USDT', '-USDT') : symbolInfo;
         } else if (symbolInfo.isAsset) {
             // Traditional Asset mapping (e.g. AAPL -> NCSKAAPL2USD-USDT)
-            fetchSym = symbolInfo.bingxSymbol; 
+            fetchSym = symbolInfo.bingxSymbol;
         } else {
             fetchSym = symbolInfo.symbol.replace('USDT', '-USDT');
         }
 
         const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${fetchSym}&interval=${interval}&limit=${limit}`);
         let list = res.data.data || [];
-        
+
         // BingX returns array of objects {open, high, low, close, volume, time}
         // We sort oldest to newest to match technical indicators logic
-        list.sort((a,b) => a.time - b.time);
-        
+        list.sort((a, b) => a.time - b.time);
+
         return list.map(k => ({
             open: parseFloat(k.open),
             high: parseFloat(k.high),
@@ -119,16 +119,19 @@ let globalMarketState = {
 };
 
 const CONFIG = {
-    minRR: 1.0,           // 1.0-2.0 arası
+    minRR: 1.5,           // 1.5-2.0 arası (Eski katı kural)
     obLookback: 30,       // 14-50 arası  
-    minScore: 40,         // 30-70 arası
+    minScore: 55,         // Short sinyalleri için kalite barajı (13 stop'un 10'unu elediği için 55)
     fvgRequired: false,   // true/false
     sma50Filter: 'soft',  // 'hard'/'soft'
     adxThreshold: 25,     // 15-35 arası
     maxActiveTrades: 10,  // Aynı anda maksimum açık BOT işlemi
     priceTolerancePct: 0.3, // İşleme girmek için tolerans %
     isMacroNewsDay: false, // FOMC, NFP gibi ekstrem günlerde EURUSD filtresi
-    useMacroFilter: false  // Gecici bir sure makro bloklama ve puanlamalar donduruldu (saf teknik analiz)
+    useMacroFilter: false, // Gecici bir sure makro bloklama ve puanlamalar donduruldu (saf teknik analiz)
+    maxSlPct: 3.5,         // Maksimum stop loss % (bunu aşanlar reddedilir)
+    premiumSlThreshold: 2.5, // Stop oranı %2.5'i aşan riskli işlemlerde premium RR zorunluluğu
+    premiumRR: 2.0         // Riskli işlemler için en az 1:2 R:R zorunluluğu
 };
 
 // --- GLOBAL MARKET SENSOR START ---
@@ -143,7 +146,7 @@ async function fetchBinanceKlines(symbol, interval) {
             volume: parseFloat(k[5]),
             closeTime: parseInt(k[6])
         }));
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
 async function fetchBybitKlinesGlobal(symbol, interval) {
@@ -157,7 +160,7 @@ async function fetchBybitKlinesGlobal(symbol, interval) {
             volume: parseFloat(k[5]),
             closeTime: parseInt(k[0])
         })).reverse();
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
 async function fetchCoinGeckoDominance() {
@@ -169,7 +172,7 @@ async function fetchCoinGeckoDominance() {
             usdt: mcp.usdt || 5,
             alt: Math.max(0, 100 - (mcp.btc || 50) - (mcp.usdt || 5) - (mcp.eth || 10) - (mcp.bnb || 3) - (mcp.sol || 2))
         };
-    } catch(e) {
+    } catch (e) {
         return { btc: 50, usdt: 5, alt: 15 };
     }
 }
@@ -178,11 +181,11 @@ function calculateTrendFromKlines(klines) {
     const defaultRes = { trend: 'NEUTRAL', rsi: 50, ema: 0, sma: 0, close: 0 };
     if (!klines || klines.length < 50) return defaultRes;
     const closes = klines.map(k => k.close);
-    const ema20 = EMA.calculate({period: 20, values: closes});
-    const sma50 = SMA.calculate({period: 50, values: closes});
+    const ema20 = EMA.calculate({ period: 20, values: closes });
+    const sma50 = SMA.calculate({ period: 50, values: closes });
     const { RSI } = require('technicalindicators');
-    const rsi = RSI.calculate({period: 14, values: closes});
-    
+    const rsi = RSI.calculate({ period: 14, values: closes });
+
     if (!ema20.length || !sma50.length || !rsi.length) return defaultRes;
 
     const lastClose = closes[closes.length - 1];
@@ -211,19 +214,19 @@ async function analyzeGlobalMarket() {
             fetchBinanceKlines('BTCDOMUSDT', '4h'),
             fetchCoinGeckoDominance()
         ]);
-        
+
         const btc1hObj = calculateTrendFromKlines(btc1h);
         const btc4hObj = calculateTrendFromKlines(btc4h);
         const btc1dObj = calculateTrendFromKlines(btc1d);
         const eth4hObj = calculateTrendFromKlines(eth4h);
         const eth1dObj = calculateTrendFromKlines(eth1d);
         const dom4hObj = calculateTrendFromKlines(dom4h);
-        
+
         let finalBtc = btc4hObj.trend;
         if ((btc4hObj.trend === 'BULL' || btc4hObj.trend === 'STRONG_BULL') && (btc1dObj.trend === 'BULL' || btc1dObj.trend === 'STRONG_BULL')) {
-             finalBtc = 'STRONG_BULL'; 
+            finalBtc = 'STRONG_BULL';
         } else if ((btc4hObj.trend === 'BEAR' || btc4hObj.trend === 'STRONG_BEAR') && (btc1dObj.trend === 'BEAR' || btc1dObj.trend === 'STRONG_BEAR')) {
-             finalBtc = 'STRONG_BEAR';
+            finalBtc = 'STRONG_BEAR';
         }
 
         globalMarketState = {
@@ -239,7 +242,7 @@ async function analyzeGlobalMarket() {
             timestamp: Date.now()
         };
         console.log(`[GLOBAL SENSOR] BTC: ${globalMarketState.btcTrend} | USDT.D: %${globalMarketState.cgDom.usdt.toFixed(1)} | ETH: ${globalMarketState.ethTrend}`);
-    } catch(e) {
+    } catch (e) {
         console.error('[GLOBAL SENSOR] Error:', e.message);
     }
 }
@@ -250,16 +253,16 @@ async function getUsdtPairs() {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
         const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT'];
-        const usdtPairs = symbols.filter(s => 
-            s.symbol.endsWith('-USDT') && 
+        const usdtPairs = symbols.filter(s =>
+            s.symbol.endsWith('-USDT') &&
             !s.symbol.startsWith('NC') && // Sentetik Varlıkları (NC) kriptolardan ayır
             !ignoredStables.includes(s.symbol) && // Stabil coinleri ele
-            parseFloat(s.quoteVolume) > 3000000
+            parseFloat(s.quoteVolume) > 3000000 // Hacim barajı tekrar 3M'ye çekildi
         );
         // BingX "BTC-USDT" kurgusunu "BTCUSDT" yap ve Dual Liquidity için volume bilgisini taşı
-        return usdtPairs.map(s => ({ 
-            symbol: s.symbol.replace('-', ''), 
-            volume: parseFloat(s.quoteVolume) 
+        return usdtPairs.map(s => ({
+            symbol: s.symbol.replace('-', ''),
+            volume: parseFloat(s.quoteVolume)
         }));
     } catch (error) {
         console.error('BingX Ticker Error:', error.message);
@@ -275,7 +278,7 @@ async function delay(ms) {
 async function checkActiveSignals() {
     try {
         const activeSignals = await db.all("SELECT * FROM signals WHERE status = 'ACTIVE'");
-        if(!activeSignals || activeSignals.length === 0) return;
+        if (!activeSignals || activeSignals.length === 0) return;
 
         console.log(`[SCANNER] Checking ${activeSignals.length} active signals...`);
 
@@ -296,7 +299,7 @@ async function checkActiveSignals() {
                             // Pozisyon Borsada Kapanmış (TP/SL)
                             console.log(`[AUTO-TRADE-CHECK] Pozisyon Borsada Kapalı Tespit Edildi: ${trade.symbol}`);
                             const currentP = priceMap[trade.symbol];
-                            if(currentP) {
+                            if (currentP) {
                                 let pnl = 0;
                                 if (trade.type === 'LONG') pnl = ((currentP - trade.entryPrice) / trade.entryPrice) * 100 * 10;
                                 else pnl = ((trade.entryPrice - currentP) / trade.entryPrice) * 100 * 10;
@@ -306,7 +309,7 @@ async function checkActiveSignals() {
                                     "UPDATE user_trades SET status = 'CLOSED', pnl = ?, closeReason = ?, closedAt = CURRENT_TIMESTAMP WHERE id = ?",
                                     [pnl, reason, trade.id]
                                 );
-                                
+
                                 // Orijinal Global sinyal duruyor olabilir. Ancak Kullanıcı Şahsi Favorilerinde "Aktif" olanları göstermeyeceğimizden listeden düşecektir.
                             }
                         } else {
@@ -318,7 +321,7 @@ async function checkActiveSignals() {
                                     const risk = Math.abs(trade.entryPrice - trade.stopPrice);
                                     let reachedTP1 = false;
                                     let newStopLoss = trade.entryPrice;
-                                    
+
                                     if (trade.type === 'LONG') {
                                         const tp1 = trade.entryPrice + risk;
                                         if (currentP >= tp1) reachedTP1 = true;
@@ -334,7 +337,7 @@ async function checkActiveSignals() {
                                             await updateStopLoss(trade.symbol, newStopLoss, trade.targetPrice);
                                             await db.run("UPDATE user_trades SET isBreakeven = 1 WHERE id = ?", [trade.id]);
                                             console.log(`[TRAILING-STOP] ${trade.symbol} 1R hedefine ulaştı. StopLoss girişe çekildi: ${newStopLoss}`);
-                                            
+
                                             // Send Telegram Message
                                             if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
                                                 const msg = `🛡️ *KORUMA DEVREDE!* [${trade.symbol}]\nİşlem İlk Kâr Hedefine (1R) ulaştı. Zarar Etme Riski Sıfırlandı, Stop Loss maliyetin hemen önüne (${newStopLoss.toFixed(4)}) çekildi!`;
@@ -347,85 +350,85 @@ async function checkActiveSignals() {
                                 }
                             }
                         }
-                    } catch(e) {}
+                    } catch (e) { }
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
         // --- AUTO TRADING CHECK END ---
 
         for (const signal of activeSignals) {
             try {
-                 const currentPrice = priceMap[signal.symbol];
-                 if (!currentPrice) continue;
-                 
-                 let newStatus = null;
-                 let pnl = 0;
-                 
-                 if (signal.type === 'LONG') {
-                     pnl = ((currentPrice - signal.entryPrice) / signal.entryPrice) * 100;
-                     if (currentPrice >= signal.targetPrice) newStatus = 'WIN';
-                     else if (currentPrice <= signal.stopPrice) newStatus = 'LOSS';
-                 } else if (signal.type === 'SHORT') {
-                     pnl = ((signal.entryPrice - currentPrice) / signal.entryPrice) * 100;
-                     if (currentPrice <= signal.targetPrice) newStatus = 'WIN';
-                     else if (currentPrice >= signal.stopPrice) newStatus = 'LOSS';
-                 }
-                 
-                 // %2 kâr barajı kontrolü
-                 if (pnl >= 2.0 && !signal.reachedTwoPercent) {
-                     await db.run("UPDATE signals SET reachedTwoPercent = 1 WHERE id = ?", [signal.id]);
-                 }
+                const currentPrice = priceMap[signal.symbol];
+                if (!currentPrice) continue;
 
-                 if (newStatus) {
-                     (async () => {
-                         try {
-                             let netUsd = null;
-                             const { getNetIncome } = require('./bingx-trade');
-                             // Bekle ki borsa income geçmişini tam işlesin
-                             await new Promise(res => setTimeout(res, 2000));
-                             netUsd = await getNetIncome(signal.symbol, signal.createdAt);
-                             
-                             if (netUsd !== null && netUsd !== undefined) {
-                                  await db.run("UPDATE signals SET status = ?, netPnlUsd = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, netUsd, signal.id]);
-                                  console.log(`[SCANNER] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: $${netUsd.toFixed(4)})`);
-                             } else {
-                                  await db.run("UPDATE signals SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, signal.id]);
-                                  console.log(`[SCANNER] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: YAKALANAMADI)`);
-                             }
-                             
-                             // Telegram Bildirimi (TP veya SL)
-                             if (typeof telegramBot !== 'undefined' && telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-                                 try {
-                                     const isTP = (newStatus === 'WIN');
-                                     let pnlText = (netUsd !== null && netUsd !== undefined) ? `💸 *Net PnL:* $${netUsd.toFixed(2)}` : `📊 *Kapanış Durumu:* Piyasa Emriyle Kapatıldı.`;
-                                     
-                                     let msg = "";
-                                     if (isTP) {
-                                         msg = `🎯 *TAKE PROFIT (HEDEF VURULDU)!* [${signal.symbol}]\nElyte Sinyali başarıyla kâr hedefine ulaştı ve kapatıldı.\n\n${pnlText}\n\nPeriskop AI hedefini vurdu! 🔭`;
-                                     } else {
-                                         if (signal.reachedTwoPercent) {
-                                             msg = `🛑 *STOP LOSS ÇALIŞTI (BAŞABAŞ)* [${signal.symbol}]\nİşlem 1R sonrası kârı korumak için giriş seviyesinden kapatıldı.\n\nZarar Koruma (Breakeven) Devrede! 🛡️`;
-                                         } else {
-                                             msg = `🛑 *STOP LOSS!* [${signal.symbol}]\nİşlem maalesef zarardurdur seviyesine temas etti ve kapatıldı.\n\nRisk yönetimi daima hayat kurtarır. 🛡️`;
-                                         }
-                                     }
-                                     telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
-                                 } catch (tgErr) {
-                                     console.error("TG Send Error on Close:", tgErr.message);
-                                 }
-                             }
+                let newStatus = null;
+                let pnl = 0;
 
-                             // Google Sheets'te Güncelle
-                             const googleApi = require('./google-api');
-                             if (googleApi.updateSheetSignalStatus) {
-                                 await googleApi.updateSheetSignalStatus(signal.id, newStatus);
-                             }
-                         } catch (err) {
-                             console.error("[SCANNER ASYNC CLOSE ERROR]:", err);
-                         }
-                     })();
-                 }
-            } catch(e) {
+                if (signal.type === 'LONG') {
+                    pnl = ((currentPrice - signal.entryPrice) / signal.entryPrice) * 100;
+                    if (currentPrice >= signal.targetPrice) newStatus = 'WIN';
+                    else if (currentPrice <= signal.stopPrice) newStatus = 'LOSS';
+                } else if (signal.type === 'SHORT') {
+                    pnl = ((signal.entryPrice - currentPrice) / signal.entryPrice) * 100;
+                    if (currentPrice <= signal.targetPrice) newStatus = 'WIN';
+                    else if (currentPrice >= signal.stopPrice) newStatus = 'LOSS';
+                }
+
+                // %2 kâr barajı kontrolü
+                if (pnl >= 2.0 && !signal.reachedTwoPercent) {
+                    await db.run("UPDATE signals SET reachedTwoPercent = 1 WHERE id = ?", [signal.id]);
+                }
+
+                if (newStatus) {
+                    (async () => {
+                        try {
+                            let netUsd = null;
+                            const { getNetIncome } = require('./bingx-trade');
+                            // Bekle ki borsa income geçmişini tam işlesin
+                            await new Promise(res => setTimeout(res, 2000));
+                            netUsd = await getNetIncome(signal.symbol, signal.createdAt);
+
+                            if (netUsd !== null && netUsd !== undefined) {
+                                await db.run("UPDATE signals SET status = ?, netPnlUsd = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, netUsd, signal.id]);
+                                console.log(`[SCANNER] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: $${netUsd.toFixed(4)})`);
+                            } else {
+                                await db.run("UPDATE signals SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, signal.id]);
+                                console.log(`[SCANNER] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: YAKALANAMADI)`);
+                            }
+
+                            // Telegram Bildirimi (TP veya SL)
+                            if (typeof telegramBot !== 'undefined' && telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
+                                try {
+                                    const isTP = (newStatus === 'WIN');
+                                    let pnlText = (netUsd !== null && netUsd !== undefined) ? `💸 *Net PnL:* $${netUsd.toFixed(2)}` : `📊 *Kapanış Durumu:* Piyasa Emriyle Kapatıldı.`;
+
+                                    let msg = "";
+                                    if (isTP) {
+                                        msg = `🎯 *TAKE PROFIT (HEDEF VURULDU)!* [${signal.symbol}]\nElyte Sinyali başarıyla kâr hedefine ulaştı ve kapatıldı.\n\n${pnlText}\n\nPeriskop AI hedefini vurdu! 🔭`;
+                                    } else {
+                                        if (signal.reachedTwoPercent) {
+                                            msg = `🛑 *STOP LOSS ÇALIŞTI (BAŞABAŞ)* [${signal.symbol}]\nİşlem 1R sonrası kârı korumak için giriş seviyesinden kapatıldı.\n\nZarar Koruma (Breakeven) Devrede! 🛡️`;
+                                        } else {
+                                            msg = `🛑 *STOP LOSS!* [${signal.symbol}]\nİşlem maalesef zarardurdur seviyesine temas etti ve kapatıldı.\n\nRisk yönetimi daima hayat kurtarır. 🛡️`;
+                                        }
+                                    }
+                                    telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
+                                } catch (tgErr) {
+                                    console.error("TG Send Error on Close:", tgErr.message);
+                                }
+                            }
+
+                            // Google Sheets'te Güncelle
+                            const googleApi = require('./google-api');
+                            if (googleApi.updateSheetSignalStatus) {
+                                await googleApi.updateSheetSignalStatus(signal.id, newStatus);
+                            }
+                        } catch (err) {
+                            console.error("[SCANNER ASYNC CLOSE ERROR]:", err);
+                        }
+                    })();
+                }
+            } catch (e) {
                 // Ignore single coin error
             }
         }
@@ -443,9 +446,9 @@ async function backfillTrades() {
     try {
         const activeCountRes = await db.get("SELECT COUNT(*) as count FROM user_trades WHERE status = 'ACTIVE'");
         const activeCount = activeCountRes ? activeCountRes.count : 0;
-        
+
         if (activeCount >= CONFIG.maxActiveTrades) return;
-        
+
         let slotsAvailable = CONFIG.maxActiveTrades - activeCount;
 
         // Havuz: Henüz BOT'ta açık işlemi olmayan Sinyalleri çek (Sıralama: Kalite Skoru yüksek olan önce)
@@ -457,7 +460,7 @@ async function backfillTrades() {
             ORDER BY s.qualityScore DESC, s.createdAt DESC
         `);
 
-        if(candidateSignals.length === 0) return;
+        if (candidateSignals.length === 0) return;
 
         console.log(`[BACKFILL] Bos slot: ${slotsAvailable}. Bekleyen ${candidateSignals.length} adet havuz sinyali degerlendiriliyor...`);
 
@@ -483,22 +486,22 @@ async function backfillTrades() {
                             "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
                             [process.env.PERISKOP_TELEGRAM_ID, signal.id, signal.symbol, signal.type, currentPrice, signal.targetPrice, signal.stopPrice, orderId]
                         );
-                        
+
                         const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signal.id]);
-                        if(!checkFav) {
+                        if (!checkFav) {
                             await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signal.id]);
                         }
                         slotsAvailable--;
                     }
-                } catch(e) {
-                     console.error(`[BACKFILL] Hata:`, e.message);
+                } catch (e) {
+                    console.error(`[BACKFILL] Hata:`, e.message);
                 }
             } else {
-                 const dir = currentPrice > signal.entryPrice ? 'Yukarı' : 'Aşağı';
-                 console.log(`[BACKFILL] Atlanıyor: ${signal.symbol} (Fiyat %${diffPct.toFixed(2)} ${dir} kaçmış. Tolerans: %${CONFIG.priceTolerancePct})`);
+                const dir = currentPrice > signal.entryPrice ? 'Yukarı' : 'Aşağı';
+                console.log(`[BACKFILL] Atlanıyor: ${signal.symbol} (Fiyat %${diffPct.toFixed(2)} ${dir} kaçmış. Tolerans: %${CONFIG.priceTolerancePct})`);
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error("Backfill Error:", e);
     }
 }
@@ -507,10 +510,10 @@ async function analyzeCoin(symbolInfo) {
     try {
         const sym = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
         const klinesFull = await fetchCandles(symbolInfo, 60, 250);
-        if(!klinesFull || klinesFull.length < 205) return null; 
+        if (!klinesFull || klinesFull.length < 205) return null;
 
         const closesFull = klinesFull.map(k => k.close);
-        const sma200Values = SMA.calculate({period: 200, values: closesFull});
+        const sma200Values = SMA.calculate({ period: 200, values: closesFull });
         const curSma200 = sma200Values[sma200Values.length - 1];
 
         // Orijinal indikatör uyumu için son 100 işlem mumunu kesiyoruz
@@ -521,19 +524,19 @@ async function analyzeCoin(symbolInfo) {
         const lows = klines.map(k => k.low);
         const closes = klines.map(k => k.close);
         const volumes = klines.map(k => k.volume);
-        
+
         const currentPrice = closes[closes.length - 1];
         const rangeHigh = Math.max(...highs);
         const rangeLow = Math.min(...lows);
         const eq = (rangeHigh + rangeLow) / 2;
 
-        const atrRes = ATR.calculate({high: highs, low: lows, close: closes, period: 14});
+        const atrRes = ATR.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentATR = atrRes[atrRes.length - 1] || (currentPrice * 0.015);
-        
+
         let avgATR = currentATR;
         if (atrRes.length >= 14) {
-             const last14 = atrRes.slice(-14);
-             avgATR = last14.reduce((acc, val) => acc + val, 0) / 14;
+            const last14 = atrRes.slice(-14);
+            avgATR = last14.reduce((acc, val) => acc + val, 0) / 14;
         }
 
         // TEMEL HESAPLAMALAR
@@ -571,41 +574,41 @@ async function analyzeCoin(symbolInfo) {
         if (!dipDeviation && !tepeDeviation) return null;
 
         const direction = dipDeviation ? 'LONG' : 'SHORT';
-        
+
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
         if (direction === 'LONG' && globalVol < 4000000) {
             // Hacim 4 Milyonun altındaysa LONG YASAK (Slippage / Scam Wick koruması)
-            return null; 
+            return null;
         }
         if (direction === 'SHORT' && globalVol < 2000000) {
             // Hacim 2 Milyonun altındaysa SHORT YASAK
-            return null; 
+            return null;
         }
 
         // --- GLOBAL MARKET CONTEXT FILTER / EXTREME BLOCKERS ---
         let eurusdDailyPenalty = 0;
-        if (CONFIG.useMacroFilter && !symbolInfo.isAsset) { 
+        if (CONFIG.useMacroFilter && !symbolInfo.isAsset) {
             const btc1d = globalMarketState.btc1dObj;
             if (btc1d && btc1d.rsi > 0 && btc1d.rsi < 25 && btc1d.close < btc1d.ema && btc1d.close < btc1d.sma) {
-                 if (direction === 'LONG') return null; // BTC EXTREME BEAR - ALTCOIN LONG BLOCKED
+                if (direction === 'LONG') return null; // BTC EXTREME BEAR - ALTCOIN LONG BLOCKED
             }
             const eth1d = globalMarketState.eth1dObj;
             if (eth1d && eth1d.rsi > 75 && eth1d.close > eth1d.ema && eth1d.close > eth1d.sma) {
-                 if (direction === 'SHORT') return null; // ETH EXTREME BULL - ALTCOIN SHORT BLOCKED
+                if (direction === 'SHORT') return null; // ETH EXTREME BULL - ALTCOIN SHORT BLOCKED
             }
         } else if (symbolInfo.isAsset) {
             // EURUSD Günlük SMA 200 Filtresi
             if (sym === 'EURUSD') {
                 if (CONFIG.isMacroNewsDay) {
-                     eurusdDailyPenalty += 20;
+                    eurusdDailyPenalty += 20;
                 }
                 const eu1d = await fetchCandles(symbolInfo, 1440, 205);
                 if (eu1d && eu1d.length >= 200) {
-                     const sma200 = SMA.calculate({period: 200, values: eu1d.map(x => x.close)});
-                     const curSma = sma200[sma200.length - 1];
-                     if (direction === 'LONG' && currentPrice < curSma) eurusdDailyPenalty += 15;
-                     if (direction === 'SHORT' && currentPrice > curSma) eurusdDailyPenalty += 15;
+                    const sma200 = SMA.calculate({ period: 200, values: eu1d.map(x => x.close) });
+                    const curSma = sma200[sma200.length - 1];
+                    if (direction === 'LONG' && currentPrice < curSma) eurusdDailyPenalty += 15;
+                    if (direction === 'SHORT' && currentPrice > curSma) eurusdDailyPenalty += 15;
                 }
             }
         }
@@ -613,7 +616,7 @@ async function analyzeCoin(symbolInfo) {
         // --- SKORLAMA (SCORING) ALTYAPISI ---
         let qualityScore = 0;
         let warnings = [];
-        
+
         // --- 200 SMA SOFT FİLTRESİ ---
         if (direction === 'LONG' && currentPrice < curSma200) {
             qualityScore -= 15;
@@ -623,7 +626,7 @@ async function analyzeCoin(symbolInfo) {
             qualityScore -= 15;
             warnings.push('Bullish 200 SMA (-15)');
         }
-        
+
         if (eurusdDailyPenalty > 0) {
             qualityScore -= eurusdDailyPenalty;
             warnings.push(`Macro EURUSD Risk (-${eurusdDailyPenalty})`);
@@ -634,7 +637,7 @@ async function analyzeCoin(symbolInfo) {
         if (CONFIG.useMacroFilter && !symbolInfo.isAsset && globalMarketState.cgDom) {
             let macroScore = 0;
             const cgDom = globalMarketState.cgDom;
-            
+
             // BTC Dominans
             if (globalMarketState.btcDomTrend === 'BEAR' || globalMarketState.btcDomTrend === 'STRONG_BEAR') {
                 macroScore += 15; // Altseason!
@@ -656,7 +659,7 @@ async function analyzeCoin(symbolInfo) {
             } else if (cgDom.alt < 15 && (globalMarketState.ethTrend === 'BEAR' || globalMarketState.ethTrend === 'STRONG_BEAR')) {
                 macroScore -= 12; // Altlar sönüyor
             }
-            
+
             qualityScore += macroScore;
         }
 
@@ -667,9 +670,9 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 4. RSI (1H) Tükenmişlik (Over-extension) Filtresi
-        const rsiRes = require('technicalindicators').RSI.calculate({period: 14, values: closes});
+        const rsiRes = require('technicalindicators').RSI.calculate({ period: 14, values: closes });
         const currentRSI = rsiRes.length > 0 ? rsiRes[rsiRes.length - 1] : 50;
-        
+
         if (direction === 'LONG' && currentRSI > 75) {
             qualityScore -= 10;
             warnings.push('RSI Overbought for LONG (-10)');
@@ -681,7 +684,7 @@ async function analyzeCoin(symbolInfo) {
         // 5. RSI Hidden Divergence (Gizli Uyumsuzluk) Bonusu
         const sweepIdx = direction === 'LONG' ? sweepIdxLong : sweepIdxShort;
         let hasHiddenDivergence = false;
-        
+
         const getRSI = (idx) => {
             const rIdx = idx - 14;
             return (rIdx >= 0 && rIdx < rsiRes.length) ? rsiRes[rIdx] : 50;
@@ -690,16 +693,16 @@ async function analyzeCoin(symbolInfo) {
         if (sweepIdx > 20) {
             const currentSweepPrice = direction === 'LONG' ? lows[sweepIdx] : highs[sweepIdx];
             const currentSweepRSI = getRSI(sweepIdx);
-            
+
             // Son 30 mumdan 5 mum oncesine kadar tarama (Gecmis dalgayi bulma)
             const lookbackStart = Math.max(14, sweepIdx - 30);
             const lookbackEnd = sweepIdx - 5;
-            
+
             if (direction === 'LONG') {
                 let prevLowest = Infinity;
                 let prevLowestRSI = 50;
                 let foundBase = false;
-                
+
                 for (let k = lookbackStart; k <= lookbackEnd; k++) {
                     if (lows[k] < prevLowest) {
                         prevLowest = lows[k];
@@ -715,7 +718,7 @@ async function analyzeCoin(symbolInfo) {
                 let prevHighest = -Infinity;
                 let prevHighestRSI = 50;
                 let foundBase = false;
-                
+
                 for (let k = lookbackStart; k <= lookbackEnd; k++) {
                     if (highs[k] > prevHighest) {
                         prevHighest = highs[k];
@@ -729,7 +732,7 @@ async function analyzeCoin(symbolInfo) {
                 }
             }
         }
-        
+
         if (hasHiddenDivergence) {
             qualityScore += 5;
             warnings.push('Hidden Divergence (+5)');
@@ -742,9 +745,9 @@ async function analyzeCoin(symbolInfo) {
         for (let i = obCandlesStart; i <= closes.length - 6; i++) {
             if (i < 0) continue;
             if (direction === 'LONG' && closes[i] < opens[i] && closes[i] <= obZone[1] && closes[i] >= obZone[0]) {
-                if (highs[i+1] > highs[i]) { hasOB = true; break; }
+                if (highs[i + 1] > highs[i]) { hasOB = true; break; }
             } else if (direction === 'SHORT' && closes[i] > opens[i] && closes[i] >= obZone[0] && closes[i] <= obZone[1]) {
-                if (lows[i+1] < lows[i]) { hasOB = true; break; }
+                if (lows[i + 1] < lows[i]) { hasOB = true; break; }
             }
         }
         if (hasOB) {
@@ -758,8 +761,8 @@ async function analyzeCoin(symbolInfo) {
         const lastIdx = closes.length - 1;
         for (let i = lastIdx - 2; i <= lastIdx; i++) {
             if (i >= 2) {
-                if (direction === 'LONG' && highs[i-2] < lows[i]) hasFVG = true; 
-                if (direction === 'SHORT' && lows[i-2] > highs[i]) hasFVG = true; 
+                if (direction === 'LONG' && highs[i - 2] < lows[i]) hasFVG = true;
+                if (direction === 'SHORT' && lows[i - 2] > highs[i]) hasFVG = true;
             }
         }
         if (hasFVG) {
@@ -771,7 +774,7 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 3. HACİM (RVOL)
-        const vol20 = volumes.slice(-21, -1); 
+        const vol20 = volumes.slice(-21, -1);
         const avgVol = vol20.reduce((a, b) => a + b, 0) / 20;
         const recentVol = Math.max(...volumes.slice(-3));
         const rvolRatio = recentVol / (avgVol || 1);
@@ -782,10 +785,10 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 4. ADX REJİMİ
-        const adxResult = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
+        const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
         breakdown.adx = Math.round(currentADX);
-        if (currentADX > 25) { 
+        if (currentADX > 25) {
             qualityScore += 10;
             warnings.push('Strong Trend (ADX > 25) (+10)');
         } else if (currentADX < 20) {
@@ -816,10 +819,10 @@ async function analyzeCoin(symbolInfo) {
             // Fetch 4H proxy or true 4H
             const klines4h = await fetchCandles(symbolInfo, 240, 50);
             const closes4h = klines4h.map(k => k.close);
-            const sma4h = SMA.calculate({values: closes4h, period: 50});
+            const sma4h = SMA.calculate({ values: closes4h, period: 50 });
             const currentPrice4H = closes4h[closes4h.length - 1];
             const sma50_4H = sma4h[sma4h.length - 1];
-            
+
             if (currentPrice4H > sma50_4H) trend4h = "bullish";
             else if (currentPrice4H < sma50_4H) trend4h = "bearish";
             breakdown.trend4h = trend4h;
@@ -841,7 +844,7 @@ async function analyzeCoin(symbolInfo) {
                     if (CONFIG.sma50Filter === 'hard') return null;
                 }
             }
-        } catch(e) {}
+        } catch (e) { }
 
         // 5.5 BAYRAK/FLAMA (FLAG/PENNANT) FORMASYONU
         let poleSize = 0;
@@ -852,16 +855,16 @@ async function analyzeCoin(symbolInfo) {
             for (let fLen = 3; fLen <= 7; fLen++) {
                 const poleEndIdx = scanIdx - fLen;
                 const poleStartIdx = Math.max(0, poleEndIdx - 5);
-                
+
                 if (poleEndIdx <= poleStartIdx) continue;
-                
+
                 const movePct = (closes[poleEndIdx] - opens[poleStartIdx]) / opens[poleStartIdx];
-                
+
                 if (direction === 'LONG' && movePct >= 0.05) {
                     poleSize = closes[poleEndIdx] - opens[poleStartIdx];
                     let flagLowest = Math.min(...lows.slice(poleEndIdx + 1, scanIdx + 1));
                     const flagRetracement = (closes[poleEndIdx] - flagLowest) / poleSize;
-                    
+
                     if (flagRetracement > 0 && flagRetracement < 0.6) {
                         hasFlagPennant = true;
                         break;
@@ -870,7 +873,7 @@ async function analyzeCoin(symbolInfo) {
                     poleSize = opens[poleStartIdx] - closes[poleEndIdx];
                     let flagHighest = Math.max(...highs.slice(poleEndIdx + 1, scanIdx + 1));
                     const flagRetracement = (flagHighest - closes[poleEndIdx]) / poleSize;
-                    
+
                     if (flagRetracement > 0 && flagRetracement < 0.6) {
                         hasFlagPennant = true;
                         break;
@@ -951,14 +954,14 @@ async function analyzeCoin(symbolInfo) {
                 const dailyKlines = await fetchCandles(symbolInfo, 1440, 200);
                 if (dailyKlines && dailyKlines.length >= 200) {
                     const dailyCloses = dailyKlines.map(k => k.close);
-                    const sma50_1dArr = SMA.calculate({period: 50, values: dailyCloses});
-                    const sma200_1dArr = SMA.calculate({period: 200, values: dailyCloses});
-                    
+                    const sma50_1dArr = SMA.calculate({ period: 50, values: dailyCloses });
+                    const sma200_1dArr = SMA.calculate({ period: 200, values: dailyCloses });
+
                     if (sma50_1dArr.length > 0 && sma200_1dArr.length > 0) {
                         const sma50_1d = sma50_1dArr[sma50_1dArr.length - 1];
                         const sma200_1d = sma200_1dArr[sma200_1dArr.length - 1];
                         const dPrice = dailyCloses[dailyCloses.length - 1];
-                        
+
                         if (direction === 'LONG') {
                             if (sma50_1d > sma200_1d && dPrice > sma200_1d) {
                                 qualityScore += 10; warnings.push('1D Golden Cross (+10)');
@@ -974,14 +977,14 @@ async function analyzeCoin(symbolInfo) {
                         }
                     }
                 }
-            } catch(e) { } // Hata olursa es geç
+            } catch (e) { } // Hata olursa es geç
         }
 
         // --- YENİ V2.6: PORTFOLIO CORRELATION FILTER (-12 Puan Cezası) ---
         try {
             const activeTrades = await db.all("SELECT symbol, type FROM user_trades WHERE status = 'ACTIVE'");
             const cryptoMajors = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT'];
-            
+
             if (cryptoMajors.includes(sym)) {
                 let sameGrpCount = activeTrades.filter(t => cryptoMajors.includes(t.symbol) && t.type === direction).length;
                 if (sameGrpCount >= 2) {
@@ -989,7 +992,7 @@ async function analyzeCoin(symbolInfo) {
                     warnings.push(`Diversity Penalty (Too many active ${direction} in Majors) (-12)`);
                 }
             }
-        } catch(e) { }
+        } catch (e) { }
 
         // --- OPTIONS GAMMA WALL & MAX PAIN (SADECE VARLIKLAR İÇİN) ---
         if (symbolInfo && symbolInfo.isAsset) { // Kriptolarda çalışmaz
@@ -1000,7 +1003,7 @@ async function analyzeCoin(symbolInfo) {
                     const optEdge = await analyzeOptionsFlow(sym, currentPrice);
                     if (optEdge) {
                         let optionsConfluence = 0;
-                        
+
                         // 1. Put/Call Ratio Yorumu
                         if (direction === 'LONG' && optEdge.pcr > 1.2) {
                             qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Put Yazılmış (PCR ${optEdge.pcr}) -> LONG Squeeze (+10)`);
@@ -1031,7 +1034,7 @@ async function analyzeCoin(symbolInfo) {
                         }
                     }
                 }
-            } catch(err) { }
+            } catch (err) { }
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
@@ -1045,35 +1048,35 @@ async function analyzeCoin(symbolInfo) {
         let gapTarget = 0;
         if (sym === 'AAPL' || sym === 'TSLA' || sym === 'NASDAQ' || sym === 'XAUUSD' || sym === 'XAGUSD' || sym === 'USOIL') {
             for (let g = 1; g < 15; g++) {
-               const gapSize = opens[closes.length - g] - closes[closes.length - g - 1];
-               if (direction === 'LONG' && gapSize < -(currentPrice * 0.005)) { // Gap down
+                const gapSize = opens[closes.length - g] - closes[closes.length - g - 1];
+                if (direction === 'LONG' && gapSize < -(currentPrice * 0.005)) { // Gap down
                     hasGap = true; gapTarget = closes[closes.length - g - 1]; break;
-               } else if (direction === 'SHORT' && gapSize > (currentPrice * 0.005)) { // Gap up
+                } else if (direction === 'SHORT' && gapSize > (currentPrice * 0.005)) { // Gap up
                     hasGap = true; gapTarget = closes[closes.length - g - 1]; break;
-               }
+                }
             }
-            
+
             // DXY Gap Confluence Bonus iptal edildi
         }
-        
+
         if (direction === 'LONG') {
             dynamicStop = currentPrice - (currentATR * slMultiplier);
             risk = currentPrice - dynamicStop;
-            
+
             // Hedef: Bayrak varsa Kırılım + Direk Boyu, yoksa EQ Likidite Noktası
             targetP = hasFlagPennant ? (currentPrice + poleSize) : eq;
-            
+
             // Hisselerde Gap Fill Hedefi
             if (hasGap && gapTarget > currentPrice) {
                 targetP = gapTarget;
                 warnings.push('Gap Fill TP Target Set');
             }
-            
+
             // FVG varsa hedefi daraltma
             if (hasFVG && targetP > currentPrice + (currentPrice * 0.02)) {
-                 targetP = currentPrice + (currentPrice * 0.02); // Minimum FVG safe zone
+                targetP = currentPrice + (currentPrice * 0.02); // Minimum FVG safe zone
             }
-            
+
             reward = targetP - currentPrice;
 
             // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama)
@@ -1086,18 +1089,18 @@ async function analyzeCoin(symbolInfo) {
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
             risk = dynamicStop - currentPrice;
-            
+
             targetP = hasFlagPennant ? (currentPrice - poleSize) : eq;
-            
+
             if (hasGap && gapTarget < currentPrice) {
                 targetP = gapTarget;
                 warnings.push('Gap Fill TP Target Set');
             }
-            
+
             if (hasFVG && targetP < currentPrice - (currentPrice * 0.02)) {
-                 targetP = currentPrice - (currentPrice * 0.02);
+                targetP = currentPrice - (currentPrice * 0.02);
             }
-            
+
             reward = currentPrice - targetP;
 
             // 1:3 R:R Cap
@@ -1108,8 +1111,33 @@ async function analyzeCoin(symbolInfo) {
                 warnings.push('TP Capped (1:3 Max)');
             }
         }
+
+
+        let riskPct = (risk / currentPrice) * 100;
         
-        
+        // PERISKOP RISK MATRIX: Kademeli Filtreleme
+        // 1. Maksimum SL % Kesicisi
+        if (riskPct > CONFIG.maxSlPct) {
+            return null; 
+        }
+
+        // 2. Dinamik R:R Talebi
+        let requiredRR = CONFIG.minRR;
+        if (riskPct > CONFIG.premiumSlThreshold) {
+            requiredRR = CONFIG.premiumRR;
+            warnings.push(`Premium RR Required (>%${CONFIG.premiumSlThreshold} Risk)`);
+        }
+
+        let requiredReward = risk * requiredRR;
+
+        // 3. Mevcut analiz (EQ, FVG) hedefi, requiredReward'ın altındaysa hedefi esnet/uzat
+        if (reward < requiredReward) {
+            reward = requiredReward;
+            if (direction === 'LONG') targetP = currentPrice + reward;
+            else targetP = currentPrice - reward;
+            warnings.push(`Target Extended to ${requiredRR}R`);
+        }
+
         let rr = risk > 0 ? (reward / risk) : 0;
         breakdown.rr = parseFloat(rr.toFixed(2));
 
@@ -1117,13 +1145,13 @@ async function analyzeCoin(symbolInfo) {
             qualityScore += 25; // Base 15 + R:R Bonus 10
             warnings.push('High R:R Bonus (+25)');
         }
-        else if (rr >= 1.2) {
+        else if (rr >= 1.5) {
             qualityScore += 5;
             warnings.push('Good R:R Bonus (+5)');
         }
-        
-        if (rr < CONFIG.minRR) return null; // Sert RR süzgeci (örneğin 1.2 altı ise kesin çöpe)
-        if (rr >= 1.0 && rr < 1.5) warnings.push(`Low RR (${breakdown.rr})`);
+
+        // Genel RR filtresi (Safety Check)
+        if (rr < requiredRR) return null; 
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
         if (direction === 'LONG' && qualityScore < 55) {
@@ -1131,7 +1159,7 @@ async function analyzeCoin(symbolInfo) {
             return null;
         }
         if (direction === 'SHORT' && qualityScore < CONFIG.minScore) {
-            // Short işlemler genelde 1:3 R:R ve 3M+ hacim ile çok karlı, baraj 40
+            // Short işlemler genelde 1:3 R:R ve 4M+ hacim ile çok karlı, baraj Altın Oran 55 yapıldı
             return null;
         }
 
@@ -1156,7 +1184,7 @@ async function analyzeCoin(symbolInfo) {
             breakdown: breakdown,
             isAsset: symbolInfo.isAsset || false
         };
-    } catch(e) {
+    } catch (e) {
         // console.error(e);
     }
     return null;
@@ -1173,133 +1201,133 @@ async function runScan() {
     try {
         console.log('[SCANNER] Starting BingX pairs scan for new signals...');
 
-    // 2. Yeni pariteleri tara
-    const cryptoPairs = await getUsdtPairs();
-    const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6;
-    const assetsToScan = isWeekend ? [] : ASSET_SYMBOLS; // Hafta sonu varlıklara istek atma
-    
-    const allPairs = [...cryptoPairs, ...assetsToScan];
-    console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan.`);
+        // 2. Yeni pariteleri tara
+        const cryptoPairs = await getUsdtPairs();
+        const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6;
+        const assetsToScan = isWeekend ? [] : ASSET_SYMBOLS; // Hafta sonu varlıklara istek atma
 
-    let signalCount = 0;
-    
-    for (let i = 0; i < allPairs.length; i++) {
-        const symbolInfo = allPairs[i];
-        const symbol = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
-        
-        // Aktif sinyali olan coini tekrar tarayıp yeni sinyal üretmeye gerek yok (Spam önleme)
-        const existingActive = await db.get("SELECT id FROM signals WHERE symbol = ? AND status = 'ACTIVE'", [symbol]);
-        if (existingActive) continue;
+        const allPairs = [...cryptoPairs, ...assetsToScan];
+        console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan.`);
 
-        const signal = await analyzeCoin(symbolInfo);
-        if (signal) {
-            const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
-            const insertResult = await db.run(
-                "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
-            );
-            const signalId = insertResult.id;
-            console.log(`[SCANNER] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
-            
-            // Google Sheets'e Yaz
-            try {
-                const dateStr = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
-                const tpPercent = signal.type === 'LONG' ? ((signal.targetPrice - signal.entryPrice) / signal.entryPrice) * 100 : ((signal.entryPrice - signal.targetPrice) / signal.entryPrice) * 100;
-                const slPercent = signal.type === 'LONG' ? ((signal.entryPrice - signal.stopPrice) / signal.entryPrice) * 100 : ((signal.stopPrice - signal.entryPrice) / signal.entryPrice) * 100;
-                
-                let macroPrefix = "";
-                if (signal.macroState) {
-                    macroPrefix = `[BTC: ${signal.macroState.btcTrend}, ETH: ${signal.macroState.ethTrend}] - `;
-                }
-                const combinedWarnings = macroPrefix + (signal.warnings || "");
+        let signalCount = 0;
 
-                const volumeText = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
-                await appendToSheet([
-                    dateStr,
-                    signal.symbol,
-                    signal.qualityScore || 0,
-                    signal.type,
-                    `%${tpPercent.toFixed(2)}`,
-                    `%${slPercent.toFixed(2)}`,
-                    'ACTIVE',
-                    combinedWarnings,
-                    signalId,
-                    volumeText
-                ]);
-            } catch (err) {
-                console.error("[SHEETS] Sinyal tabloya yazılamadı:", err);
-            }
-            
-            // --- AUTO TRADING BLOCK START ---
-            if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID) {
+        for (let i = 0; i < allPairs.length; i++) {
+            const symbolInfo = allPairs[i];
+            const symbol = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
+
+            // Aktif sinyali olan coini tekrar tarayıp yeni sinyal üretmeye gerek yok (Spam önleme)
+            const existingActive = await db.get("SELECT id FROM signals WHERE symbol = ? AND status = 'ACTIVE'", [symbol]);
+            if (existingActive) continue;
+
+            const signal = await analyzeCoin(symbolInfo);
+            if (signal) {
+                const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
+                const insertResult = await db.run(
+                    "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
+                );
+                const signalId = insertResult.id;
+                console.log(`[SCANNER] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
+
+                // Google Sheets'e Yaz
                 try {
-                    const activeCountRes = await db.get("SELECT COUNT(*) as count FROM user_trades WHERE status = 'ACTIVE'");
-                    const activeCount = activeCountRes ? activeCountRes.count : 0;
-                    
-                    if (activeCount >= CONFIG.maxActiveTrades) {
-                        console.log(`[AUTO-TRADE] Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal ${signal.symbol} havuza eklendi.`);
-                    } else {
-                        // Aynı gün içinde aynı coine girildi mi?
-                        const todayStr = new Date().toISOString().split('T')[0];
-                        const existingTrade = await db.all(
-                            "SELECT id FROM user_trades WHERE symbol = ? AND date(createdAt) = ?", 
-                            [signal.symbol, todayStr]
-                        );
+                    const dateStr = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+                    const tpPercent = signal.type === 'LONG' ? ((signal.targetPrice - signal.entryPrice) / signal.entryPrice) * 100 : ((signal.entryPrice - signal.targetPrice) / signal.entryPrice) * 100;
+                    const slPercent = signal.type === 'LONG' ? ((signal.entryPrice - signal.stopPrice) / signal.entryPrice) * 100 : ((signal.stopPrice - signal.entryPrice) / signal.entryPrice) * 100;
 
-                        if (existingTrade.length === 0) {
-                            console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol}`);
-                            try {
-                                const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
-                                if (orderId) {
-                                    await db.run(
-                                        "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
-                                        [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
-                                    );
-                                    
-                                    // Ekranda favori yıldızı yanması için standart tabloya da yaz
-                                    const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
-                                    if(!checkFav) {
-                                        await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
-                                    }
-                                    console.log(`[AUTO-TRADE] Başarılı! Favorilere kayıt edildi.`);
-                                }
-                            } catch(e) {
-                                console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
-                            }
-                        } else {
-                            console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden girilmiş bir emir var.`);
-                        }
+                    let macroPrefix = "";
+                    if (signal.macroState) {
+                        macroPrefix = `[BTC: ${signal.macroState.btcTrend}, ETH: ${signal.macroState.ethTrend}] - `;
                     }
-                } catch(e) {
-                    console.error("[AUTO-TRADE] Hata:", e.message);
-                }
-            }
-            // --- AUTO TRADING BLOCK END ---
-            
-            if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-                try {
-                    const hasFlag = Array.isArray(signal.warnings) ? signal.warnings.some(w => w.includes('Flag')) : (signal.warnings && signal.warnings.includes('Flag'));
-                    const flagPart = hasFlag ? `🔥 Formasyon: Bayrak/Flama Modeli Tespit Edildi, +10 Kalite Puanı eklendi.\n\n` : `\n`;
-                    const categoryTag = signal.isAsset ? '[VARLIKLAR (FX/Emtia)]' : '[KRİPTO]';
-                    const msg = `🚨 *Elyte Sinyal Uygulaması Üzerinde '${categoryTag}' Kategorisinde Yeni Bir Sinyal Düştü!*\n\n` +
-                                `⭐ Kalite Skoru: *${signal.qualityScore}*\n` +
-                                `🎯 Yön: *${signal.type}*\n` + flagPart +
-                                `_Detaylar ve seviyeler için Elyte aplikasyonuna girebilirsiniz..._ 🔭\n\n` +
-                                `🔗 Web Platformu:\nhttps://www.elytesignals.com/dashboard`;
-                    telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
-                } catch (e) {
-                    console.error("Telegram send signal failed:", e.message);
-                }
-            }
-            
-            signalCount++;
-        }
-        
-        // Rate limit'i aşmamak için her istek arası 100ms bekle (1 saniyede 10 istek, limite çok uzak)
-        await delay(100); 
-    }
+                    const combinedWarnings = macroPrefix + (signal.warnings || "");
 
-    console.log(`[SCANNER] Scan complete. Found ${signalCount} new signals.`);
+                    const volumeText = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
+                    await appendToSheet([
+                        dateStr,
+                        signal.symbol,
+                        signal.qualityScore || 0,
+                        signal.type,
+                        `%${tpPercent.toFixed(2)}`,
+                        `%${slPercent.toFixed(2)}`,
+                        'ACTIVE',
+                        combinedWarnings,
+                        signalId,
+                        volumeText
+                    ]);
+                } catch (err) {
+                    console.error("[SHEETS] Sinyal tabloya yazılamadı:", err);
+                }
+
+                // --- AUTO TRADING BLOCK START ---
+                if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID) {
+                    try {
+                        const activeCountRes = await db.get("SELECT COUNT(*) as count FROM user_trades WHERE status = 'ACTIVE'");
+                        const activeCount = activeCountRes ? activeCountRes.count : 0;
+
+                        if (activeCount >= CONFIG.maxActiveTrades) {
+                            console.log(`[AUTO-TRADE] Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal ${signal.symbol} havuza eklendi.`);
+                        } else {
+                            // Aynı gün içinde aynı coine girildi mi?
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            const existingTrade = await db.all(
+                                "SELECT id FROM user_trades WHERE symbol = ? AND date(createdAt) = ?",
+                                [signal.symbol, todayStr]
+                            );
+
+                            if (existingTrade.length === 0) {
+                                console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol}`);
+                                try {
+                                    const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
+                                    if (orderId) {
+                                        await db.run(
+                                            "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
+                                            [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
+                                        );
+
+                                        // Ekranda favori yıldızı yanması için standart tabloya da yaz
+                                        const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
+                                        if (!checkFav) {
+                                            await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
+                                        }
+                                        console.log(`[AUTO-TRADE] Başarılı! Favorilere kayıt edildi.`);
+                                    }
+                                } catch (e) {
+                                    console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
+                                }
+                            } else {
+                                console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden girilmiş bir emir var.`);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("[AUTO-TRADE] Hata:", e.message);
+                    }
+                }
+                // --- AUTO TRADING BLOCK END ---
+
+                if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
+                    try {
+                        const hasFlag = Array.isArray(signal.warnings) ? signal.warnings.some(w => w.includes('Flag')) : (signal.warnings && signal.warnings.includes('Flag'));
+                        const flagPart = hasFlag ? `🔥 Formasyon: Bayrak/Flama Modeli Tespit Edildi, +10 Kalite Puanı eklendi.\n\n` : `\n`;
+                        const categoryTag = signal.isAsset ? '[VARLIKLAR (FX/Emtia)]' : '[KRİPTO]';
+                        const msg = `🚨 *Elyte Sinyal Uygulaması Üzerinde '${categoryTag}' Kategorisinde Yeni Bir Sinyal Düştü!*\n\n` +
+                            `⭐ Kalite Skoru: *${signal.qualityScore}*\n` +
+                            `🎯 Yön: *${signal.type}*\n` + flagPart +
+                            `_Detaylar ve seviyeler için Elyte aplikasyonuna girebilirsiniz..._ 🔭\n\n` +
+                            `🔗 Web Platformu:\nhttps://www.elytesignals.com/dashboard`;
+                        telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
+                    } catch (e) {
+                        console.error("Telegram send signal failed:", e.message);
+                    }
+                }
+
+                signalCount++;
+            }
+
+            // Rate limit'i aşmamak için her istek arası 100ms bekle (1 saniyede 10 istek, limite çok uzak)
+            await delay(100);
+        }
+
+        console.log(`[SCANNER] Scan complete. Found ${signalCount} new signals.`);
     } finally {
         isScanning = false;
     }
@@ -1313,16 +1341,16 @@ async function sendNightlyReport() {
         const dayString = yesterdaysDate.toISOString().split('T')[0];
 
         const allSignals = await db.all("SELECT qualityScore, status, symbol FROM signals WHERE date(createdAt) = ?", [dayString]);
-        
+
         const detailedData = {};
         let totalWins = 0; let totalLosses = 0; let totalActive = 0;
 
         allSignals.forEach(s => {
-            if(!detailedData[s.qualityScore]) detailedData[s.qualityScore] = { WIN:0, LOSS:0, ACTIVE:0 };
+            if (!detailedData[s.qualityScore]) detailedData[s.qualityScore] = { WIN: 0, LOSS: 0, ACTIVE: 0 };
             detailedData[s.qualityScore][s.status]++;
-            if(s.status === 'WIN') totalWins++;
-            if(s.status === 'LOSS') totalLosses++;
-            if(s.status === 'ACTIVE') totalActive++;
+            if (s.status === 'WIN') totalWins++;
+            if (s.status === 'LOSS') totalLosses++;
+            if (s.status === 'ACTIVE') totalActive++;
         });
 
         let totalClosed = totalWins + totalLosses;
@@ -1342,8 +1370,8 @@ async function sendNightlyReport() {
         reportText += `⏳ Açık: ${totalActive} İşlem\n`;
         reportText += `🎯 *Başarı Oranı: %${winRate}*\n\n`;
 
-        let scores = Object.keys(detailedData).sort((a,b) => b - a);
-        if(scores.length === 0) {
+        let scores = Object.keys(detailedData).sort((a, b) => b - a);
+        if (scores.length === 0) {
             reportText += `Dün piyasada pozisyon açılmadı.\n\n`;
         }
 
@@ -1353,7 +1381,7 @@ async function sendNightlyReport() {
         try {
             const backupMessage = await backupSystem();
             reportText += backupMessage;
-        } catch(backupErrorStr) {
+        } catch (backupErrorStr) {
             reportText += backupErrorStr;
         }
 
@@ -1371,13 +1399,13 @@ async function sendNightlyReport() {
 
             const ALL_SCORES = [40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
 
-            for(let i=0; i < ALL_SCORES.length; i++) {
+            for (let i = 0; i < ALL_SCORES.length; i++) {
                 let score = ALL_SCORES[i];
                 let data = detailedData[score] || { WIN: 0, LOSS: 0, ACTIVE: 0 };
                 let scoreTotal = data.WIN + data.LOSS + data.ACTIVE;
                 let closed = data.WIN + data.LOSS;
                 let wr = closed > 0 ? ((data.WIN / closed) * 100).toFixed(1) + '%' : '-';
-                
+
                 if (i === 0) {
                     rowsToInsert.push([
                         score,                 // Skor Puanı
@@ -1403,7 +1431,7 @@ async function sendNightlyReport() {
                 }
             }
 
-            if(rowsToInsert.length > 0) {
+            if (rowsToInsert.length > 0) {
                 const googleApi = require('./google-api');
                 await googleApi.appendToSheet(rowsToInsert, 'REPORT');
             }
@@ -1412,7 +1440,7 @@ async function sendNightlyReport() {
         }
 
     } catch (error) {
-         console.error('[SCANNER] Send Nightly Report Error: ', error);
+        console.error('[SCANNER] Send Nightly Report Error: ', error);
     }
 }
 
@@ -1422,12 +1450,12 @@ function backupSystem() {
         try {
             const dateStr = new Date().toISOString().split('T')[0];
             const path = require('path');
-            
+
             // AWS veya lokal fark etmeksizin root dizinini bul
             const sourceFolder = __dirname;
-            const backupDir = path.join(__dirname, '..', 'backups'); 
+            const backupDir = path.join(__dirname, '..', 'backups');
             const backupFolder = path.join(backupDir, `ElyteSignal_Backup_${dateStr}`);
-            
+
             // Klasörü yarat ve yedekle
             const cmd = `mkdir -p "${backupFolder}" && rsync -av --exclude="node_modules" --exclude=".git" --exclude=".expo" "${sourceFolder}/" "${backupFolder}/"`;
             exec(cmd, (error, stdout, stderr) => {
@@ -1439,7 +1467,7 @@ function backupSystem() {
                 console.log(`[SCANNER] Backup successfully created at: ${backupFolder}`);
                 resolve(`📦 *Sistem Yedeği Başarıyla Alındı!*\nKlasör: \`${backupFolder}\`\nDostum, kodların ve sistemin her gece olduğu gibi güvenli sunucu dizinine yedeklendi! 🫡`);
             });
-        } catch(e) {
+        } catch (e) {
             console.error('[SCANNER] Backup Exception:', e);
             reject(`⚠️ *Elyte Sistem Yedekleme Hatası!*\n\`${e.message}\``);
         }
@@ -1469,7 +1497,7 @@ function startScanner() {
         scheduled: true,
         timezone: "Europe/Istanbul"
     });
-    
+
     // Uygulama ilk açıldığında da 1 kez çalışsın
     // Çakışmayı ve birden fazla instancesi engellemek için timeout
     setTimeout(() => {
