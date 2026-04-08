@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { RSI, SMA, ATR, ADX } = require('technicalindicators');
-const { analyzeElliottWaves } = require('./elliott');
 require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
