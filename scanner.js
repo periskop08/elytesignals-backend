@@ -1211,6 +1211,7 @@ async function runScan() {
                 }
                 const combinedWarnings = macroPrefix + (signal.warnings || "");
 
+                const volumeText = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
                 await appendToSheet([
                     dateStr,
                     signal.symbol,
@@ -1220,7 +1221,8 @@ async function runScan() {
                     `%${slPercent.toFixed(2)}`,
                     'ACTIVE',
                     combinedWarnings,
-                    signalId
+                    signalId,
+                    volumeText
                 ]);
             } catch (err) {
                 console.error("[SHEETS] Sinyal tabloya yazılamadı:", err);
