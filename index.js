@@ -493,10 +493,10 @@ async function fetchIntervalData(symbol, interval) {
     let cumulativeTPVol = 0;
     let cumulativeVol = 0;
     for (let i = 0; i < klines.length; i++) {
-        const h = parseFloat(klines[i][2]);
-        const l = parseFloat(klines[i][3]);
-        const c = parseFloat(klines[i][4]);
-        const v = parseFloat(klines[i][5]);
+        const h = klines[i].high;
+        const l = klines[i].low;
+        const c = klines[i].close;
+        const v = klines[i].volume;
         const tp = (h + l + c) / 3;
         cumulativeTPVol += tp * v;
         cumulativeVol += v;
@@ -508,9 +508,9 @@ async function fetchIntervalData(symbol, interval) {
     const binSize = (rangeHigh - rangeLow) / binCount || 1; 
     const profile = new Array(binCount).fill(0);
     for (let i = 0; i < klines.length; i++) {
-        const h = parseFloat(klines[i][2]);
-        const l = parseFloat(klines[i][3]);
-        const v = parseFloat(klines[i][5]);
+        const h = klines[i].high;
+        const l = klines[i].low;
+        const v = klines[i].volume;
         const typicalCandlePrice = (h + l) / 2;
         let binIndex = Math.floor((typicalCandlePrice - rangeLow) / binSize);
         if (binIndex < 0) binIndex = 0;
@@ -527,13 +527,7 @@ async function fetchIntervalData(symbol, interval) {
     }
     const poc = rangeLow + (maxVolIndex * binSize) + (binSize / 2);
 
-    const ewResult = analyzeElliottWaves(klines, interval); 
-    let ewText = "Veri yetersiz veya dalga tespiti yapılamadı.";
-    if (ewResult && ewResult.status) {
-        ewText = `Durum: ${ewResult.status} | Aktif Dalga: ${ewResult.current_wave || 'Belirsiz'}`;
-        if (ewResult.invalidates_at) ewText += ` | İptal Seviyesi: ${ewResult.invalidates_at.toLocaleString('en-US',{maximumFractionDigits:4})}`;
-        if (ewResult.confluence_zone) ewText += ` | Olası 5. Dalga Hedefi: ${ewResult.confluence_zone[0]} - ${ewResult.confluence_zone[1]}`;
-    }
+    // --- SMART MONEY CONCEPTS (SMC) & ADX ---
 
     // --- SMART MONEY CONCEPTS (SMC) & ADX ---
     const opens = klines.map(k => parseFloat(k[1]));
@@ -595,7 +589,6 @@ async function fetchIntervalData(symbol, interval) {
         volRatio,
         avwap,
         poc,
-        ewText,
         smc,
         closes 
     };
@@ -685,11 +678,7 @@ async function fetchAssetIntervalData(symbol, interval) {
     const rangeLow = Math.min(...lows);
     const eq = (rangeHigh + rangeLow) / 2;
 
-    const ewResult = analyzeElliottWaves(klines, interval); 
-    let ewText = "Dalga Tespiti Sınırlı.";
-    if (ewResult && ewResult.status) {
-        ewText = `Durum: ${ewResult.status} | Aktif Dalga: ${ewResult.current_wave || 'Belirsiz'}`;
-    }
+    // --- BASIC SMC ---
 
     const adxResult = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
     const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
@@ -719,7 +708,6 @@ async function fetchAssetIntervalData(symbol, interval) {
         volRatio: 100,
         avwap: currentPrice,
         poc: currentPrice,
-        ewText,
         smc,
         closes 
     };

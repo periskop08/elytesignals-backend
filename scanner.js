@@ -1153,6 +1153,7 @@ async function analyzeCoin(symbolInfo) {
             qualityScore: qualityScore,
             warnings: JSON.stringify(warnings),
             macroState: globalMarketState,
+            breakdown: breakdown,
             isAsset: symbolInfo.isAsset || false
         };
     } catch(e) {
@@ -1192,9 +1193,10 @@ async function runScan() {
 
         const signal = await analyzeCoin(symbolInfo);
         if (signal) {
+            const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
             const insertResult = await db.run(
-                "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings]
+                "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
             );
             const signalId = insertResult.id;
             console.log(`[SCANNER] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
