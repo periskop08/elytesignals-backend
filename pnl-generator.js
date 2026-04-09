@@ -24,7 +24,7 @@ async function generatePnlImage(symbol, side, pnlPercentage, netUsdProfit, isWin
         const symbolStr = symbol.replace('-USDT', '');
         
         // PNL Kartı SVG'si (Saf Glassmorphism)
-        const svgContent = \`
+        const svgContent = `
         <svg width="\${width}" height="\${height}" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
@@ -90,7 +90,7 @@ async function generatePnlImage(symbol, side, pnlPercentage, netUsdProfit, isWin
                 </text>
             </g>
         </svg>
-        \`;
+        `;
 
         // SVG buffer'ı al ve Sharp üzerinden yuksek cozunurluklu PNG olarak Isle
         return await sharp(Buffer.from(svgContent)).png().toBuffer();
