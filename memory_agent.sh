@@ -26,4 +26,13 @@ else
   echo "Değişiklik yok. GitHub push atlandı." >> $LOG_FILE
 fi
 
+# 3. Telegram Bildirimi
+TOKEN="8753605831:AAG2YMLriwZUrNq23O4-9NcbVXHAfuByKKA"
+CHAT_ID="1194576674"
+MESSAGE="🧠 *ELYTE Memory Agent* %0A%0A✅ Tüm sohbet anıları ve sistem kodları Masaüstüne ve Github'a senkronize edildi. Agent hala aktif!"
+curl -s -X POST "https://api.telegram.org/bot${TOKEN}/sendMessage" \
+     -F chat_id="${CHAT_ID}" \
+     -F text="$(echo -e ${MESSAGE})" \
+     -F parse_mode="Markdown" >> $LOG_FILE
+
 echo "[$(date)] Memory Agent uykuya geçti." >> $LOG_FILE
