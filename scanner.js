@@ -642,12 +642,12 @@ async function analyzeCoin(symbolInfo) {
 
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
-        if (direction === 'LONG' && globalVol < 10000000) {
-            // Hacim 10 Milyonun altındaysa LONG YASAK (Slippage / Scam Wick koruması)
+        if (direction === 'LONG' && globalVol < 4000000) {
+            // Hacim 4 Milyonun altındaysa LONG YASAK (Slippage / Scam Wick koruması)
             return null;
         }
-        if (direction === 'SHORT' && globalVol < 3000000) {
-            // Hacim 3 Milyonun altındaysa SHORT YASAK
+        if (direction === 'SHORT' && globalVol < 2000000) {
+            // Hacim 2 Milyonun altındaysa SHORT YASAK
             return null;
         }
 
