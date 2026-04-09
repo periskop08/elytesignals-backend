@@ -302,6 +302,29 @@ app.post('/api/signals/admin/close', async (req, res) => {
             await db.run("UPDATE signals SET status = ?, stopPrice = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, currentPrice, signalId]);
         }
         
+        // Telegram Bildirimi
+        if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_VIP_GROUP_ID) {
+            try {
+                const isTP = (newStatus === 'WIN');
+                let pnlText = `📈 *Manuel Müdahale Neticesi:* Kâr oranı %${pnl.toFixed(2)}`;
+                let msg = "";
+                
+                if (isTP) {
+                    msg = `🎯 *TAKE PROFIT (HEDEF VURULDU)!* [${signal.symbol}]\nElyte Sinyali yetkili onayıyla kâr hedefine ulaştırılarak erken kapatıldı.\n\n${pnlText}\n\nPara masadan başarıyla alındı! 💸`;
+                } else {
+                    msg = `🛑 *STOP LOSS!* [${signal.symbol}]\nİşlem yetkili onayıyla zararı kesmek amacıyla kapatıldı.\n\nRisk yönetimi devrede. 🛡️`;
+                }
+                
+                await require('axios').post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    chat_id: process.env.TELEGRAM_VIP_GROUP_ID,
+                    text: msg,
+                    parse_mode: 'Markdown'
+                });
+            } catch (tgErr) {
+                console.error("TG Send Error on Admin Close:", tgErr.message);
+            }
+        }
+        
         res.json({ success: true, newStatus });
     } catch (err) {
         console.error("Admin close error:", err);
