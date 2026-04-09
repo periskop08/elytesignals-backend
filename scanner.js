@@ -696,7 +696,7 @@ async function analyzeCoin(symbolInfo) {
             qualityScore -= eurusdDailyPenalty;
             warnings.push(`Macro EURUSD Risk (-${eurusdDailyPenalty})`);
         }
-        let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral" };
+        let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
 
         // DOMİNANS HARMAN SCORING (-25 ile +43 puan)
         if (CONFIG.useMacroFilter && !symbolInfo.isAsset && globalMarketState.cgDom) {
@@ -1321,7 +1321,12 @@ async function runScan() {
 
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
-                const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
+                let formattedVol = '-';
+                if (signal.breakdown && signal.breakdown.globalVol) {
+                    formattedVol = (signal.breakdown.globalVol / 1000000).toFixed(1) + 'M';
+                }
+                const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? `${formattedVol} (${signal.breakdown.rvol}x)` : formattedVol;
+                
                 const insertResult = await db.run(
                     "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
@@ -1341,7 +1346,12 @@ async function runScan() {
                     }
                     const combinedWarnings = macroPrefix + (signal.warnings || "");
 
-                    const volumeText = signal.breakdown && signal.breakdown.rvol ? signal.breakdown.rvol + 'x' : '-';
+                    let formattedVolSheet = '-';
+                    if (signal.breakdown && signal.breakdown.globalVol) {
+                        formattedVolSheet = (signal.breakdown.globalVol / 1000000).toFixed(1) + 'M';
+                    }
+                    const volumeTextSheet = signal.breakdown && signal.breakdown.rvol ? `${formattedVolSheet} (${signal.breakdown.rvol}x)` : formattedVolSheet;
+
                     await appendToSheet([
                         dateStr,
                         signal.symbol,
@@ -1352,7 +1362,7 @@ async function runScan() {
                         'ACTIVE',
                         combinedWarnings,
                         signalId,
-                        volumeText
+                        volumeTextSheet
                     ]);
                 } catch (err) {
                     console.error("[SHEETS] Sinyal tabloya yazılamadı:", err);
