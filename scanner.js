@@ -483,6 +483,7 @@ async function checkActiveSignals() {
                                         } else {
                                             msg = `🛑 *STOP LOSS!* [${signal.symbol}]\nİşlem maalesef zarardurdur seviyesine temas etti ve kapatıldı.\n\nRisk yönetimi daima hayat kurtarır. 🛡️`;
                                         }
+                                    }
                                     
                                     // TELEGRAM MESAJI GONDER
                                     telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
