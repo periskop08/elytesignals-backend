@@ -94,6 +94,17 @@ async function getInstrumentInfo(symbol) {
     return null;
 }
 
+// 1.5 Set Leverage (For Dynamic Fallbacks)
+async function setLeverage(symbol, positionSide, leverage) {
+    console.log(`[BINGX] Kaldıraç Güncelleniyor: ${symbol} -> ${leverage}x (${positionSide})`);
+    const params = {
+        symbol: symbol,
+        leverage: leverage,
+        side: positionSide
+    };
+    return await makePrivateRequest('POST', '/openApi/swap/v2/trade/leverage', params);
+}
+
 // 2. Place Order mapping
 async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPrice) {
     // rawSymbol: 'BTCUSDT' -> Format to BingX 'BTC-USDT' or 'NCCOXAG2USD-USDT' for assets
@@ -145,8 +156,20 @@ async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPri
     };
 
     console.log(`[BINGX] Gönderilen Emir:`, JSON.stringify(params));
-    const response = await makePrivateRequest('POST', '/openApi/swap/v2/trade/order', params);
+    let response = await makePrivateRequest('POST', '/openApi/swap/v2/trade/order', params);
     
+    // YENİ EK: Kaldıraç Sınırına Takılırsak Dinamik Olarak Kaldıracı İndirip Tekrar Dene
+    if (response && response.code !== 0 && response.msg && response.msg.includes("maximum leverage")) {
+        const match = response.msg.match(/is\s+(\d+)/);
+        if (match && match[1]) {
+            const allowedLeverage = parseInt(match[1], 10);
+            console.log(`[BINGX OTOPİLOT] Uyarı: Parite çok yeni veya volatil! Borsa bu coine onaylamıyor. Kaldıraç otomatik olarak güvenli ${allowedLeverage}x seviyesine çekilip emir zorlanıyor...`);
+            await setLeverage(symbol, direction === 'LONG' ? 'LONG' : 'SHORT', allowedLeverage);
+            // İkinci Deneme
+            response = await makePrivateRequest('POST', '/openApi/swap/v2/trade/order', params);
+        }
+    }
+
     if (response && response.code === 0) {
         console.log(`[BINGX] Emir Başarılı! ID: ${response.data.order.orderId}`);
         return response.data.order.orderId;
