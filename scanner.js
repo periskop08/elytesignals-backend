@@ -375,6 +375,13 @@ async function checkActiveSignals() {
                                     [pnl, reason, trade.id]
                                 );
 
+                                // UI FAVORILER SENKRONIZASYONU (Borsada kapanan manuel islemlerin web arayuzunde asili kalmamasi icin)
+                                const customFavStatus = pnl >= 0 ? 'WIN' : 'LOSS';
+                                await db.run(
+                                    "UPDATE favorites SET customStatus = ?, customPnl = ?, closedAt = CURRENT_TIMESTAMP WHERE telegramId = ? AND signalId = ? AND customStatus IS NULL",
+                                    [customFavStatus, pnl, trade.telegramId, trade.signalId]
+                                );
+
                                 // Orijinal Global sinyal duruyor olabilir. Ancak Kullanıcı Şahsi Favorilerinde "Aktif" olanları göstermeyeceğimizden listeden düşecektir.
                             }
                         } else {
