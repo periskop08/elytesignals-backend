@@ -46,6 +46,12 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 
 *Buraya yaptığımız tüm altyapı güncellemelerini, versiyon notlarını ve kararları tarih bazlı ekleyeceğiz.*
 
+### Tarih: 10 Nisan 2026 - Breakeven & Admin Balyoz Özelliği
+**(Sürüm: v2.8.6)**
+*   **(Core Logic - Breakeven) Başabaş Kapanış Durumu:** Önceden hedef barajına (%1 = 1R/Maliyet çizgisi, `reachedTwoPercent`) varıp maliyete stop çekilen işlemler, fiyata geri değdiğinde mantıksız bir şekilde istatistiklere "KAYIP (LOSS)" olarak yansıyordu. `scanner.js` ve veritabanı uçları güncellenerek bu işlemler artık "BAŞABAŞ (BREAKEVEN)" durum koduyla kapatıldı. Tüm geçmiş hatalı zararlar geriye dönük düzeltilerek istatistiklerdeki WinRate kurtarıldı.
+*   **(Frontend & Backend - Admin Balyoz) Global Sinyali Kapatma Yetkisi:** Elyte Admin'i (Örn: Telegram ID 1194576674) artık "Sinyaller" sayfasında tüm piyasa adına açık duran sinyalleri tek tuşla (Admin Kapat) sonlandırabiliyor. Uzun ve yatay giden işlemler PnL (Anlık Kâr veya Zarar) ile doğrudan istatistiklere kazınır.
+*   **(Finansal Koruma) Matematiksel Bütünlük Filtresi:** Adminin erken kestiği kârlı işlemler, ilk baştaki "Uzanılamayan Hedefe (Target)" göre kâr yazmasın diye, işlemi kestiği saniyedeki anlık fiyat, sinyalin veri tabanındaki nihai hedefine işlenir (`UPDATE targetPrice = currentPrice`). Böylece istatistikteki başarı oranı "hayali" olarak kabarmaz, harfi harfine gerçekçi bir net yüzde gösterilir.
+
 ### Tarih: 8 Nisan 2026 - Elyte Dashboard UI Overhaul & Risk Control Fixes 
 **(Sürüm: v2.8.5)**
 *   **(Frontend) Arayüz Modernizasyonu:** Dashboard yapısındaki sinyal kartları dikey yapıdan 6 sütunlu (`1fr 1.5fr 1fr 1.1fr 1.1fr 0.8fr`) veri bankası/tablo (Nasdaq Barometer tarzı) formuna dönüştürüldü.
