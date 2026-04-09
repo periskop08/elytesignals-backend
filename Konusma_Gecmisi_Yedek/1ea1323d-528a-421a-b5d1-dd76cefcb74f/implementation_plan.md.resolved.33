@@ -1,0 +1,30 @@
+# Mobile Navigation Redesign for Elyte Web Dashboard
+
+Kullanıcının mobil tarayıcısından girdiği web sitesi sürümünün, Native Mobil App'e (Bottom Tab Bar) benzemesi amaçlanmıştır. Mevcut durumda Desktop versiyonu için tasarlanan Sidebar, mobilde içeriği aşağı iterek kötü bir kullanıcı deneyimine sebep olmaktadır.
+
+## Mimarisi ve Çözüm Yaklaşımı
+
+1. **Desktop Sidebar Gizlenecek (Mobile)**: 768px altı çözünürlüklerde (mobil cihazlar) mevcut sol Sidebar tamamen gizlenecektir (`display: none`).
+2. **Kompakt Mobil Üst Bilgi (Top Header)**:
+    - Sinyal sayfasının en üstüne, sadece mobilde görünecek sabit bir üst bar yerleştirilecektir.
+    - Bu barda solda **Elyte Logosu**, sağda ise **Kullanıcı Avatarı ve Çıkış yap butonu** bulunacaktır.
+3. **Mobil Alt Menü (Bottom Tab Bar)**:
+    - Mobil uygulamadaki gibi sayfanın en altına yapışık (`position: fixed; bottom: 0;`) bir gezinme çubuğu (Bottom Navigation) oluşturulacaktır.
+    - İçerisinde **Taramalar** (Activity), **Favoriler** (Star) ve **İstatistikler** (PieChart) butonları yatay hizada ikon+yazı formatında listelenecektir.
+
+## Değiştirilecek Dosyalar
+
+### 1) [MODIFY] `index.css` / `style.css`
+- Mobil `border-box` ve padding ayarları.
+- `.sidebar` için `@media (max-width: 768px) { display: none; }` tanımı eklenecek.
+- Yeni oluşturulacak `.mobile-bottom-nav` sınıfı için CSS yazılacak.
+- Sayfa içeriği kapsayıcısına `.dashboard-content` mobilde alt menünün arkasında kalmasın diye `padding-bottom: 80px` eklenecek.
+
+### 2) [MODIFY] `src/pages/Dashboard.jsx`
+- JSX yapısı revize edilerek, tüm içeriğin dışına (ancak container içerisine) Mobil Top Header eklenecek.
+- Sayfanın en altına `mobile-bottom-nav` div'i çizilecek ve aktif olan sekmeye göre ikonların `color` değeri değişecek.
+- Menü yapısı ve React bileşenlerinin state yönetimleri zaten `activeTab` üzerinden yapıldığı için logic değişmeyecek, sadece bu state'i güncelleyen yeni butonlar çizilecek.
+
+> [!IMPORTANT]
+> **Kullanıcı Onayı Gerekiyor**
+> Bu değişiklik, mobildeki görselliği uygulamanıza tamamen benzetmek için tasarlandığından tasarımsal olarak radikal bir iyileştirmedir. Mobil alt barın renkleri mevcut koyu temanıza uyumlu olacak (Lacivert/Siyah tonları ve aktif tab neon yeşil). Onay verirseniz kodlamaya başlıyorum!

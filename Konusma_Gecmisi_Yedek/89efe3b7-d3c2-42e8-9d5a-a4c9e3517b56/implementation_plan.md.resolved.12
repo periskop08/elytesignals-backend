@@ -1,0 +1,59 @@
+# 📈 Momentum & Bulut Katmanı (Sinyal Motoru Revizyonu)
+
+Amerika hisseleri ve yüksek volatiliteli pariteler için analiz motorunda (Scanner) yer alan teknik analiz algoritmamızı, "Aşırı Alım/Satım" (Mean Reversion) mantığından, **"Momentum Hızı"** ve **"Trend Onayı"** (Trend Following) mantığına çeviriyoruz. 
+
+## Yüzeysel Özellikler (Kapsam)
+1.  **Stokastik RSI - Altın / Ölüm Kesişimi:** Önceden "Fiyat çok şişti, -10 puan ceza" verdiğimiz yapıyı değiştiriyoruz. Eğer fiyat dipten uyanıp (veya tepeden çöküşe geçip) mavi çizgi (K), turuncu çizgiyi (D) kesiyorsa buna **"Hızlanan Trend Bonusu (+10)"** vereceğiz.
+2.  **Ichimoku Kumo (Bulut) Filtresi:** Fiyat bulutun üzerindeyse zaten +15 bonus veriyoruz, ancak fiyat **bulutun içerisindeyse** (A ile B span çizgilerinin arasında) bunu "Testere Piyasası (Chop/Range)" olarak etiketleyip yatırımcıya raporlayacağız.
+
+## Proposed Changes
+
+Aşağıdaki güncellemeler ana arama motorumuz olan `scanner.js` ve bağlı test dosyamız `scanner_test.js` içerisine uygulanacaktır.
+
+### Backend Sinyal Motoru (scanner.js & scanner_test.js)
+
+#### [MODIFY] [scanner.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/scanner.js)
+
+**Değişecek 1. Blok: Stochastic RSI (Aşırı Alım/Satım Cezası -> Altın Kesişim)**
+
+**Eski Mantık:**
+```javascript
+if (direction === 'LONG' && lastStoch.k > 80) qualityScore -= 10;
+```
+**Yeni (Momentum Dönüş) Mantığı:** 
+Sadece son mum değil, bir önceki mum (prevStoch) çizgilerine de bakılarak kesişim tespit edilecektir:
+```javascript
+if (direction === 'LONG') {
+    // Mavi(K) Turuncuyu(D) yukarı kesti ve 20 hizasından yükseldi!
+    if (prevStoch.k <= prevStoch.d && lastStoch.k > lastStoch.d && lastStoch.k > 20) {
+        qualityScore += 10; warnings.push('StochRSI Altın Kesişim (+10)');
+    }
+} else if (direction === 'SHORT') {
+    // Ölüm Kesişimi
+    if (prevStoch.k >= prevStoch.d && lastStoch.k < lastStoch.d && lastStoch.k < 80) {
+        qualityScore += 10; warnings.push('StochRSI Ölüm Kesişimi (+10)');
+    }
+}
+```
+
+**Değişecek 2. Blok: Ichimoku Cloud (Bulut Onayı)**
+
+Eski yapıda sadece `currentPrice > spanA && currentPrice > spanB` ile +15 alıyorduk. 
+Şimdi **"Bulutun İçi"** durumu da haritalanacaktır:
+```javascript
+const maxSpan = Math.max(currentIchi.spanA, currentIchi.spanB);
+const minSpan = Math.min(currentIchi.spanA, currentIchi.spanB);
+
+if (currentPrice < maxSpan && currentPrice > minSpan) {
+    // Bulut içi! Puan yok, SADECE UYARI
+    warnings.push('Kumo Bulutu İçi (Testere Piyasası)');
+} else {
+   // Zaten var olan +15 veya -15 kuralı...
+}
+```
+
+> [!TIP]
+> Bu stratejik geçiş sayesinde hisse senetlerindeki aşırı uzamış trendlerde (Örn. NVIDIA ralli yaparken StochRSI'nin sürekli 80'in üzerinde kalması durumu) botumuzun işlem alması **engellenmeyip** trende katılması sağlanacaktır.
+
+## Soru (User Review Required)
+Bu tasarladığım "Altın kesişim ve Bulut içi Testere" mantığı aklındaki Wall Street vizyonu ile tam olarak örtüşüyor mu? Uygulamaya alıp AWS'ye göndereyim mi?

@@ -1,0 +1,37 @@
+# Google Sheets - Yeni Başlık/Sütun Yapılandırma Planı
+
+Kullanıcının Google E-Tablolar (Sheets) üzerinde yaptığı sütun değişiklikleri başarıyla okundu ve sistemin buna göre Google API raporlama modülünü revize etmesi için aşağıdaki plan hazırlandı.
+
+## User Review Required
+
+> [!CAUTION]
+> Lütfen aşağıdaki eşleştirmelerin sizin Sheets yapınızdaki yeni başlıklara ve formata tam uygun olup olmadığını doğrulayın. Yeni sisteme göre artık günde TEK SATIR değil, o gün görülen **Her Farklı Skor Türü için 1 SATIR** eklenecek.
+
+- **Okunan Yeni Başlıklarımız:** `["Skor Puanı", "Sinyal Sayısı", "TP", "SL", "WR", "Toplam Sinyal Sayısı", "Tarih"]`
+
+## Proposed Changes
+
+### [backend/google-api.js]
+- Artık tek bir satır değil, listeler dolusu satırı **(Bulk Insert)** Google Sheets'e tek seferde ekleyebilmesi için ufak bir yapısal güçlendirme (`rowsData` kabul edecek şekilde) yapılacaktır.
+
+### [backend/scanner.js]
+`sendNightlyReport()` fonksiyonu içindeki veri inşa etme (Payload) bölümü yeni başlıklara göre baştan yazılacaktır:
+- Döngü her bir alt skoru gezerken sırasıyla şu verileri sütunlara dizecek:
+1. `Skor Puanı` = 40, 45, 50 vb.
+2. `Sinyal Sayısı` = Sadece o skordaki toplam sinyal sayısı.
+3. `TP (Take Profit)` = O skordaki başarılı `[WIN]` kapanan işlem sayısı.
+4. `SL (Stop Loss)` = O skordaki başarılı olmayan `[LOSS]` kapanan işlem sayısı.
+5. `WR (Win Rate)` = Örneğin `%85.5` formatında `TP` ve `SL` oranına göre o skorun başarı puanı.
+6. `Toplam Sinyal Sayısı` = O gün tarz ve skordan bağımsız atılan *toplam günlük sinyal* miktarı.
+7. `Tarih` = Raporun yansıtıldığı tarih (Örn: 2026-04-01).
+
+### Amazon (AWS) Sunucu Güncellemesi
+- Kodlarımız masaüstü bilgisayarınızda (Lokal) güncellendikten hemen sonra, yine kaydettiğimiz `Elyte.pem` anahtarı kullanılarak doğrudan canlı AWS ortamınız (`13.60.44.209`) üzerine saniyeler içinde zerk edilecek ("Deploy") ve sunucu yenilenecektir.
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. Aktif (`ACTIVE`) durumda işlem görürken günü kapatan ve henüz TP/SL olmamış işlemler için özel bir sütununuz yok. Eğer isterseniz bunları görmezden gelip sadece kapananlar üzerinden `Sinyal Sayısı` alabiliriz ya da eski sistemdeki gibi aktifleri de yansıtabileceğiniz ekstra bir sütun açmak ister misiniz?
+> 2. `Toplam Sinyal Sayısı` her alt satırda tekrar edecek (Örneğin "Puan 40" satırının yanında Günlük 15 yazarken, hemen altındaki "Puan 65" satırının da yanında aynı şekilde Günlük 15 yazacak). Bu bir sorun teşkil etmiyor değil mi?
+
+Onay verdiğiniz takdirde kod düzenlemeleri ve sunucu güncellemesi başlayacaktır! 🚀

@@ -1,0 +1,12 @@
+# Web VIP Katılım Modalı Tasks
+
+- [ ] Add `showVipModal` React state to `Dashboard.jsx`
+- [ ] Implement `useEffect` to trigger modal if `user.isVip === 0`
+- [ ] Inject Glassmorphism VIP Modal UI into `Dashboard.jsx` layout
+  - [ ] Overlay Div with Backdrop Filter
+  - [ ] User Profile Image & Greeting
+  - [ ] Description Text
+  - [ ] Join VIP Group Call-to-Action (External Link)
+  - [ ] Conditional `Daha Sonra Belki` Exit Action
+- [ ] Commit and push repository updates to trigger Vercel deployment
+- [ ] Summarize integration in Walkthrough

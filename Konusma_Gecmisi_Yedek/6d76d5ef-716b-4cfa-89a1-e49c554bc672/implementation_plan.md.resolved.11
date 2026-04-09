@@ -1,0 +1,29 @@
+# İkili Google Sheets Mimarisi Planı
+
+Çok iyi detaylandırmışsın, sorunun kaynağını buldum! Biz sadece tek bir değişken ( `GOOGLE_SHEETS_ID` ) üzerinden çalıştığımız için sistem tablo ayrımı yapamıyor. İki farklı tablo demek, botun beynine iki farklı yönlendirme haritası vermek demektir. 
+
+Bunu mükemmel bir şekilde kalıcı olarak çözmek için yapacağım mimari değişiklikler şunlar:
+
+## Proposed Changes
+
+### [MODIFY] `backend/.env` & `backend/google-api.js`
+Artık `.env` dosyasında tek bir ID değil, iki farklı ID barındıracağız:
+- `GOOGLE_SHEETS_REPORT_ID` = Gece 03:00 Raporlarının atılacağı (ElyteSignalReport) Tablonun ID'si.
+- `GOOGLE_SHEETS_INSTANT_ID` = Anlık sinyallerin (PTB, BSU vb.) aktığı Sinyal İstatistik Tablonun ID'si.
+
+Google API'ye istek atan fonksiyonumu (`appendToSheet(data, type)`) yenileyip, gönderilen verinin **REPORT** mu yoksa **INSTANT_SIGNAL** mi olduğunu anlayıp doğru tablo hedefine yollamasını sağlayacağım.
+
+### [MODIFY] `backend/scanner.js` (Gece Raporlama Cron'u)
+Gece `03:00`'te çalışan `sendNightlyReport()` isimli bir Cron fonksiyonumuz halihazırda var.
+Şu an bu fonksiyon sadece Telegram'a rapor atıyor. O fonksiyona yeni Google Sheets entegrasyonunu ekleyeceğim.
+- Bot 03:00'te uyanacak.
+- O günkü (Total Sinyal, Win, Loss, Active, WinRate vs) verileri derleyecek.
+- Sadece 1 satırlık **GÜNLÜK ÖZET** verisini `ElyteSignalReport` tablosuna yazıp uyuyacak.
+- Gün içerisindeki anlık coin sinyallerini ise eskisi gibi 2. tabloya asmaya devam edecek.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bu kurgunun sorunsuz çalışması için arka plana iki farklı ID kaydetmem gerekiyor. 
+> 
+> Bana lütfen **ElyteSignalReport** tablosunun ID'si ile **Sinyal İstatistik Tablosu**'nun ID'lerini açıkça hangisinin hangisi olduğunu belirterek tekrar atar mısın? Sen ID'leri verdiğinde hemen ikiye bölüp kurguyu ayağa kaldıracağım!

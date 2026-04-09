@@ -1,0 +1,26 @@
+# Perplexity Algoritma Revize Planı: Uyumsuzluk (Divergence) & Mum Teyidi
+
+Perplexity çok profesyonel iki hamle önermiş ancak bunlardan biri bizim Canlı Sistemimizin yapısına uygunken diğeri maalesef bize zarar verebilir. İkisini de senin kuralın ("Sinyali ezmesin") çerçevesinde masaya yatırdım:
+
+## 1. MADDENİN REDDİ: ATR Fakeout Sonrası Mum Teyidi (-5 Ceza)
+**Kesinlikle Eklemiyoruz.** Neden mi? 
+Perplexity'nin önerisi: "Fakeout (Haber) mumu yaşandıysa o an girme, 1-2 mum bekle, trend devam ediyorsa gir, etmiyorsa -5 puan ver" diyor. 
+Ancak bizim botumuz piyasayı *Anlık (Real-time)* tarıyor. Eğer işleme girmek için kırılım mumundan sonra 1-2 mum daha beklersek (1 Saatlik grafikte bu 2 saat gecikme demektir), kripto gibi roket hızında hareket eden bir piyasada fiyat çoktan Hedefe (TP'ye) uçmuş olur! **Gecikmeli girmek R:R (Risk/Ödül) avantajını tamamen öldürür ve sinyal sayımızı köreltir.** Zaten büyük mumda hali hazırda kemiksiz **-15 ceza** kesiyoruz, bu güvenlik bize fazlasıyla yeterli. 
+
+## 2. MADDENİN KABULÜ: RSI Hidden Divergence (Gizli Uyumsuzluk) Bonusu (+5 Puan)
+**Harika Bir Fikir. Kesinlikle Ekliyoruz.** 
+Uyumsuzluk (Divergence) teknik analizin şah damarıdır. 
+- **Gizli Boğa Uyumsuzluğu (LONG):** Fiyat bir düzeltme yapıp eskisinden daha "Yukarıda" bir dip (Higher Low) yaparken, RSI eskisinden daha "Aşağıda" (Lower Low) dibe iniyorsa, bu "Düzeltme bitti, trendin gazı patlamak üzere" demektir.
+- Ceza değil, **ÖDÜL (+5 Puan)** mekanizması olduğu için sinyal sayımızı **azaltmaz**, aksine kıl payı barajı (40 Puanı) geçemeyen çok kaliteli fiyat hareketlerine altın dokunuş yaparak onları kurtarır!
+
+## Proposed Changes
+
+### [MODIFY] `backend/scanner.js`
+- `analyzeCoin` fonksiyonunun içindeki Skoralama (SCORING) yapısına **"Gizli RSI Uyumsuzluğu" (Hidden RSI Divergence)** algoritması eklenecek.
+- Son 30 mumluk RSI dalgaları incelenerek, Fiyat tepeleri/dipleri ile RSI tepeleri/diplerinin uyumsuz olduğu (Trend yönünde toplanma olduğu) anlarda `qualityScore += 5;` ve `warnings.push('Hidden Divergence (+5)')` eklenecek.
+
+## User Review Required
+
+> [!WARNING]
+> Perplexity teorikte doğru çalışıyor ama canlı bir trade botunun hız gereksinimini düşünmeden "1-2 mum bekle" diyerek tuzağa düşüyor. Sinyal sayısını yok etmemek ve fiyattan geri kalmamak (Fırsatı kaçırmamak) için ilk maddeyi fırlatıp çöp kutusuna atıyorum.
+> Ama ikinci madde olan RSI Uyumsuzluğu gerçekten +5 puanlık pırlanta bir fırsattır. Bunu uygulamamı onaylıyor musun? (Ayrıca dünkü Google Tablo ID'ni atarsan onu da hemen bağlayalım!)

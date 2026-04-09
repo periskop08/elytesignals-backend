@@ -1,0 +1,14 @@
+# Weekend Yahoo Finance Fallback Plan
+
+We will update the `fetchAssetIntervalData` to handle BingX weekend pauses by falling back directly to Yahoo Finance's `.chart` API.
+
+## Proposed Changes
+
+### [MODIFY] `index.js`
+We will rewrite `fetchAssetIntervalData`:
+1. It will first attempt to fetch prices from BingX.
+2. If BingX returns an empty list (which triggers our `Market for ... is currently paused` error), the `catch` block will automatically trigger the Yahoo Finance `.chart()` fallback strategy.
+3. The Yahoo Finance fallback will utilize `yahooFinance.chart(fetchId, { interval, period1 })` to securely fetch the latest available `15m`, `60m` (for `1h` and `4h`) data without encountering the standard `historical` API enum errors.
+
+## User Review Required
+Does this fallback hierarchy make sense? Once approved, I will deploy the fail-safe directly to the AWS server.

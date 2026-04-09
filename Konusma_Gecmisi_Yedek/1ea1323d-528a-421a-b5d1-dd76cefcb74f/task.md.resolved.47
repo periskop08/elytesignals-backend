@@ -1,0 +1,10 @@
+# AWS EC2 Sunucu Taşıma & Üretim Planı (Deployment)
+
+- `[x]` 1. `.pem` anahtarına gerekli izinleri vermek (chmod 400).
+- `[x]` 2. Sunucuya SSH üzerinden bağlanmak (ping testi ve bağlantı doğrulama).
+- `[x]` 3. Sunucuda Node.js ortamı, SQLite ve Git hazır hale getirmek.
+- `[x]` 4. Yerel bilgisayardaki `backend` klasörünü (scp veya rsync ile) AWS sunucusuna göndermek.
+- `[x]` 5. AWS sunucusunda `pm2` ayarlarını başlatmak ve backend'i yayına almak (`node index.js`).
+- `[/]` 6. AWS sunucusunun `3000` veya ana portunun aktif olup olmadığını test etmek (Curl veya PM2 Logs).
+- `[ ]` 7. Yerel mobil projedeki `192.168.x.x` API isteklerini yeni sunucu `13.60.44.209` üzerine yapılandırmak.
+- `[ ]` 8. Mobil uygulamayı APK derlemek veya EAS Build için hazırlamak.

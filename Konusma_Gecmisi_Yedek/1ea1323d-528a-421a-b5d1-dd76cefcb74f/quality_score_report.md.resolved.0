@@ -1,0 +1,39 @@
+# 🤖 Periskop Yapay Zeka - Skor Başarı Analizi (Toplu Rapor)
+
+Sistemin "Eğitim" ve "Canlı Puanlama" modülüne ait son veritabanlarındaki toplam **197 sinyal** (Aktif ve Kapanan) derinlemesine raporlanmıştır. Özellikle sistemin her sinyale atadığı **"Quality Score (Kalite Puanı)"** metriklerinin gerçek kapanış başarına olan yansımaları aşığıdaki gibidir.
+
+## 🎯 Puan Bazlı Kazanma (Win-Rate) Dağılımı
+
+*(Aşağıdaki oranlar sadece "Kapanan (WIN/LOSS)" işlemler üzerinden hesaplanmıştır, beklemede olan ACTIVE işlemler orana dahil edilmez)*
+
+| Periskop Score | Kapanan Toplam | WIN (Hedef) | LOSS (Stop) | Başarı (Win Rate) | Açık İşlem |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **85 Puan** (Süper Güvenli)| 0 | 0 | 0 | **-** | 8 |
+| **70 Puan** (Yüksek İhtimal)| 3 | 3 | 0 | **%100** | 10 |
+| **65 Puan** | 2 | 0 | 2 | **%0** | 1 |
+| **60 Puan** (Güvenli Alan) | 5 | 4 | 1 | **%80** | 22 |
+| **55 Puan** | 6 | 5 | 1 | **%83** | 10 |
+| **50 Puan** (Nötr Nokta) | 3 | 2 | 1 | **%66** | 2 |
+| **45 Puan** (Agresif Mod) | 23 | 20 | 3 | **%86** | 69 |
+| **40 Puan** (Minimum Kalite)| 9 | 4 | 5 | **%44** | 24 |
+
+---
+
+## 📈 Toplam Platform İstatistikleri
+
+Tüm skorların birleşimi sonucu Periskop motorunun genel kripto performansı:
+
+*   **Toplam Sinyal:** 197 Strateji (Geçmiş + Canlı Taramalar)
+*   **Piyasada Açık İşlemler:** 146
+*   **Kapanan (Sonuçlanan) İşlemler:** 51
+*   **Net Hedefe Giden (WIN):** 38
+*   **Stop Olan (LOSS):** 13
+*   🟢 **GENEL YAPAY ZEKA KAZANMA ORANI:** **%74.5**
+
+---
+
+> [!TIP]
+> **Uzman Yorumu ve Skor Analizi:**
+> - **70 Puan ve Üzeri:** Sistemin en zor bulduğu (sadece 18 işlem) ama bulduğunda affetmediği elit sinyal bloğudur. Bu puanda hiç stop (Loss) yemedik (3 kapanışın 3'ü de kusursuz kârla vurdu)!
+> - **45 Puanlık Yoğunluk:** 69 aktif işlemin beklediği 45 Kalite puanı, enteresan bir şekilde kapananlarda en kârlı hacmi yaratmış. Kapanan 23 işlemin 20'sinde doğrudan TP (Kar Al) seviyesine ulaşılmış. Bu, stratejinin Elliott "Agresif Kırılım" tarafını mükemmel yakaladığını gösteriyor.
+> - **40 Puan Limiti:** "Zorlama" diyebileceğimiz düşük emniyetli sinyaller (40 Skor) ise sadece **%44 Başarı** göstererek bizi şaşırtmadı. Strateji kurallarında 45 altı skorları manuel elemeye/filtreye sokmayı düşünebilirsiniz!

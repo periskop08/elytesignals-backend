@@ -1,0 +1,29 @@
+# ⚡ BingX Büyük Göçü: Operasyon Başarılı! (Walkthrough)
+
+Sistemdeki Bybit motorunu başarıyla söküp yerine BingX'in API'sini bağlamış bulunmaktayız. Bütün sistem kurgusu (Sinyal üretme, Fiyat kontrolü, Pozisyon Yöneticisi) baştan aşağı BingX üzerinden akacak şekilde güncellendi.
+
+## Tamamlanan Değişiklikler
+
+1. **`bingx-trade.js` Motoru Yazıldı**
+   - Açık Mimarili HMAC-SHA256 yetkilendirme modülü eklendi. (BingX API paramterleri sıralamalı ve querystring üstünden istiyor, bu algoritma özel yazıldı.)
+   - Sinyalleri BingX `Swap V2` üzerinden Limit/Market emrine dönüştüren `placeOrder` fonksiyonu bağlandı.
+   - Sinyal 1R kara ulaştığında (Breakeven) tetiği tetiklendiğinde Stop rakamını BingX üzerinde güncelleyen `updateStopLoss` algoritması ayarlandı.
+   - BingX'in borsa diline göre `LONG`/`SHORT` komutları formatlandı (`BUY`/`SELL` ve `LONG`/`SHORT` pos mapping).
+
+2. **Veri Tedariği (Data Fetching) Güncellendi**
+   - Piyasa analizi modülü (`scanner.js`), piyasadaki genel trendleri ve verileri önceden Bybit üzerinden ararken; artık **Google/BingX sunucuları** üzerinde `openApi/swap/v2/quote/ticker` adresiyle haberleşiyor.
+   - Sadece günlük hacmi **10.000.000 Dolar** barajını (quoteVolume) aşan BingX coin listesini hafızaya alıp oraya odaklanıyor.
+
+3. **Sembol Standartlaştırma Protokolü**
+   - Bybit `BTCUSDT` kullanıyordu, uygulamanın frontend arayüzü ve SQLite veritabanı da bu şemaya alışıktı.
+   - BingX API'si ise `BTC-USDT` şeklinde araya tire giren bir format kullanıyor.
+   - Kodları baştan aşağı yıkmamak için; araya bir *Tercüman Algoritma* yazdım. Sistem hala arayüzde (VIP Telegram ve App) `BTCUSDT` diye bağırıyor ama BingX'e trade atarken veya mum alırken otomatik tire koyup BingX ile iletişim kuruyor!
+
+## ⏳ Bekleme Modu (Waiting for Keys)
+Şu anda `.env` dosyanda şu satırları arıyor:
+```env
+BINGX_API_KEY=xxx
+BINGX_API_SECRET=yyy
+```
+
+Bu anahtarlar panele girdiği saniye, Elyte otomatik olarak çalışmaya başlayacak. 🚀

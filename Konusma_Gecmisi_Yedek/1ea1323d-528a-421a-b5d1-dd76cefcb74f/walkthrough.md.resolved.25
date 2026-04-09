@@ -1,0 +1,37 @@
+# Gerçek Telegram Doğrulama Sistemi Kurulumu Tamamlandı!
+
+Mobil uygulamanız ve arka uç (backend) sunucunuz artık gerçek bir Telegram Aracı Botu (Auth Bot) ile çalışacak şekilde kodlandı. "Telegram'da var mı yok mu" kararını verecek yapay zeka/bot altyapısı Amazon sunucunuz üzerinde çalışmaya hazır.
+
+## 🚀 Sahne Arkasında Neler Değişti?
+1. **Veritabanı (SQLite):** `sessions` adlı özel bir tablo eklendi. Giren herkesin resmi, ID'si ve `isVip` durumu tutulacak.
+2. **Backend API:** Saniyede bir telefonunuzla konuşacak `/api/auth/session` endpointleri yazıldı.
+3. **VIP Modal:** Artık "her girişimde çıkıyor" değil! Sadece backend'den "Bu kullanıcı grupta YOK" cevabı gelirse (`isVip: 0`) o inatçı uyarı çıkıyor ve gruptaysa asssla rahatsız etmiyor.
+
+## 🔑 Sizin Yapmanız Gereken "Teknik Bot" Ayarı
+Bu sistemin "gerçeğe" dönüşmesi için bana şifre vermenizi bekleyemedim ve altyapıyı "sizin gireceğiniz" şekilde esnek hazırladım. Lütfen şu üç adımı uygulayın:
+
+### Adım 1: BotFather'dan Telegram Botu Alın
+1. Telegram uygulamanızı açın ve arama yerine **@BotFather** yazın (mavi tikli olana girin).
+2. Chat'e `/newbot` yazın.
+3. Botunuza bir isim verin (Örn: `Elyte Signals Auth`).
+4. Botunuza kullanıcı adı verin (Mutlaka 'bot' ile bitmeli. Örn: `ElyteAuthBot` veya `ElyteVipVerifyBot`).
+5. **ÖNEMLİ:** BotFather size kocaman bir kırmızı yazıyla **HTTP API Token** verecektir (şöyle bir şeye benzer: `712345:AAH-xZy...`). Bunu kopyalayın!
+
+### Adım 2: VIP Grubuna Botu "Admin" Ekleyin
+1. Kendi VIP Grubunuza (`https://t.me/+Rw9Ea6LPHFgwZDU0`) girin.
+2. Az önce yarattığınız botu (Örn: `@ElyteAuthBot`) gruba ekleyin.
+3. Bota grupta **Yönetici (Admin)** yetkisi verin ki üyeleri görebilsin!
+
+### Adım 3: Backend `.env` Dosyasına Bu Bilgileri Girmek
+Amazon sunucunuzun (Backend klasörü içindeki) `.env` dosyasına girip şu bilgileri eklemeniz ve **sonra backend'i yeniden başlatmanız** gerekiyor:
+
+```env
+# backend/.env dosyasına eklenecekler:
+TELEGRAM_BOT_TOKEN='712345:AAH-xZy... (BotFatherdan Aldığınız Token)'
+TELEGRAM_VIP_GROUP_ID='-10012345678 (Kanalınızın ID numarası)'
+```
+
+> [!IMPORTANT]  
+> Mobil uygulamadaki "Telegram ile Giriş" butonuna tıkladığınızda açılacak olan bot linki kod içerisinde şu an "ElyteAuthBot" olarak ayarlı (`LoginScreen.js` satır 80 civarı). Lütfen kendi yarattığınız botun *kullanıcı adını* oradaki koda yazın veya bana söyleyin ben hemen değiştireyim. (Örn: `@BenimAuthSistemimBot` yaptıysanız koda onu yazmalıyım).
+
+Bu adımları yapıp Backend sürecinizi (`node index.js`) yeniden başlattığınız an kusursuz çalışan profesyonel bir şirket Auth yapısına kavuşmuş olacaksınız! İstiyorsanız tokenları ve bot ismini bana verin, ben doğrudan AWS içine işleyeyim. Ne dersiniz?

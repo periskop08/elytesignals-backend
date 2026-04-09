@@ -1,0 +1,15 @@
+# Task Checklist: Elyte Scanner Pine Script
+
+- [x] Create implementation plan
+- [x] Write Pine Script v5 code translating `scanner.js`
+  - [x] Add ATR sweep deviation logic
+  - [x] Order Block (OB) logic (+25)
+  - [x] Fair Value Gap (FVG) logic (+15)
+  - [x] RVOL logic (+15)
+  - [x] ADX, KAMA, Ichimoku logics (+15)
+  - [x] Order Flow Delta logic
+  - [x] StochRSI logic
+  - [x] Accumulate Score
+- [x] Add visual shapes (labels/arrows) based on score conditions
+- [x] Output the file to the workspace
+- [x] Create walkthrough documentation

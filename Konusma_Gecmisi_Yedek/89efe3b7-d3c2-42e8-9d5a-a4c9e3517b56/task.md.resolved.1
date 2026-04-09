@@ -1,0 +1,6 @@
+# PeriskopAI Asset Analiz Entegrasyonu
+
+- [x] `index.js` içerisindeki `parsePrompt` fonksiyonuna varlık ayrımı (`isAsset`) eklenmesi.
+- [x] Kripto ve hisse ayrımı yapacak, `yahoo-finance` destekli (ya da uyumlu) `fetchAssetData` benzeri bir veri çekme altyapısı kurulması. (Bunun için BingX API kullanıldı, hafta sonu pazarları kapalı olduğu için düzgün bir hata dönüşü de eklendi).
+- [x] AI Prompt tasarımlarının "PeriskopAI" kimliği ile revize edilmesi, varlıklar (Assets) için Options Flow / PCR / Max Pain metriklerinin simüle edilerek veya entegre edilerek prompta dahil edilmesi.
+- [x] AWS sunucusuna deployment gerçekleştirilmesi (`scp` ile yükleme, PM2 restart) ve `localhost:3000/api/analysis` (veya test scripti) üzerinden canlı AAPL ve SOL testlerinin yapılması.

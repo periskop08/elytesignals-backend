@@ -1,0 +1,13 @@
+# Mobil UI Glassmorphism & Parity Güncellemesi
+
+- [x] Global Işık Okyanusu (Bright Gradient Orbs) tasarımı.
+- [x] Sekme Çubukları & Üst Menü Blur Dönüşümü.
+- [x] Sinyal Kartlarına Saydam Şeffaf (Translucent) Geçiş.
+- [x] İstatistik Kartları (Aktif, Long, Short vb.) Web sitesindeki gibi Beyaz Çerçeveli ve Arkası Gölgeli Glass Badge yapısına geçirildi.
+- [x] Dashboard filtreleme sekmesi eklendi: "Hepsi", "Kripto", "Varlıklar". Aktif sinyaller bu metriklere göre bölünüyor ve istatistik çubuklarına anında etki ediyor (Pürüzsüz Web kopyası).
+
+# İstatistik Güncellemesi
+
+- [x] `backend/index.js` içerisinde İstatistik Hesaplama Mantığı yeniden yazıldı. (Başlangıç $500, işlem başı risk(1R) $10 olarak temel alındı. Zararda sabit 10$ eksi, kârda Hedef/Stop R rasyosu kadar artı kâr yansıtılıyor).
+- [x] Web Sitesi (`Dashboard.jsx`) istatistik gösterge bölümü, "Güncel Kasa Bakiyesi (Başlangıç: $500)" + Net Büyüme (PnL) gösterecek şekilde güncellendi.
+- [x] Telefon Uygulaması (`StatisticsScreen.js`) arayüz metinleri ve toplam kasa hesabı ($500 Bakiye ile) detaylandırılarak uyumlu hale getirildi.

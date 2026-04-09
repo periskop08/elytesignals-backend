@@ -1,0 +1,53 @@
+# 📊 Elyte Sinyal Kalite Skoru Analiz Raporu
+
+Sinyal skorlama (Quality Score / 40 Puan Barajı) sistemine geçişimizden bu yana, veritabanına kalitesi hesaplanarak kaydedilmiş **toplam 13 sinyal** üzerinden çıkartılan performans raporudur.
+
+> [!TIP]
+> Skorlama sistemi henüz yeni oturduğu için mevcut veri kümesi görece küçüktür (13 Sinyal). Piyasaların da oldukça dalgalı olduğu bu günlerde algoritmamızın kısa vadeli hareketleri okunabilmektedir. Veri setiniz (sinyal sayınız) arttıkça aşağıdaki tablonun istatistiksel geçerliliği daha da güvenilir olacaktır.
+
+---
+
+## 📈 Skorlara Göre Performans (Özet)
+
+| Skor Barajı | Üretilen Sinyal | Başarılı (TP/WIN) | Başarısız (SL/LOSS) | Aktif / Bekleyen | Başarı Oranı (Win Rate) |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **🔥 65 Skor** | 2 Adet | 0 | 2 | 0 | **%0** |
+| **⚡️ 50 Skor** | 2 Adet | 1 | 1 | 0 | **%50** |
+| **✨ 45 Skor** | 2 Adet | 1 | 1 | 0 | **%50** |
+| **🎯 40 Skor** | 7 Adet | 0 | 3 | 4 | **%0** |
+
+---
+
+## 🔍 Sinyal Bazlı Detaylı Döküm
+
+Aşağıda algoritmaya takılan ve skoru hesaplanmış işlemlerin tam listesini görebilirsiniz:
+
+### 🏆 50-65 Puan Arası (Yüksek Kalite Beklentisi)
+- `CROSSUSDT` (LONG) - Skor: **65** ➡️ **LOSS (Stop Oldu)**
+- `IPUSDT` (LONG) - Skor: **65** ➡️ **LOSS (Stop Oldu)**
+- `RUNEUSDT` (SHORT) - Skor: **50** ➡️ **WIN (TP Oldu)** 🟢
+- `GASUSDT` (SHORT) - Skor: **50** ➡️ **LOSS (Stop Oldu)**
+
+### 🟡 45 Puan (Orta Kalite)
+- `MOVRUSDT` (SHORT) - Skor: **45** ➡️ **WIN (TP Oldu)** 🟢
+- `ERAUSDT` (LONG) - Skor: **45** ➡️ **LOSS (Stop Oldu)**
+
+### ⚪ 40 Puan (Sınır/Baraj Puanı)
+- ⏳ `CHZUSDT` (SHORT) - Skor: **40** ➡️ İşlem **Aktif**
+- ⏳ `UNIUSDT` (SHORT) - Skor: **40** ➡️ İşlem **Aktif**
+- ⏳ `AEROUSDT` (LONG) - Skor: **40** ➡️ İşlem **Aktif**
+- ⏳ `MERLUSDT` (LONG) - Skor: **40** ➡️ İşlem **Aktif**
+- `AEROUSDT` (LONG) - Skor: **40** ➡️ **LOSS (Stop Oldu)** 
+- `LRCUSDT` (LONG) - Skor: **40** ➡️ **LOSS (Stop Oldu)**
+- `SAHARAUSDT` (LONG) - Skor: **40** ➡️ **LOSS (Stop Oldu)**
+
+---
+
+## 🧠 Analiz Çıkarımı ve Yapay Zeka Yorumu
+
+1. **Yüksek Skor Yanılgısı (Outliers):** Algoritmada en yüksek puanları (65) alan `CROSS` ve `IP` gibi coinler maalesef stop olmuş. Bu durum muhtemelen **"Çok Yüksek Volatilite"** kaynaklı iğnelerden (fakeout) dolayı sert stop patlatmaları olarak değerlendirilebilir. Çok hızlı formasyon çizen sığ tahtalarda skor yüksek çıksa bile risk çok yüksek olabiliyor.
+2. **Orta Skor Tutarlılığı (45-50):** Şu an için TP (Take Profit / Hedefe ulaşma) gören tek işlemler **45** ve **50** bandında (RUNE ve MOVR Shortları).
+3. **Short / Long Ayrımı:** TP ile kapanan işlemlerin *tamamının* "SHORT" (`RUNEUSDT`, `MOVRUSDT`), SL olan yüksek/orta skorluların ağırlıklı "LONG" olduğu görülüyor. Piyasanın mevcut yönü/düşüş dalgası, long sinyallerinin stoplarını daha kolay tetikliyor olabilir.
+
+### Öneri:
+Bir süre daha (en az 50-100 sinyal birikene kadar) 40 puan sınırlaması aktif kalsın. Meblağ/Risk dağılımınızda (Margin) her skora eşit işlem yaklaşımınızı şimdilik değiştirmemeniz isabetli olur. Ancak eğer **LONG yönlü SL** sayıları artmaya devam ederse, arka planda sadece LONG sinyalleri için bir ek "*trend filtresi (Piyasa Ayı yönlüyse zorlaştırma)*" kuralı entegre edebiliriz.

@@ -1,0 +1,14 @@
+# Geleneksel Varlık İsimlendirme ve Borsa Emir İletim Köprüsü
+
+- `[/]` 1. `scanner.js` Regex ve Parser Temizliği
+    - `[ ]` `724` ve `OILBRENT`/`OILWTI` gibi stringsizleştirme (Örn: `724NASDAQ100` -> `NASDAQ100`, `OILBRENT` -> `BRENT`) mantığının kodlanması.
+    - `[ ]` Tarama anında bellekte (RAM) tutulacak olan `global.BINGX_SYMBOL_MAP` haritasının yaratılması. `[cleanSymbol]: bingxSymbol` şeklinde.
+    - `[ ]` `getNativeBingxSymbol(symbol)` adında veritabanındaki temiz ismi arayıp Native BingX ismini döndürecek bir tercüman fonksiyonunun yazılması.
+- `[ ]` 2. Auto-Trade (Otopilot) Entegrasyonu
+    - `[ ]` `scanner.js` içerisindeki `placeOrder()` fonksiyonuna doğrudan `BINGX_SYMBOL_MAP`'ten dönen `NCSISP500...` formatının enjekte edilmesi.
+    - `[ ]` `checkActiveSignals()` fonksiyonu içerisindeki kâr alma (`updateStopLoss`, `getPosition`) bölümlerinin Native BingX sembolünü kullanması için haritadan yararlanmasının sağlanması.
+- `[ ]` 3. Index.js / Kâr Al & Favori Manuel Döngü Uyumu
+    - `[ ]` `index.js` içerisine `/api/favorites/toggle` (Otopilota devretme) istekleri için ana Native Sembolün çekilmesinin eklenmesi. 
+    - `[ ]` Admin tarafından Dashboard üzerinden elle manuel "Kâr-Al" yapıldığında BingX API'sine gidecek paketin Native sembole tercüme ettirilmesi.
+- `[ ]` 4. Walkthrough Oluşturma ve Test (Verify)
+    - `[ ]` Eski bozuk DB Sinyallerinin temizlenmesi ve Live Test yapılması.

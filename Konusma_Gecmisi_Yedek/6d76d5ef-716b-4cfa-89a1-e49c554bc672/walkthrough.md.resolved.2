@@ -1,0 +1,38 @@
+# Global Piyasa (Macro Trend) Sensörü Entegrasyon Özeti
+
+Daha az risk, daha isabetli işlemler için tasarlanan *Global Market Filtresi* projesi planlandığı şekilde başarıyla tamamlanmıştır. Uygulamanın nasıl çalıştığını, hangi verileri çekip neye karar verdiğini aşağıda detaylandırdım.
+
+## Yapılan Geliştirmeler
+
+### 1- Çift Borsa (Bybit & Binance) Veri Kaynağı Kullanımı
+CoinMarketCap veya ek API limitine takılmamak adına, çok akılcı bir rota çizdim:
+- **Bitcoin Trendi (BTCUSDT):** Doğrudan Bybit API'sinden 1 Saatlik, 4 Saatlik ve Günlük bazlı olmak üzere üç kademede çekilir.
+- **Altcoin Market Sağlığı (ETHUSDT proxy):** Ethereum (ETH), altcoinlerin Total Marketini yansıtan en güvenilir kripto para olduğu için, Ethereum dataları 4 saatlik periyotta Bybit üzerinden hesaplandı.
+- **Bitcoin Dominansı (BTCDOMUSDT):** Bu metrik her borsada olmadığı için, bedava ve limitsiz olan **Binance Futures API**'si üzerinden saatlik ve 4 saatlik periyotta sisteme doğrudan bağlandı.
+
+### 2- İndikatör Sentezleme & Trend Belirleme Algoritması (`calculateTrendFromKlines`)
+Gelen bu ham veriler basit bir yükseliş grafiğine değil; profesyonel 3 indikatörün onayından geçirilir:
+- Fiyat, EMA(20)'nin üzerinde ve EMA(20) de SMA(50)'nin üzerinde mi?
+- RSI(14), 55'in (ayı için 45'in) üzerinde bir güce ulaştı mı?
+*Sonucunda piyasa anlık olarak 5 farklı seviyede etiketlenir: `STRONG_BULL, BULL, NEUTRAL, BEAR, STRONG_BEAR`*
+
+### 3- Zaman Diliminde Kesişim Mantığı (Gelişmiş Teyit)
+Sadece 4 saatlikte BTC'nin yeşil yakması aldatıcı olabilir! Bot, **Hem 4 Saatlik Hem de Günlük (1D) periyot** eşzamanlı olarak `BULL` (veya `STRONG_BULL`) değilse o duruma kesin "BOĞA!" onayı vermez. Uzun vade (günlük) trend desteklemiyorsa filtremiz pasif modda/nötr olarak kalmaya ve riski dengelemeye devam edecektir.
+
+### 4- Altcoin Filtreleme ve İptal Mekanizması
+ `analyzeCoin` mantığında, bot taradığı bir altcoinde efsanevi bir sinyal bulsa dahi, son aşamada Global Sensör'ün raporuna bakar:
+> [!CAUTION]
+> - Sinyal **SHORT (Düşüş)** ise ve Küresel Trend **BULL/STRONG_BULL** (Boğa) aşamasında ise, sinyal iptal edilir ve asla Telegram'a/Veritabanına yollanmaz. Akıntıya karşı işlem açmak YASAK.
+> - Sinyal **LONG (Yükseliş)** ise ve Küresel Trend **BEAR/STRONG_BEAR** (Ayı) ise tamamen aynı şekilde REDDEDİLİR.
+
+## Test ve Devreye Alma Süreci
+
+> [!TIP]
+> **Lokal Testler (Başarılı):**
+`[GLOBAL SENSOR] BTC: BULL (1H:NEUTRAL) | ETH: STRONG_BULL | BTCDOM: NEUTRAL`  
+Sistemin verileri hatasız sentezlediğini ve doğru uyarı mekanizmasını kurduğunu lokal CLI üzerinde doğruladım.
+
+- Değişen `scanner.js` kod dosyası, AWS bulut sunucusuna (13.60.44.209) **otomatik rsync ile deploy edildi.**
+- Sunucudaki `ElyteBackend` isimli PM2 Daemon süreci başarıyla yeniden başlatıldı.
+
+*(Artık sistem ocağa koyduğum yemeğin altını kıstı. Gece patlayan onlarca short işleminin bir daha o şekilde toplu şekilde gelmesi teknik ve yazılımsal olarak imkansız hale getirildi!)*

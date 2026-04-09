@@ -1,0 +1,11 @@
+# ETH ve Dominans Entegrasyonu Görev Listesi
+
+- `[x]` **Adım 1:** `backend/scanner.js` dosyasının açılması ve `analyzeCoin` mantığının kontrolü.
+- `[x]` **Adım 2:** Global ETH Trend Filtresinin Eklenmesi:
+  - Sinyal LONG ve ETH Trendi (Total Proxy) Ayı ise (BEAR/STRONG_BEAR) sinyalin iptal edilmesi (`return null`).
+  - Sinyal SHORT ve ETH Trendi Boğa ise (BULL/STRONG_BULL) sinyalin iptal edilmesi.
+- `[x]` **Adım 3:** Dominans (BTCDOM) Puanlama/Ceza Sisteminin Eklenmesi:
+  - Dominans Boğa ise (BULL/STRONG_BULL), tüm LONG sinyallerine `-15` ceza puanı uygulanması.
+  - Dominans Ayı ise (BEAR/STRONG_BEAR), tüm LONG sinyallerine `+15` ödül puanı eklenmesi.
+- `[x]` **Adım 4:** Lokal CLI üzerinde kısa bir senaryo testi yapılarak söz dizimi (Syntax) hatası olmadığından emin olunması.
+- `[x]` **Adım 5:** Kodların AWS Canlı Sunucuya aktarılması ve sistemin güncellenerek yeniden başlatılması.

@@ -1,0 +1,28 @@
+# "Favorites" Kişisel İstatistik Paneli Geliştirmesi
+
+Kullanıcıların sadece kendi "Favorilere" aldıkları (işleme girdikleri) sinyallerin istatistiksel analizini görebileceği yeni bir Kişisel Performans (Dashboard) modülü hazırlanacaktır.
+
+## İhtiyaç Analizi
+Mevcut `FavoritesScreen.js` dosyası sadece aktif ve geçmiş sinyalleri listeliyor ve anlık PnL toplamını gösteriyor. 
+Şimdi ise ekranın üst kısmına, kullanıcının favoriler (portföy) listesinden şu 4 metriği canlı sentezleyen şık bir ızgara (Dashboard) inşa edilecek:
+
+1. **TP Olanlar (WIN):** Favoriye alınan sinyallerden kaçının hedefe ulaştığı.
+2. **SL Olanlar (LOSS):** Favoriye alınan sinyallerden kaçının stop olduğu.
+3. **Kişisel Başarı Oranı (Win Rate):** `(TP) / (TP + SL) * 100` formülüyle hesaplanan sadece kişiye özel kazanma yüzdesi.
+4. **+%2'yi Gören Aktifler:** Devam eden (ACTIVE) işlemlerin kaç tanesinde kârın %2'yi anlık olarak aştığı.
+
+## UI Tasarım & Mimari Planı (Proposed Changes)
+
+### [MODIFY] [FavoritesScreen.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/mobile/src/screens/FavoritesScreen.js)
+*   **Veri Hesaplama:**
+    *   Sayfadaki `favorites` ve `liveData` states'leri kullanılarak yukarıdaki 4 metrik filtreleme metotları (`.filter`, `.reduce`) ile canlı hesaplanacak.
+*   **Arayüz (Görünüm):**
+    *   Ekranın üst tarafındaki mevcut sayaçların hemen altına `2x2` veya yatay `flex-direction: row` tasarımında şık metrik kutuları (Stat Box) eklenecek.
+    *   TP sayısı için ✅ yeşil, SL sayısı için ❌ kırmızı, %2 görenler için 🚀 ikonları, Win Rate için ise 📈 veya ⚡ Star ikonları kullanılacak.
+    *   Listenin düzgün kaydırılabilmesi için (scroll), bu Dashboard doğrudan `FlatList` bileşeninin `ListHeaderComponent` özelliğine entegre edilecek. Böylece kullanıcı aşağı kaydırdığında istatistik paneli de liste ile birlikte kaybolup ekranı rahatlatacak.
+
+---
+
+> [!IMPORTANT]  
+> **Kullanıcı Onayı İsteniyor:**
+> Bu analiz paneli sadece kullanıcının yıldızladığı (favoriye aldığı) hem aktif hem de bitmiş işlemleri baz alacak, burası sistemin genel başarısı değil, kullanıcının *Kendi Seçtiği Sinyallerin* başarısı olacak. Planlanan bu 4 metrik ve FlatList tasarım kurgusu hoşunuza gitti mi? Onaylarsanız derhal tasarımı kodlayıp yayına alıyorum!

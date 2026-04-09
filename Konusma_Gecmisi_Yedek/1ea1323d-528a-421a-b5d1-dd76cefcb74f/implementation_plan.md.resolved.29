@@ -1,0 +1,28 @@
+# Web Paneli (Dashboard) Premium Tasarım Revizyonu
+
+Kullanıcı, Web Dashboard'unun işlevselliğinin çalıştığını (Telegram girişi başarılı) ancak tasarımının Mobil Uygulamada inşa ettiğimiz o "Premium, Parlak, Özel" hissi vermediğini belirtti. Hedefimiz 3 panelli geniş masaüstü düzenini (Binance stili) koruyarak, içindeki elementleri **birebir mobildeki tasarımlara (Kartlar, AI Sohbeti, Gradient renkler)** çevirmektir.
+
+## User Review Required
+
+> [!WARNING]
+> Mobil uygulamada (React Native) kullandığımız yapılar `View` ve `Text` iken, web tarayıcısında (React/HTML) `div` ve `p` kullanıyoruz.
+> Ben bu tasarımları tek tek HTML'e aktararak, web için mükemmel ve parlak bir "Klon" yaratacağım. 
+
+## Proposed Changes
+
+### [MODIFY] `Dashboard.jsx` (Tasarım Revizyonu)
+- **Sinyal Kartları (Orta Panel):** Mobildeki o yeşil/kırmızı neon bordürlü, kalite skorlu (Yıldızlar) ve hedef/stop loss çizgilerinin (bar chart) yer aldığı özel tasarımlı kartlar birebir kopyalanacak.
+- **AI Sohbet Baloncukları (Sağ Panel):** Mobildeki `AnalysisScreen.js` içerisindeki fütüristik yeşil baloncuklar, cam efekti (glassmorphism) ile web'e uyarlanacak.
+- **İkonlar ve Tipografi:** Fontlar (`Outfit` / `Inter`) tam entegre edilecek ve Mobildeki *Lucide* hissi yaratılacak.
+- **Dinamik Grid:** Kartlar mobilde alt alta diziliyorken, masaüstünde büyük ekrandan faydalanmak için 2'li veya 3'lü kolon (Grid) halinde omuz omuza dizilecek. Böylece boşluk kalmayacak.
+
+### [NEW] `src/components/SignalCard.jsx`
+- Temiz kod yapısı için sinyal kartı başlı başına bir web bileşeni yapılacak.
+
+## Open Questions
+
+Şu an panelde "Favoriler" veya "İstatistikler" sayfaları için menü tıkladığınızda menü tuşları düz duruyor, bir yere gitmiyor. Opsiyon B planımız "tek bir 3 panelli komuta merkezi" etrafına kurulu. İstediğiniz tüm bu güzel kartları bu 3 panelin içine şıkça dağıtmam (Ortada Sinyaller, Sağda AI) size uygun mudur? Onay verdiğiniz an Web Panelini baştan aşağı giydiriyorum!
+
+## Verification Plan
+1. CSS Sınıflarını `Dashboard.jsx` ve yeni bileşenler için kopyalayıp web tarayıcısında sorunsuz parlamasını sağlayacağım.
+2. Vercel'deki sitenin görünümünü lokaldemdeki tarayıcı botum ile (Subagent) denerim ve tasarımdan %100 emin olduktan sonra güncellemeyi size veririm.

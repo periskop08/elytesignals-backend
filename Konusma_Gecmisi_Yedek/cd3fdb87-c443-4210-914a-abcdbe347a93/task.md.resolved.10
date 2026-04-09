@@ -1,0 +1,11 @@
+# Akıllı Mesai Entegrasyon İşlemleri
+
+- `[/]` 1. **Timezone Korumalı Şalter (scanner.js)**
+    - `[ ]` `isWeekend` değişkeninin yerini `Europe/Istanbul` kurallı saat, dakika ve gün verisi alan zeki bir `Date` motoruyla değiştir.
+    - `[ ]` `15:30` (930 dk) ve `23:00` (1380 dk) aralığında çalışacak `isInstitutionalHours` değişkenini ekle.
+    - `[ ]` TradFi varlıkları `assetsToScan` havuzuna aktarılırken, sadece hafta içi ve mesai saatleri içindeyse havuz açılacak hale getir.
+- `[ ]` 2. **Terminal Bildirimleri Koruması**
+    - `[ ]` Sunucu loglarında filtrelenen TradFi sayısının kontrol edilip loglandığından emin ol (`Found 230 USDT pairs and 0 assets to scan (Sleep Mode)` gibi net çıktı verilebilir).
+- `[ ]` 3. **Manifesto Güvencesi ve Dağıtım**
+    - `[ ]` Bu yeni kuralı `ELYTE_MANIFESTO.md` dökümanına işle ki sistem yarın unutmasın!
+    - `[ ]` Sunucuya (`deploy.sh`) gönder.

@@ -1,0 +1,36 @@
+# 📈 Wall Street Edge: Options Flow (Gamma & Max Pain) Entegrasyonu
+
+Geleneksel piyasaların (Opsiyon tahtası açık olan Varlıkların) Market Maker verilerini `scanner.js` arka plan analiz motorumuza başarıyla işledik. Artık bot, hisseleri analiz ederken kripto gibi körlemesine Price Action okumuyor; arka planda o günkü tahvil / opsiyon kumarını kimin yönettiğini görüyor!
+
+## 🔧 Neler Yapıldı?
+
+> [!WARNING]
+> **Kırmızı Çizgi Koruması:**
+> Bu entegrasyon **yalnızca** `symbolInfo.isAsset === true` olan ve opsiyon tahtası desteklenen demirbaş varlıklar (Şimdilik: `AAPL, TSLA, NVDA, NQ=F, QQQ, SPY`) için devreye girer. Kripto işlemlerindeki o muazzam kazanma (Win-Rate) oranımıza zerre kadar dokunmaz ve çakışma yaşatmaz!
+
+### 1. `yahoo-finance2` Opsiyon Zinciri Manipülasyonu
+Harici ve ücretli (Barchart vs) herhangi bir API'ye para dökmeden, doğrudan kendi sistemimizdeki Yahoo modülü ile Opsiyon Zinciri (`YF.options`) çekildi. Sistem, hisse için "en yakın vadeli" (nearest expiration) opsiyon kontratını saniyeler içinde çözümlüyor.
+
+### 2. Algoritmik Sinyaller & Puanlar
+
+> [!TIP]
+> **1. Yığınlaşma: Put/Call Ratio (PCR)**
+> Toplam Çağrı (Call) ve Satım (Put) açık faizleri (Open Interest) hesaplandı. Aşırı yığılma durumları squeeze fırsatı yaratır:
+> - **PCR > 1.2 (Çok Put Yazılmış):** Bot +10 LONG bias puanı fırlatır (Çünkü Market Maker herkesi patlatıp yukarı sürmek ister).
+> - **PCR < 0.8 (Çok Call Yazılmış):** Bot +10 SHORT bias puanı fırlatır.
+
+> [!CAUTION]
+> **2. Market Maker Mıknatısı: Max Pain (+8 Puan)**
+> Tüm Strike fiyatlarını tek tek döngüye soktuk ve hem Çağrı hem Satım alanların **totalde en büyük zararı ettiği**, yani Tahta Yapıcının (Market Maker) bütün kasayı cukkalayacağı o "Sıfırlanma Noktası" bulundu. 
+> - Fiyat bu Max Pain noktasına doğru bir çekim momentumu yaratıyorsa sistem o yöne **+8 Puan** yapıştırır.
+
+> [!IMPORTANT]
+> **3. Kurumsal Duvarlar: Gamma Wall (Open Interest Peak) (+7 Puan)**
+> Gerçek bir perakende avcısı! En yüksek hacimli Put seviyesini fiyat için "Kurşun Geçirmez Destek (Put Wall)", en yüksek Call seviyesini ise "Aşılmaz Direnç (Call Wall)" olarak okuyoruz.
+> Fiyat buralara çarpıp sekiyorsa, bot **+7 Puan** ile teyit veriyor. Kurumsal duvar bizimle oluyor.
+
+## 🚀 Son Durum
+Sistem `scanner.js` içerisine yazıldı. AWS Ubuntu sunucusuna PM2 üzerinden deploy edildi. Artık TSLA veya AAPL gibi sembolleri taradığında kontrol paneline şu bildirimler düşecek:
+`💎 Kurumsal Opsiyon Confluence Bonusu (+5)` ve `Max Pain Çekimi (252.5) (+8)`.
+
+Şimdi arkana yaslan ve Wall Street'in kendi silahlarıyla vuruluşunu izle! 😎

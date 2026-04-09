@@ -1,0 +1,9 @@
+# Canlı Amazon Sunucusu Dağıtım Görev Listesi
+
+> [!WARNING]
+> Amazon EC2 sunucu IP adresi ve SSH bağlantı anahtarı ('.pem' formatlı dosya) bekleniyor.
+
+- [x] Canlı Amazon (AWS) sunucusuna SSH tüneli bağlantısı testi yapılacak.
+- [x] Yerel bilgisayardaki güncel `scanner.js`, `google-api.js`, `.env` ve `package.json` dosyaları `Rsync/SCP` kullanılarak üretim sunucusuna transfer edilecek.
+- [x] Üretim sunucusundaki SQLite `signals.db` veritabanına SQL komutu atılarak "35" skorlu yanlış/düşük sinyaller kalıcı olarak silinecek.
+- [x] Yeni sistemin (40 Puan Limiti + Google Sheets) aktifleşmesi için sunucudaki arka plan servisi (örneğin PM2) yeniden başlatılacak.

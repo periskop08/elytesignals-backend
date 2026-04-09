@@ -1,0 +1,13 @@
+# Elyte Hedge Fund Cihazı Görev Listesi
+
+## Aşama 1: Temel & Büyüme Analiz Motoru
+- [x] Yeni bir `macro_scanner.js` modülü oluştur.
+- [x] Yahoo Finance API entegrasyonu ile (F/K, PEG, EPS, Ciro) verilerini çek.
+- [x] Hisse senedi evreni tanımla (NVDA, TSLA, MSFT, META, GOOGL, LMT, vb.).
+- [x] Büyüme Rasyolarına dayalı "Kırmızı Bayrak" kurallarını uygula.
+
+## [AKTİF] Aşama 2: Kriptodan İzole Sunucu/Frontend Entegrasyonu
+- `[/]` Backend'de `macroEngine.js` oluştur.
+- `[ ]` `GET /api/macro-risk` endpointini `index.js` içine ekle.
+- `[ ]` `MacroCompassScreen.js` frontend dosyasını güncelle.
+- `[ ]` Tasarım ve testi tamamla.

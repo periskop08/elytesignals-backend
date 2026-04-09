@@ -1,0 +1,6 @@
+- `[ ]` 1. Implement `calculateKAMA` function in `scanner.js`.
+- `[ ]` 2. Integrate `technicalindicators` Ichimoku Cloud and Stochastic RSI in `analyzeCoin`.
+- `[ ]` 3. Implement Volume Approximation (Order Flow Delta) logic in `analyzeCoin`.
+- `[ ]` 4. Implement conditional 1D candle fetch logic for Daily MA Cross (to save API limits) in `analyzeCoin`.
+- `[ ]` 5. Update the Scoring System to include all 5 new indicators (+48 boost).
+- `[ ]` 6. Verify changes carefully using a local scratch test.

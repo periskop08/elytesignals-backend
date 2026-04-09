@@ -1,0 +1,35 @@
+# Update Web Dashboard AI to Gemini Native with Elyte Signals Strategy
+
+Bu planda, web panelinin sağ alt köşesindeki yazar kasa / chat botunu (Periskop AI) tamamen Gemini yapay zekasına dönüştürüyoruz ve sinyal tarayıcı (scanner) botumuzun temel karar prensiplerini bota entegre ediyoruz.
+
+## Mevcut Sorunlar
+1. Kodun içinde OpenAI SDK kırıntıları (GPT çağrıları) kalmış ve geçersiz bir Gemini modeli (`gemini-3.1-pro-preview`) kullanıldığı için bot arka planda çöküp hata mesajları üretiyor.
+2. Botun güncel strateji prompt'unda az önce "gereksiz" bulup çöpe attığımız **Elliott Dalga Teorisi (Elliott Waves)** yönergeleri kalmış.
+3. Bot, anlık sistemimizde kullandığımız SMA 200 soft filtresini, Hacim barajını ve R:R Katı kuralını bilmiyor.
+
+## Proposed Changes
+
+### 1. `backend/index.js` LLM Çağrıları Yükseltmesi
+Gemini SDK'sını native olarak kurup intent parsing (Kullanıcının hangi coini, hangi yönde, hangi kaldıraçla sorduğunu anlayan kod) kısmındaki GPT tabanlı API isteğini `gemini-2.5-flash` kullanarak Gemini formatına çevireceğiz. Ana analiz sorgusu için de sağlam ve güncel bir model olan `gemini-1.5-pro` çağıracağız. (Tamamen Native Google SDK formatında).
+
+#### [MODIFY] `backend/index.js`
+- `ai.chat.completions.create` (OpenAI formatı) kod bloğu silinip yerine `model.generateContent` JSON response formatı destekli Gemini SDK çağrısı eklenecek.
+- `gemini-3.1-pro-preview` geçersiz model ismi yerine `gemini-1.5-pro` yazılıp hatasız bağlantı kurulacak.
+
+### 2. Elyte "Kurumsal Disiplin" Strateji Promptunun Yazılması
+Sanal asistanın (Chat) analiz üretirken kullandığı ana komut dosyası (Prompt), ana backend motorumuzun (scanner.js) kurallarıyla 1:1 formatta güncellenecektir. 
+
+#### Prompt Değişiklikleri:
+- **Eski Satır Silinecek:** `- Periskop Modeli relies on advanced Price Action (PA), Dynamic ATR-based Elliott Waves...`
+- **Yeni Kurallar Eklenecek:** 
+  1. Hacim (Volume) filtresi kontrolü. Sığ sulara girmemek.
+  2. 200 SMA kontrolünün yapılması (Fiyat SMA200 altındaysa Long işlemler zayıftır ve skor cezası alır).
+  3. Risk:Reward (R:R) ölçümü. (1.0'ın altında R:R oranı çıkaran işlemlere asla onay - setup verme, anında Reddet - İptal et).
+  4. Order Block (OB) ve Fair Value Gap (FVG) varsa işleme +25 veya +15 ekstra ehemmiyet verilmesi.
+  
+## Open Questions
+Brocum, AI asistanı bir coini analiz ettiğinde yukarıdaki kurallara rağmen (mesela Fiyat SMA200'ün altında ama coin mükemmel bir dip fitil bırakmış ve R:R'ı çok iyi) sana "Riskli ama denenebilir" diyebilsin mi yoksa sistem botumuz gibi anında "Hayır bu yasaklı" diyerek reddetsin mi? İnsanlara sohbet botunda biraz daha toleranslı (esnek) davranmasını ister misin?
+
+## Verification Plan
+1. Panelin sağ altından CHAT penceresini açarak "STBL için bir futures analizi yapar mısın, shortlamak istiyorum" diye soracağız.
+2. Botun SMA 200, R:R veya Order Block gibi terimleri kullanarak güncel stratejiyle detaylı bir geri dönüş yapıp yapmadığı kontrol edilecek. Mükemmel şekilde çalışıyorsa canlıya bırakılacak.

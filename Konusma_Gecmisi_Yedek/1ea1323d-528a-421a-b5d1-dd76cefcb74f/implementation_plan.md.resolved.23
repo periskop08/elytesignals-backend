@@ -1,0 +1,41 @@
+# AWS EC2 Sunucu Taşıma & Üretim Planı (Deployment & Build)
+
+Bu plan, **Elyte Signals** uygulamasının backend mimarisini yerel geliştirme ortamından çıkarıp 7/24 kalıcı **Amazon Web Services (AWS)** sunucularına taşıma ve mobil uygulamayı bağımsız bir `.apk` / uygulama paketi haline getirme adımlarını içerir.
+
+## User Review Required
+
+> [!CAUTION]  
+> Sunucu kurulumuna geçmeden önce Amazon AWS panelinden **Ubuntu tabanlı bir EC2 bulucu** ayağa kaldırmanız ve o sunucuya bağlanabileceğim bir **SSH Key (.pem dosyası)** ile sunucunun **Public IP (Açık IP) numarasını** bana iletmeniz gerekmektedir.
+
+## Önerilen İş Aşamaları (Proposed Changes)
+
+Mimarinin taşıma süreci aşağıdaki alt bileşenlerin taşınmasından oluşmaktadır:
+
+### 1. AWS EC2 Sunucusunun Yapılandırılması (SSH Üzerinden Otomatik)
+Sizden `.pem` anahtarını aldıktan sonra ben yerel bilgisayarınızın terminalini kullanarak sunucunuza `ssh` bağlantısı kuracağım:
+- Sunucuya **Node.js, npm ve SQLite** kurulumları otomatik betiklerle yapılacak.
+- Amazon Güvenlik Gruplarından (Security Groups) gerekli olan HTTP/Verilerim (**Port 3000** veya **80**) trafiği izinleri kontrol edilecek.
+- İşletim sistemi çökmelerine karşı uygulamanın yeniden başlamasını sağlayan **PM2 (Process Manager)** kurulacak.
+
+### 2. Backend Dosyalarının Amazon'a Transferi
+Yerel diskinizde çalışan `backend` projesi rsync/scp gibi güvenli protokollerle sunucunuza aktarılacak.
+- `backend/index.js` ve veritabanı `backend/signals.db` sunucuya çıkacak.
+- `dotenv` içerisindeki OpenAI API anahtarı gibi sırlar sunucudaki .env dosyasına tanımlanacak.
+
+### 3. Mobil Uygulamanın Üretime Hazırlanması (Frontend)
+- `mobile/src/screens/HomeScreen.js`, `FavoritesScreen.js`, `StatisticsScreen.js` ve `SignalHistoryScreen.js` dosyalarında `http://192.168.68.51:3000` şeklinde yazan yerel test IP'leri doğrudan sizin **Amazon EC2 IP adresinizle** değiştirilecek.
+
+### 4. Expo APK (EAS Build)
+Mobil proje ayarları `app.json` üzerinden nihai hale getirilecek. Akabinde dilerseniz Android işletim sistemi için `eas build -p android` (kurulum dosyası çıkarımı) prosedürünü sizin yerelinizde başlatacağım. 
+
+## Open Questions
+
+> [!IMPORTANT]  
+> 1. Amazon tarafında bir **EC2 Sunucusu (Instance)** oluşturdunuz mu? Oluşturduysanız sunucunun **IP Addresini** ve indirdiğiniz `.pem` uzantılı anahtarı bilgisayarınızda hangi klasöre kaydettiğinizi bana yazar mısınız?
+> 2. Android cihazlar için direkt yüklenebilir (Installable) bir `.apk` dosyası alalım mı?
+
+## Verification Plan
+### Automated & Manual Verification
+- Amazon AWS sunucusuna uzaktan SSH ile erişerek `pm2 status` loglarına bakılacak ve `Active` statüsü görülecek.
+- Uygulama çalışır durumda test edilecek, API `http://<AWS-IP>:3000` curl veya postman gibi isteklerle teyit edilecek.
+- Mobil uygulama bağımsız APK halinde çalıştırılarak lokal ağ test ortamından tamamen kurtulduğu teyit edilecek.

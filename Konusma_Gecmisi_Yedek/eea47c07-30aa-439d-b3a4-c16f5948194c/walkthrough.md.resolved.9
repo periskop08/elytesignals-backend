@@ -1,0 +1,20 @@
+# Otonom Keşif Robotu (Screener) Kurulumu Tamamlandı
+
+Talebiniz doğrultusunda **Otomatik Keşif Robotu** AWS arka uca kuruldu ve tamamen bağımsız bir şekilde veri akışı sağlandı.
+
+## Gerçekleştirilen Adımlar
+
+1. **Tarayıcı Motoru (`screener_engine.js`) Yazıldı:**
+    - `yahoo-finance2`'nin `screener` API'si kullanılarak `day_gainers`, `aggressive_small_caps` ve `undervalued_growth_stocks` kategorilerinden her gün dinamik potansiyel varlıklar çekilmesi sağlandı.
+2. **Yapay Zeka Onay Mantığı Eklendi:**
+    - Çekilen ham hisseler Gemini 3.1 Pro engine üzerinden filtreleniyor.
+    - AI, bu hisseye kendi 100 baz sistemi üzerinden not veriyor ve eğer **Skor > 85** ise onaylıyor.
+3. **Portföye Otomatik Alım ve 5% Ağırlık:**
+    - Yapay zeka onayından geçen hisse senedi o anki piyasa lot fiyatından bölünerek **%5 portföy ağırlığıyla** `portfolio_assets` tablosuna direkt ekleniyor.
+4. **Telegram C3 Uyarısı:**
+    - Alım esnasında bağlı olan VIP Telegram grubuna "🚀 YAPAY ZEKA FIRSAT KEŞFİ!" başlığıyla hisse senedi radarı düşüyor.
+5. **Kurulum**
+    - AWS sunucusuna (*13.60.44.209*) dosyalar gönderilip PM2 yeniden başlatıldı.
+
+## Sonuç
+Sistem **hafta içi her gün saat 09:00'da** uyanıp tek başına avlanmaya başlayacak. Artık hisse araştırmayı yapay zekaya emanet ettik!

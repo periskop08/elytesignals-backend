@@ -1,0 +1,21 @@
+# Elyte Web "Canlı Borsa Terminali" Güncellemesi
+
+Web Dashboard uygulamanızı statik bir görünümden kurtarıp adeta bir **VIP Trading Station**'a (Canlı Piyasa Görüntüleyicisine) dönüştüren yenilikler devreye alındı. Mobil uygulamadaki dinamik vizyon artık Web platformunda da aynen çalışıyor.
+
+## Yapılan Geliştirmeler
+
+### 1. ByBit Canlı Fiyatlandırma Sistemi
+Arka planda saniyede *birkaç defa* çalışan bir veri çekici (Polling) devreye sokuldu. Sisteminizi yormadan dünyaca ünlü kripto para borsası ByBit üzerinden tüm aktif koinlerinizin anlık (Real-Time) fiyatları panosuna dolduruluyor. 
+
+### 2. Kâr ve Zarar (PNL) Yüzdesi ve Animasyonu
+- Sinyal kartlarının sağ tarafında, İşlem türünün (LONG/SHORT) hemen solunda artık **Canlı PNL oranı** (örn: `+%1.28`) beliriyor.
+- **Çakar Animasyon (Blinking):** Tıpkı polis lambası gibi porsiyon ve kâr dengesine göre hızlanan ışıklar eklendi. İşlem %1 kârdaysa yavaş, %2 kârdaysa normale yakın, %3'ü geçerse oldukça sert bir frekansla yanıp sönen ve kullanıcının dopaminini artıran "flaşör" altyapısı CSS `@keyframes` içine gömüldü.
+
+### 3. Sinyal Detay Görünümü ve TradingView IFrame
+Herhangi bir sinyal kartına tıkladığınızda artık hiçbir yere sapmadan **Ana Panel** değişiyor ve ekranın orta alanı *Sinyal Detay Merkezi*'ne dönüşüyor.
+- Tepede sizin mobil uygulamanızdaki gibi `Blinking Lamba`, `Giriş`, `Hedef`, ve `Stop` sayıları var.
+- Hemen altına ise sayfanızın tasarım dili olan **Karanlık Tema (Dark Mode)** ile mükemmel bir uyum sergileyen `1 Saatlik (1H)` devasa bir **TradingView Canlı Grafiği** açılıyor.
+- Dilediğiniz zaman sol üstteki **Sol Ok** (Geri Yön) butonuna basarak Taramalar (Canlı Akış) menüsüne kayıpsızca dönebilirsiniz.
+
+> [!TIP]
+> TradingView paneli için herhangi bir devasa NPM kütüphanesi sömürülüp site yavaşlatılmadı. TradingView'un orijinal "Widget Iframe Embed" kütüphanesi kullanıldığı için masaüstü veya mobilde tarayıcı hiç yorulmadan su gibi akıyor.

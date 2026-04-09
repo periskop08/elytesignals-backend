@@ -1,0 +1,18 @@
+# Top-Down Pivot Motoru 🏔️
+
+Yapay Zeka (AI) Asistanınızın yeteneklerini az önce Dünya çapında nadir görülen bir seviyeye çıkardık. Analiz motorumuz artık "at gözlüğü" takıp sadece 1 saatlik grafiğe bakmıyor; bir helikoptere binip tüm ormanı kuş bakışı tarıyor.
+
+## 🛠 Neler Değişti?
+
+### 1. Eşzamanlı 5 Parça Zaman Dilimi (MTF)
+Siz "Bitcoin'i analiz et" düğmesine bastığınız milisaniye içerisinde, sistem arka planda Binance'e koşup **1 Aylık (1M), 1 Haftalık (1W), 1 Günlük (1d), 4 Saatlik (4h) ve 1 Saatlik (1h)** grafiklerin tam 100'er adet mumunu çekiyor. Bu da yetmiyor, çektiği her bir periyodun; RSI'ını, MA50'sini, Hacim Ortalamasını (RVOL), AVWAP'ını, Hacim Düğümünü (POC) ve tabii ki Elliot Dalga Yapısını *birbirlerinden ayrı ayrı* hesaplıyor.
+
+### 2. Fibonacci Altın Oran Hesaplamaları
+Tam da talep ettiğiniz gibi backend matematiğinin içine yepyeni bir "Fibonacci Motoru" kurduk. Yapay Zekadan önceki aşamada, sistem o zaman dilimindeki Zirve ile Dip aralığını ölçüp `0.236, 0.382, 0.5 (EQ), 0.618 (Altın Oran) ve 0.786` seviyelerini çıkarıyor.
+
+### 3. Confluence (Kesişim) Algoritması
+Gemini için yazılan devasa komut dosyasını (Prompt) tamamen yeniledik. Gemini artık önüne konan bu 5 farklı klasörü okuduğunda kendisine verdiğim şu emre uyuyor:
+> *"1 Aylık grafikte bulduğun 0.618 Fibonacci desteğine bak. Bir de dönüp 4 Saatlik grafikteki Elliot 4. Dalga seviyesine veya Saatlik formasyonlara bak. İkisi aynı fiyata denk geliyorsa bu bir ÖRTÜŞMEDİR (Confluence) ve kullanıcıya orayı kaçırılmaz bir Alım / Satım yeri olarak müjdele."*
+
+## 💡 Sonuç
+Artık **"Dipten almak istiyorum, Bitcoin'i en iyi fiyattan nereden yakalarım?"** sorusunu sorduğunuzda alacağınız cevap; küçük bir destek-direnç bilgisinden ziyade; "Dostum, Haftalık grafikteki 0.618'e denk gelen $X seviyesi ile, 4 Saatlik grafikteki Elliot dip tespiti tam üst üste biniyor, burası harika bir destek!" kıvamında son derece elit bir çıkarım olacaktır. Bol şans ve iyi testler!

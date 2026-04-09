@@ -1,0 +1,38 @@
+# Google Sheets Sinyal Entegrasyon Planı
+
+Sistemimizin ürettiği "Wall Street" kalitesindeki elit sinyalleri, şeffaf bir takip arşivi oluşturmak adına Google Sheets dosyasına otomatik yedekleyeceğiz.
+
+`google-api.js` altyapısı sistemde halihazırda var. Sinyaller veritabanına (`signals.db`) ve Telegram'a aktarıldığı anda, tam o bloğun arasına Google Sheet API tetikleyicisi ekleyeceğim.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Sinyalleri oraya yazabilmem için açacağın tabloyu sistemimizin özel güvenlik hesabına yetkilendirmen (Editör olarak paylaşman) ve ID'sini bana vermen gerekiyor.
+
+Lütfen tabloyu açtıktan sonra sağ üstteki "Paylaş (Share)" butonuna basıp şu mail adresini **Editör** yetkisiyle ekle:
+`elytesignal@elytesignals.iam.gserviceaccount.com`
+
+**Tablonda Olması Gereken Başlıklar (A Sütunundan başlayarak):**
+1. **Tarih (Zaman)**
+2. **Sembol**
+3. **Yön (LONG/SHORT)**
+4. **Giriş (Entry)**
+5. **Hedef (Target)**
+6. **Stop (SL)**
+7. **Kalite Skoru**
+8. **Filtre Uyarıları**
+*(Ben verileri tam bu sırayla yazacak şekilde kodu ayarlayacağım)*
+
+## Proposed Changes
+
+### [MODIFY] `backend/scanner.js`
+- Sinyalin veritabanına eklenip başarıyla oluşturulduğu satırın (Satır 599) hemen altına `google-api.js` modülünden `appendToSheet()` fonksiyonunu çağıracağım.
+- Veriyi bir Dizi (Array) halinde formatlayıp: `[Tarih, symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings]` Google Sheet'e anlık "Satır Ekleme (Append)" komutuyla yollayacağım.
+
+### [MODIFY] `backend/.env` (Gerektiğinde)
+- Tabloyu oluşturduğunda tarayıcı URL'sinde bulunan upuzun ID'yi (Örn: `1BxiMVs0XRYNzO...`) bana vermelisin. Bunu AWS sunucusundaki `.env` dosyasına `GOOGLE_SHEETS_ID=` olarak kaydedeceğim.
+
+## Open Questions
+
+> [!TIP]
+> Tabloyu oluşturup mail adresimi ekledikten sonra URL'deki Tablo ID'sini bana yollar mısın? Sonrasında entegrasyonu hemen Canlıya alacağım!

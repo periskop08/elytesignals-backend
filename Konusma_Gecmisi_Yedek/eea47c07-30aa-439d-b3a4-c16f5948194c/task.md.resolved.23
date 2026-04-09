@@ -1,0 +1,7 @@
+# Checkbox List
+- [ ] Migrate `intentResponse` in `backend/index.js` to use `gemini-1.5-flash` natively.
+- [ ] Update `backend/index.js` to use `gemini-1.5-pro` for detailed strategy replies.
+- [ ] Implement Volume, SMA200, RR constraints and OB/FVG awareness in the AI prompts.
+- [ ] Push updates to AWS production server and restart pm2.
+- [ ] Verify chat functionality.
+- [ ] Create Walkthrough.

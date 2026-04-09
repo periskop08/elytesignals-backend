@@ -1,0 +1,29 @@
+# Ethereum & Dominans Optimizasyonu Planı
+
+Çok haklısın, son yaptığımız güncellemede ETH (Total Market Proxy) ve BTC Dominans (BTCDOM) verilerini çektik, loglayarak arka planda hazır hale getirdik. Ancak henüz `analyzeCoin` içerisindeki kararlara etki etmesini sağlamadık, sadece BTC yönüne göre filtreleme (Reddetme) işlemi aktif. 
+
+Bu değerleri aktif karar mekanizmasına dahil etmek, sistemin "Zeka Puanını" %100 oranında artıracaktır.
+
+## Proposed Changes
+
+### [MODIFY] `backend/scanner.js`
+Şu anki basit reddetme mekanizmasını, ETH ve Dominans verilerini de hesaba katacak şekilde genişleteceğiz:
+
+#### 1. Kesin İptal (Red) Kurallarının Genişletilmesi
+Sadece BTC'ye değil, Altcoin pazarının lideri olan ETH'ye (Total Proxy) de bağlanacak:
+- Eğer Sinyal **LONG** ise ve **ETH Trendi `BEAR` veya `STRONG_BEAR`** ise -> **Sinyali İptal Et!** (BTC nötr olsa bile, altcoin piyasası kan ağlıyorsa boşa long aranmaz).
+- Eğer Sinyal **SHORT** ise ve **ETH Trendi `BULL` veya `STRONG_BULL`** ise -> **Sinyali İptal Et!** (Altcoinler ralli yaparken şort aranmaz).
+
+#### 2. Kalite Skoruna (Quality Score) Etki Eden Makro Puanlama (Yeni)
+Makro piyasa nötr veya hafif zıt ise direkt reddetmek yerine puanını (Skorunu) artırıp azaltacak mekanizma ekleyeceğiz:
+- Eğer BTC Dominansı (`btcDomTrend`) **`STRONG_BULL`** veya **`BULL`** (Dominans sert yükseliyorsa) ise:
+   - Bu durum altcoinlerden likiditenin BTC'ye kaydığı anlamına gelir.
+   - Bu nedenle oluşan **LONG (Yükseliş)** altcoin sinyallerinin `qualityScore` puanından `-15` ceza puanı düşeceğiz. (Zorla barajı aşıyorsa çok sağlamdır, onaylanır).
+- Eğer BTC Dominansı (`btcDomTrend`) **`BEAR`** veya **`STRONG_BEAR`** (Dominans düşüyorsa) ise:
+   - Bu tam bir Altcoin Sezonu/Partisi işaretidir!
+   - Açılan tüm **LONG** sinyallerine `qualityScore` puanı olarak fazladan `+15` bonus eklenecek. Sinyallerin kalitesi barajı çok daha kolay aşacak.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bu mantıksal kurallar (Dominans yükselirken altcoin longlarına ceza, Dominans düşerken altcoin longlarına ödül puanı; ve ETH yönüne göre ters işlemleri kökten reddetme) kripto piyasasının temel Price Action dinamiklerinden alınmıştır. Kuralların veya puan cezalarının miktarını onaylıyor musun? Onaylarsan ETH ve BTCDOM verilerini direkt oyunun içerisine dahil edip sunucuya göndereceğim!

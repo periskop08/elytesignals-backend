@@ -1,0 +1,48 @@
+# Global English Translation Plan
+
+Kullanıcının talebi üzerine, Kripto Sinyal ve AI Analiz uygulamasının **Uçtan Uca (End-to-End)** tamamen İngilizceye çevrilmesi (Uluslararası platform standartlarına geçişi).
+
+## User Review Required
+
+> [!WARNING]
+> Bu süreç, hem mobil arayüzdeki (React Native) buton ve başlıkların dönüştürülmesini hem de arka planda çalışan yapay zeka beyninin Türkçe çıktı vermek yerine Amerikan İngilizcesi (Trading Jargonu) ile yanıt vermesini kapsayacak.
+> 
+> Lütfen yapacağım bu devasa çeviri operasyonunun kapsamını onaylar mısın?
+
+## Proposed Changes
+
+### [Frontend (React Native)]
+
+Mobil uygulamadaki tüm ekranların metinleri "Wall Street" standartlarına uygun profesyonel İngilizce trade jargonuna dönüştürülecek:
+
+#### [MODIFY] `mobile/src/navigation/AppNavigator.js`
+- Alt menü isimleri: Ana Sayfa -> **Home**, Sinyaller -> **Dashboard**, Analiz Sor -> **AI Analyst**, İstatistik -> **Stats**, Favoriler -> **Favorites**.
+
+#### [MODIFY] `mobile/src/screens/HomeScreen.js`
+- "Aktif Alım Fırsatları", "Hedef", "Zarar Kes", "Şu Anki Kâr" -> "Active Trade Setups", "Target", "Stop Loss", "Unrealized PNL" vb. şekillerde çevrilecek.
+
+#### [MODIFY] `mobile/src/screens/DashboardScreen.js`
+- "Özet İstatistikler", "Geçmiş İşlemler", "Yapay Zeka Analisti" -> "Quick Stats", "Trade History", "AI Assistant".
+
+#### [MODIFY] `mobile/src/screens/StatisticsScreen.js`
+- Performans Özeti -> "Performance Summary", Başarılı (TP) -> "Wins (TP)", Başarısız (SL) -> "Losses (SL)", Kazanma Oranı -> "Win Rate", Kâr Barajını Aşanlar -> "Trades Reaching +2%".
+
+#### [MODIFY] `mobile/src/screens/SignalDetailScreen.js & SignalHistoryScreen.js`
+- "Sinyal Detayı", "Önceki İşlemler", "Giriş Fiyatı" -> "Signal Details", "Historical Trades", "Entry Price", vb.
+
+#### [MODIFY] `mobile/src/screens/AnalysisScreen.js`
+- "Hangi kriptoyu analiz etmemi istersin?", hata mesajları ve ipuçları İngilizce olacak.
+
+### [Backend & AI Prompt]
+
+#### [MODIFY] `backend/index.js`
+- **Fallback Uyarılar:** "Botumuz yoğun" -> "AI is currently busy, please try again."
+- **Niyet Okuyucu:** JSON yapısı aynı kalacak, prompt İngilizce "Intent Extractor" a dönecek.
+- **SPOT & FUTURE Prompt Templates:** GPT'ye verilen format kuralları, sözlükler (POC, AVWAP) ve "ÖZET SPOT SETUP" tabloları tamamen İngilizce trade jargonuyla yeniden kodlanacak ("SPOT SETUP SUMMARY", "Entry Zone", "First Resistance", "Moonbag Warning").
+- AI çıktıyı üretirken Türkçe "dostum" tarzı konuşmak yerine profesyonel İngilizce ("Mate" veya "Trader") üslup kullanacak.
+
+## Verification Plan
+
+### Manuel Doğrulama
+1. Uygulama menüleri kontrol edilip taşma (uzun ingilizce metin) olup olmadığına bakılılacak.
+2. AI "Ask Analyst" üzerinden herhangi bir Bitcoin analizi istenip raporun tamamen İngilizce gelip gelmediği test edilecek.

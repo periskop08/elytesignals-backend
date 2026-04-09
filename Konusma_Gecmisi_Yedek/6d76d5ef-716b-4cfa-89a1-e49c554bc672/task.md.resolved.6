@@ -1,0 +1,14 @@
+# Global Piyasa Filtresi Entegrasyonu Görev Listesi
+
+- `[x]` **Adım 1:** Global sensör verilerini tutacak `globalMarketState` objesinin tanımlanması.
+- `[x]` **Adım 2:** `analyzeGlobalMarket()` fonksiyonunun yazılması.
+  - Bybit API üzerinden BTCUSDT (1h, 4h, 1d) verilerinin çekilmesi.
+  - Binance API üzerinden BTCDOMUSDT (BTC Dominans) verilerinin çekilmesi.
+  - Binance API üzerinden ETHUSDT (TOTAL ve Altcoin market proxy'si olarak) verilerinin çekilmesi.
+  - Bu verilerin teknik indikatörlerle (EMA20, SMA50, RSI) "STRONG_BULL", "BULL", "NEUTRAL", "BEAR", "STRONG_BEAR" trend formatına çevrilmesi.
+- `[x]` **Adım 3:** Global Sensör'ün ana döngüye (15 veya 30 dakikada bir çalışacak şekilde) entegre edilmesi.
+- `[x]` **Adım 4:** `analyzeCoin` içerisindeki LONG ve SHORT karar mekanizmasının güncellenmesi.
+  - Sinyal SHORT ve BTC 4h/1d "BULL" ise puan kesintisi veya iptal (İptal edildi).
+  - Sinyal LONG ve BTC 4h/1d "BEAR" ise puan kesintisi veya iptal (İptal edildi).
+- `[/]` **Adım 5:** Test sürecinin lokal olarak yapılması.
+- `[ ]` **Adım 6:** AWS Sunucusuna (Canlıya) Deploy edilmesi ve servisin yeniden başlatılması.

@@ -1,0 +1,19 @@
+# AWS EC2 Ortam Taşıma Raporu
+
+**Hedef:** Sistemin kalıcı olarak çevrimiçi tutulması ve bağımsız bir yapıya dönüşmesi.
+
+Tüm backend (veritabanı analiz ve yapay zeka entegrasyonu) AWS EC2 Ubuntu sunucusuna taşınmış ve mobil uygulamanın buna olan bağlantıları güncellenmiştir.
+
+## Tamamlanan Adımlar
+1. `chmod 400` yetkileri sağlanmış ve Amazon sunucusuna şifresiz, güvenli `SSH` arka kapı köprüsü kurulmuştur.
+2. Amazon'a güncel `Node.js 20` ve `SQLite3` ortamları yüklenmiştir.
+3. Kripto algoritması, AWS sunucusunda 7/24 arkada planda (background daemon) çalışabilmesi için **PM2 Process Manager** kullanılarak başlatılmıştır.
+4. Terminalde alınan Canlı PM2 Logs raporuna göre, sistem başarıyla başlamış ve `449 USDT` piyasasını taramak için Amazon altyapısında tur atmaya başlamıştır.
+5. Mobil Uygulamadaki (`mobile/src/screens`) bütün arayüzlerin `192.168.68.51` olan eski yerel hat bağlantıları `13.60.44.209` (Amazon Elastic IP) olarak yeniden programlanmıştır.
+
+## Kritik Doğrulamalar (User Action Required)
+> [!WARNING]  
+> Mobil uygulamanız `13.60.44.209:3000` adresine istekte bulunacaktır. Bu sebeple **Amazon AWS > EC2 > Security Groups** sekmesinden ilgili sunucunuzun güvenliğine **Custom TCP kuralı ekleyip Port Range alanını 3000 yaparak** "Anywhere (0.0.0.0/0)" erişime açtığınızdan emin olun. Aksi halde telefonunuz sunucu devrede olsa da Port 3000 kapalı olduğu için veri çekemez.
+
+## Sonraki Adım (EAS Build)
+Sisteminizi Android cep telefonunuza kalıcı APK olarak kurmak için "EAS Kullanarak" bir derleme yapmamız gereklidir. Gerekli Expo/EAS hesabı onaylandığında işlem başlayacaktır.

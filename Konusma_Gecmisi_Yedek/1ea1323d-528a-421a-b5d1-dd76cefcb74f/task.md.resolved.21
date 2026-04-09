@@ -1,0 +1,12 @@
+# Elliot Dalga Entegrasyonu Görevleri
+
+- [x] 1. Matematiksel Modül Oluştur (`backend/elliott.js`)
+  - [x] Mum (Kline) verilerinden ATR değerini hesaplayan yardımcı fonksiyonu yerleştir.
+  - [x] ATR bazlı dinamik **ZigZag Algoritması** ile trend yönlerini ve `Pivot High`/`Pivot Low` noktalarını çıkar.
+  - [x] Saptanan son 5 pivot noktasını alarak Elliot'un 3 Altın Kuralına (2. dalga ihlali, 3. dalganın kısalığı, 4. dalga örtüşmesi) göre sıralı dalga biçimi olup olmadığını doğrula.
+  - [x] Tespitleri `{"asset": "BTC", "current_wave": 3, "invalidates_at": 45000, "confluence_zone": [X, Y], "status": "Valid/Invalid"}` formatında döndür.
+- [x] 2. AI Analiz Motorunu Besle (`backend/index.js`)
+  - [x] Sohbet analizlerinde `elliott.js` fonksiyonunu çalıştırıp dönen JSON'u Gemini'a "Elliot Durumu" olarak promptla.
+- [x] 3. Sinyal Motorunu Zenginleştir (`backend/scanner.js`)
+  - [x] Sinyalin arka planda üretimi sırasında Elliot tespitini çağır ve uyarı logları üret.
+- [x] 4. Test et ve Node Sunucusunu yeniden başlat.

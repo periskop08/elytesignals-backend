@@ -1,0 +1,18 @@
+# Hedef
+
+1. **Dinamik Aktif İşlem İstatistikleri:** Ana sayfada (Dashboard) bulunan toplam işlem sayısının altında, aktif pozisyonların anlık olarak kaç adetinin LONG, kaç adetinin SHORT olduğunu, ve Binance anlık fiyatlarına göre kaç tanesinin O AN KÂRDA, kaç tanesinin ZARARDA olduğunu dinamik olarak göstereceğiz.
+2. **%2 Kâr Görme İstatistiği:** Aktifken fiyat dalgalanması sırasında en az %2'lik (veya daha fazla) bir kâr seviyesini "görmüş" olan işlemleri sistem otomatik not edecek. (Daha sonra stop dahi olsalar, bu yeteneği başardıkları kaydedilecek). İstatistik sayfasında bu işlemler ayrı bir "Başarı (%2+ Görenler)" sayacı olarak gösterilecek; böylece TP olan işlemler yine orjinal haliyle listelenmeye devam edecek.
+
+## Önerilen Değişiklikler
+
+### Backend
+1. **Veritabanı (SQLite):** `signals` tablosuna `reachedTwoPercent INTEGER DEFAULT 0` kolonu eklenecek.
+2. **Scanner Bot (scanner.js):** 1 dakikalık döngü sadece Stop/TP'yi değil, aynı zamanda anlık fiyatın işlemin Entry noktasına göre `%2` kârı geçip geçmediğini kontrol edecek. Eğer geçmişse veritabanındaki `reachedTwoPercent` bayrağını `1` olarak işaretleyecek. Ayrıca Binance'ten 300+ coini tek tek çekmek yerine, `api/v3/ticker/price` ile tüm fiyatları tek hamlede (batch) çekecek şekilde hızlandırılacak.
+3. **API Uç Noktası (index.js):** `/api/signals/stats` endpoint'i genişletilecek. Tüm coinlerin anlık fiyatları tek hamlede alınıp; aktif pozisyonlar içindeki Kâr/Zarar olanların sayısı ve Long/Short dağılımı hesaplanacak. Ayrıca `reachedTwoPercent` olan toplam işlem sayısı (Geçmiştekiler dahil) arayüze gönderilecek.
+
+### Frontend (Mobil Tarafı)
+1. **Ana Sayfa (DashboardScreen.js):** "Aktif Piyasada X Sinyal Bulunuyor" yazısının alt bölgesine yeni bir şık kutucuk açılacak. Burada "📈 14 Long / 📉 5 Short" ve hemen yanında animasyonlu renklerle "✅ 10 Kârda / ❌ 9 Zararda" şeklinde anlık özet tablo yerleştirilecek.
+2. **İstatistik Sayfası:** Ayrıyetten "İşlemlerde %2 kâr görenler" bilgisini vermek için `DashboardScreen` veya `SignalHistoryScreen` üzerinde yeni bir vurgulu analiz kartı oluşturulacak: "✨ %2 Kâr Barajını Aşan İşlemler: X adet".
+
+## Onay Bekliyoruz
+Lütfen planı onaylayın, ardından sistem mimarisini ve arayüzü tek hamlede hızlıca inşa edeceğim. Eklemek istediğiniz veya rengini/düzenini farklı istediğiniz bir şema varsa belirtebilirsiniz.

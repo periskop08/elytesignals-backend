@@ -1,0 +1,41 @@
+# 🚀 Frontend Ana Sayfa ve Makro Pusula Revizyon Planı
+
+Arayüzdeki Taramalar sekmesinin "Sinyaller" olarak değiştirilmesi, yepyeni bir "Ana Sayfa" tasarlanması ve oluşturduğumuz Dominans verilerinin (BTC.D, USDT.D, Alt.D) bu yeni sayfaya Glassmorphism tasarımıyla entegre edilmesini hedefleyen yapılandırma planı:
+
+## ⚠️ Kullanıcı Onayı Gerekenler (User Review)
+
+> [!IMPORTANT]  
+> Yeni eklenecek "Ana Sayfa"nın (Home Tab) mobil uygulamada sayfa açıldığında **ilk karşılayan ekran (Varsayılan Sekme)** olmasını planladım. Böylece kullanıcı uygulamayı açtığında direkt piyasa genel yönünü görebilecek, "Sinyaller" sekmesine kendi geçiş yapacak. Bunu onaylıyor musun?
+
+## 🛠 Önerilen Değişiklikler
+
+### 🧹 1. Backend API Optimizasyonu (`index.js` & `scanner.js`)
+Mevcut durumda Dashboard'a veri gönderen `index.js` içindeki bağımsız DXY sorgusu tamamen çöpe atılacaktır.
+#### [MODIFY] `scanner.js`
+- `globalMarketState` objesini `getGlobalMarketState = () => globalMarketState` şeklinde dışa (export) aktaran bir fonksiyon eklenecek.
+#### [MODIFY] `index.js`
+- `updateMacroStatus` fonksiyonu tamamen silinecek. 
+- `/api/macro` uç noktası doğrudan `scanner.js`'den gelen 100% gerçek zamanlı makro/kripto dominans verilerini (USDT.D, BTC.D, vb.) döndürecek. API'nin ağırlığı sıfıra indirilecek.
+
+---
+
+### 🎨 2. Frontend Navigasyon Düzenlemeleri (`Dashboard.jsx`)
+#### [MODIFY] `Dashboard.jsx` (Menüler)
+- Menü Listesi (Sidebar & Alt Bar): `Ana Sayfa` (Home Ikou), `Sinyaller` (Activity Ikonu), `Favoriler` (Star Ikonu), `İstatistik` (PieChart) şeklinde 4 sekmeye revize edilecek.
+- `Taramalar` veya `Tarayıcılar` yazan her metin `Sinyaller` kelimesiyle değiştirilecek.
+
+---
+
+### 🔮 3. Yeni Ana Sayfa Tasarımı (Macro Compass V2)
+Göz alıcı, Glassmorphism temalı yeni bir Panel hazırlanacak. Panel aşağıdaki widget'ları barındıracaktır:
+#### [MODIFY] `Dashboard.jsx` (Görünüm Modülü)
+- **Ana Sayfa Görünümü:** Sayfanın en üstünde gradient bir "PeriskopAI Makro Pusulası" başlığı.
+- **Kart 1 (Genel Yön):** BTC ve ETH Trendlerinin mevcut mum analiz durumu (Boğa/Ayı).
+- **Kart 2 (Tether Dominansı):** Kripto piyasasındaki Risk/Korku durumunu gösteren USDT.D barı ve yüzdesi. (Örn: \> %5 Kırmızı uyarı)
+- **Kart 3 (Kripto Para Akışı):** BTC Dominans ve Altseason durumunu gösteren grafiksel şeritler.
+- Eski arayüzdeki "markets" sekmesinden makro veriler (ufak şeritler) tamamen kaldırılıp, sadece "Ana Sayfa" daki dev ekrana taşınacak.
+
+## 🧪 Doğrulama Planı (Verification)
+1. **API Testi:** `http://localhost/api/macro`'nun DXY yerine USDT, BTC verilerini düzgün bastığının terminalde kontrolü.
+2. **Görsel Önizleme:** React arayüzünde "Ana Sayfa" bileşenlerinin mobile duyarlı esnek yapıda çalışıp çalışmadığının testi.
+3. **AWS Deploy:** Lokaldeki test başarıyla bittikten sonra tüm `web/src` ve `backend` tarafının sunucuya çekilmesi.

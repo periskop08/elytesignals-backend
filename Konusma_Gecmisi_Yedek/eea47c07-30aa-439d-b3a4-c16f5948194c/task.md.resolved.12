@@ -1,0 +1,7 @@
+# Pine Script Parity Upgrade Task
+
+- [x] Add MTF (Multi-Timeframe) support for 4H (+15 Pts)
+- [x] Add MTF support for 1D Golden Cross (+10 Pts)
+- [x] Implement logical Risk:Reward calculation & dynamic targets (+25 Pts)
+- [x] Write final `elyte_scanner.pine` artifact
+- [x] Provide walkthrough to user

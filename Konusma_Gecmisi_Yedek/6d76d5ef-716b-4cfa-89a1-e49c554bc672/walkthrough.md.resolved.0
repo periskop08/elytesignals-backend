@@ -1,0 +1,35 @@
+# Elyte Auto-Trading Bot Entegrasyonu Tamamlandı! 🚀
+
+Tebrikler dostum! Arayüzdeki düz bir sinyal sağlayıcısını alıp, doğrudan senin kişisel API anahtarlarınla Bybit hesabına hükmeden, otonom bir **"Hedge Fon Botu"na** dönüştürdük. Hem arka planda matematiksel kontrolleri yapıyor hem de arayüzde kişisel kontrol panelini sunuyor.
+
+## Neler Yapıldı?
+
+### 1. Bybit V5 Modülü ve Doğrudan Erişim
+- Hiçbir üçüncü parti aracı veya ağır kütüphane (`ccxt` gibi) kullanılmadan doğrudan Node.js `crypto` modülü kullanılarak en hafif ve en hızlı haliyle `bybit-trade.js` çekirdeği yazıldı.
+- Sinyal oluşur oluşmaz `placeOrder` fonksiyonu çalışarak emri saniyesinde USDT vadeli işlemlere gönderiyor. İşlem boyutu sabit **$500 hacim** (Örn: $50 Margin x 10 Kaldıraç) hedeflenerek lot hesaplamaları eklendi. (Dilersen bunu `process.env.BYBIT_TRADE_USD` üzerinden ayarlayabilirsin).
+
+### 2. Otonom Teyit ve Veritabanı (user_trades)
+- Tüm kişisel işlemlerin için `database.js` içine `user_trades` adında yepyeni bir takip şeması oluşturuldu.
+- Sistemin (Global Sinyallerin) kendi Stop'u gelse bile, bizim bot Bybit tarafına gidip **GERÇEKTEN pozisyon kapandı mı?** (Position Size = 0) diye kontrol edip güncel durumu ve kârı veritabanına işliyor.
+- **Zaman Damgası Koruması:** Günde bir coinden 2-3 kez sinyal gelse bile gün damgası kontrolü yapılarak o coine sadece 1 kez işlem açılması sağlandı.
+
+### 3. Favoriler Ekranında "Kişisel Panel"
+- Artık favoriler ekranındaki istatistikler ve yüzdeler sadece "Kötü/İyi giden sinyalleri" değil, **Gerçekten senin cüzdanında kârla veya zararla kapanan net sonuçları** yansıtıyor.
+- Aktif işlemlerin için sinyal kartı içerisine **"İşlemi Kapat"** butonu entegre edildi. Bu butona bastığında arka planda doğrudan `/v5/order/create` ile pozisyon sıfırlayıcı (Ters Market) emir gönderilerek borsadaki işlemin zorla kapatılıyor (Yine de sistemin o coindeki global kurulumu "Aktif" olarak devam ediyor).
+
+### 4. Akıllı UYARI Sistemleri
+- Canlı Akış (Taramalar) sekmesinde eğer bir işleme senin adına girilmişse, o sinyalin kartında **"Emir Gönderildi (Açık)"** ibaresi yazıyor.
+- Eğer işlem TP, SL veya Manuel olarak kapattıysan bir daha girmemen için kocaman bir uyarı veriyor: `Bu işlem açıldı ve KÂRLA sonlandırıldı (+X.XX%). Tekrar açmayınız.`
+
+## Canlıya Almadan Önce (Çok Önemli!)
+> [!IMPORTANT]
+> Sistem şu anki haliyle API aramaya ve kendi kendine tetiklenmeye tamamen hazır. 
+> Çalışması için Bybit'ten API Key ve Secret oluşturup sunucudaki `.env` içerisine şu şekilde kaydetmen gerekiyor:
+
+```env
+BYBIT_API_KEY=senin_api_key
+BYBIT_API_SECRET=senin_api_secret
+PERISKOP_TELEGRAM_ID=senin_kendi_telegram_id_numaran
+```
+
+Güle güle bol kazançlar dilerim usta! Her şey hazır! 🥂

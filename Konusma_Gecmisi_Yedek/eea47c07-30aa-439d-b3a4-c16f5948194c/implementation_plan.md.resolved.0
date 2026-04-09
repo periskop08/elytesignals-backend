@@ -1,0 +1,34 @@
+# Mobil Uygulama: Elyte AI Terminal Entegrasyonu
+
+Web uygulamasında hayata geçirdiğimiz "Sohbet ve Karar Motoru" (Quant Analyzer) özelliğinin eksiksiz olarak mobil uygulamaya uyarlanması planlanmaktadır.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - **Menü Eklemesi:** Yapay Zeka botuna ayrılmış özel bir alt sekme (Bottom Tab) oluşturulması en iyi kullanıcı deneyimini sağlayacaktır. `AITerminalScreen` isminde yeni bir sekme eklememi onaylıyor musun? (Diğer sekmeler: Taramalar, Favoriler, İstatistikler)
+> - PnL widget'ı gibi sayfa içi özellikleri istersen mevcut bir sayfaya (örn. Favoriler) da gömebiliriz, ancak yeni versiyonda AI Terminalinin ayrı bir bölüm olması daha "premium" hissettirir. Fikrin nedir?
+
+## Proposed Changes
+
+### Mobil Arayüz
+
+#### [NEW] `mobile/src/screens/AITerminalScreen.js`
+- Cam efekti (Glassmorphism) estetiği ile yeni bir Yapay Zeka ekranı oluşturulacak.
+- Sayfanın üst kısmında `POST /api/llm/analyze` tetikleyecek bir Hisse Tarayıcısı girdi alanı (Input) olacak. Analiz esnasında tıpkı webde olduğu gibi "Analiz Ediliyor..." loading durumu görüntülenecek.
+- Taranan hisselerin "CEO Skoru", "Tech Edge" ve "AI Skoru" verilerini sunan liste (LLM Radar) yer alacak.
+- Listeden bir öğeye tıklandığında, web tarafındaki "Investment Thesis" (Yatırım Tezi) raporunun detaylıca okunabileceği bir "Modal" açılacak.
+
+#### [MODIFY] `mobile/src/navigation/AppNavigator.js`
+- Bottom Tab Navigator içerisine `AI Terminal` isimli yeni bir menü elemanı eklenecek.
+- İkon olarak modern bir yapay zeka/terminal sembolü atanacak (Örn: `Bot` veya `Terminal` ikonu).
+
+## Open Questions
+- Gönderimler sırasında mobil klavye (KeyboardAvoidingView vb.) davranışlarında özel bir istek var mı, standart Native hissi mi korunsun?
+- Mevcut `FavoritesScreen` (Borsa Varlıkları) içerisinde herhangi bir ek değişiklik isteniyor mu?
+
+## Verification Plan
+
+### Automated/Manual Tests
+- Expo Go / Simulator üzerinde uygulamanın yeni Navigation sekmesi açılıp test edilecek.
+- Rastgele bir coin (Örn: TSLA) yazılarak API üzerinden "Analyze" isteği atılacak ve sonucun anında listeye/modal'a yansıması test edilecek.
+- Tasarımın karanlık (Dark Mode) temaya ve mevcut Glassmorphism hissine %100 uyumu kontrol edilecek.

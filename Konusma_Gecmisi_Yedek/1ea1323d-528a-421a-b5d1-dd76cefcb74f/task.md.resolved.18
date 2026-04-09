@@ -1,0 +1,14 @@
+# Sinyal Filtrasyonu: Win-Rate Geliştirme
+
+- [ ] 1. Bağımlılıkları Düzelt
+  - [ ] `backend/scanner.js` içerisine `technicalindicators` paketinden `ATR` ve `SMA` fonksiyonlarını dahil et.
+- [ ] 2. AVWAP ve ATR Algoritmalarını Entegre Et
+  - [ ] `analyzeCoin` içerisinde 14 periyotluk ATR'yi hesapla.
+  - [ ] Statik `%1` Stop hedefini, Dinamik `1.5 * ATR` olacak şekilde güncelle.
+  - [ ] AVWAP seviyesi ile güncel fiyat kıyaslanarak maliyet altı (LONG için) veya üstü (SHORT için) zıt işlemleri kesinlikle `return null` ile reddet.
+- [ ] 3. MTF (Çoklu Zaman Dilimi) Uyuşmazlığı
+  - [ ] 1H analizini başarıyla tamamlayıp "Sinyal Adayı" olan coinler için Binance'den hızla 4 Saatlik (4H) veriyi (`limit=50`) çek.
+  - [ ] 4 Saatlik periyotta `SMA(50)` hesaplat.
+  - [ ] Eğer büyük zaman diliminin (4H) trendi, gireceğimiz sinyalin yönüyle çelişiyorsa sinyali çöpe at.
+- [ ] 4. Test & Doğrulama
+  - [ ] Sistemi yeniden başlat ve başarılı tarama sonrasında console loglarından işlemleri teyit et.

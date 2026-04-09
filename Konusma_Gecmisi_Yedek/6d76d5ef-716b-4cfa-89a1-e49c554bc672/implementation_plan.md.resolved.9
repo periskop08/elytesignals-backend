@@ -1,0 +1,39 @@
+# Google Sheets Dinamik Senkronizasyon Planı
+
+Eline sağlık, tablo yetkisi ve ID tamam! 
+İstediğin sütun yapısını harika kurgulamışsın, ancak sormuş olduğun *"sonlandığında buraya da güncelleyebilir misin?"* sorusu işin rengini tam bir "Yazılım Mühendisliği" projesine çevirdi! Çünkü tabloya dümdüz satır eklemek kolayken, 3 gün sonra kapanan bir işlemin o koca tabloda **hangi satırda** olduğunu bulup sadece onun `Aktif` yazısını `WIN` yapmak zekice bir mimari gerektirir.
+
+Bunu çözmek için harika bir planım var:
+
+## Proposed Changes
+
+### 1- Sütun Yapısı ve Gizli Kimlik (Signal ID)
+Tabloda istediğin 8 sütunu aynen kullanacağız ancak **9. Sütuna (I Sütunu)**, sinyalin benzersiz ID'sini (Örn: `145`) yazdıracağım. Bu sütunu sistemin satırı bulabilmesi için "Kimlik (Barkod)" olarak kullanacağız. Yormaması için o sütunu sağ tıklayıp "Gizle" diyebilirsin.
+
+*Yeni Veri Şablonu:*
+1. **Tarih:** 02.04.2026 02:00
+2. **Coin Adı:** BTCUSDT
+3. **Skoru:** 45
+4. **Yön:** LONG
+5. **TP%:** %2.5 X
+6. **SL%:** %1.1 X
+7. **Durum:** ACTIVE
+8. **Açıklama:** BTC Trend: BULL, ETH Trend: BEAR
+9. **(Gizli) ID:** 12
+
+### [MODIFY] `backend/google-api.js`
+- Eski `appendToSheet` metodunu güncelleyip, sonuna **Sinyal ID (Signal ID)** gönderilmesini sağlayacağım.
+- Yeni bir fonksiyon yazacağım: `updateSheetSignalStatus(signalId, newStatus)`. Bu fonksiyon Google Sheets'teki tüm I (Kimlik) sütununu baştan sona hızlıca okuyup aradığımız ID'nin kaçıncı satırda olduğunu bulacak ve sadece G sütununu (Durum) değiştirecek.
+
+### [MODIFY] `backend/index.js` ve Cron Job
+- `backend/index.js` dosyasında borsayla (Bybit) konuşan ve `WIN/LOSS` kararını veren sisteme, karar verdikten hemen sonra yukarıdaki `updateSheetSignalStatus()` fonksiyonunu çağırma görevi verilecek.
+
+### [MODIFY] `backend/scanner.js` ve `.env`
+- Sunucudaki `.env` dosyasına Tablo ID'ni (`1VRUTg...`) isleyeceğim.
+- Sinyal yazma işleminde TP% ve SL% oranlarının matematiksel hesabı yapılarak Tablo dizisine eklenecek.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Sinyal kapandığında tablodaki o satırı bulup güncelleyebilmem için Google Tablona 9. Sütun (I Sütunu) olarak **Sinyal ID** ekleyeceğim. (Göz yormaması için o sütunu sen sonradan gizleyebilirsin). 
+> Bu mimari fikrimi ve güncellemeyi destekliyor musun? Onayladığında `.env` kaydını yapıp hemen 1 satırlık **Test Verisi** ateşleyeceğim!

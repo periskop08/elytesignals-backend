@@ -1,0 +1,6 @@
+# 📈 Momentum & Bulut Katmanı Task Listesi
+
+- `[x]` **Scanner Sinyal Motoru Revizyonu:** `scanner.js` ve `scanner_test.js` dosyaları içerisinde teknik indikatörler güncellendi.
+- `[x]` **Stokastik RSI Altın Kesişim:** "Kısmi Overbought penaltısı" devre dışı bırakıldı. Onun yerine "Momentum Cross" algoritmasına çevrilerek kesisim anında +10 net bonus alması sağlandı.
+- `[x]` **Ichimoku Testere (Chop) Filtresi:** Fiyat bulut çizgileri (SpanA ve SpanB) arasındayken `Kumo Bulutu İçi (Testere Piyasası)` uyarısı vermesi ve puan/bonus (eskiden +15 alabiliyordu) almaması yönünde algoritma optimize edildi.
+- `[/]` **Canlı Sistem Entegrasyonu:** Yenilenmiş `scanner` motorunun AWS Hedge Fund sunucusuna gönderilip `pm2 restart all` ile canlıya alınması.

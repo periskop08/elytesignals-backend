@@ -1,0 +1,15 @@
+# Akıllı Mesai (Institutional Hours) Çözümü
+
+TradFi varlıkları (NASDAQ, SP500, Hisseler) için gece manipülasyonlarını engellemek ve otonom işlemleri sadece gerçek kurumsal hacim aralığına sıkıştırmak için `scanner.js` içerisine **"Akıllı Mesai"** özelliği entegre edilecektir:
+
+## 1. Zaman Dilimi Koruması (Timezone Lock)
+Sistemin çalıştığı AWS sunucusunun (İrlanda vb.) saat dilimi ne olursa olsun, zaman hesaplaması doğrudan **İstanbul Saati (`Europe/Istanbul`)** baz alınarak yapılacaktır. Böylece kurgumuz saat farklarından sapmayacaktır.
+
+## 2. TradFi Şalteri & Hacim Odaklı Tarama
+Tarama döngüsüne şu mantık oturtulacaktır:
+- Hafta sonu şalteri (`isWeekend`) İstanbul saatine sabitlenerek daha kusursuz hale getirilecektir (Cumartesi - Pazar tradfi taranmaz).
+- Hafta içi ise saat tam `15:30` (Açılış öncesi veri dalgası) olduğunda sistem TradFi varlıklarını tarama havuzuna dahil edecek, saat `23:00` (Borsa Kapanışı) olduğunda ise vanayı anında kesecektir.
+- Kriptolar her zamanki gibi bu filtrelerden etkilenmeyecek ve 7/24 taramaya devam edecektir.
+
+## User Review Required
+Bu mantık kusursuzca "Fake Sinyallerden" TradFi varlıklarını kurtaracak. Onaylıyorsan şalteri hemen takıp AWS'ye gönderiyorum!

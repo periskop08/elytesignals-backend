@@ -1,0 +1,34 @@
+# Manual Liquidation (Hedge to QQQ) UI & API
+
+Kullanıcının kötü giden veya ağırlığı çok düşen hisseleri tek tuşla tamamen "Satıp" (ağırlığını 0'a indirip) tüm payı QQQ ETF'ine (güvenli limana) aktarması için bir özellik geliştirilecektir.
+
+## Proposed Changes
+
+### Backend API (`/api/portfolio/liquidate`)
+Arka planda SQLite veritabanındaki hisselerin `allocatedPercentage` (ağırlık) değerlerini güncelleyen yeni bir endpoint yazılacak:
+- Hedef sembolün ağırlığı 0 yapılacak.
+- O semboldeki ağırlık QQQ (hedef ETF) üzerine eklenecek.
+- Eğer QQQ veritabanında yoksa, işlem reddedilecek veya hata bastırılacaktır.
+
+#### [MODIFY] backend/index.js
+- Yeni bir `POST /api/portfolio/liquidate` endpoint eklenecek.
+- SQLite `db.run()` fonksiyonlarıyla `% ağırlık` kaydırma işlemi yapılacak.
+
+### Frontend (Web & Mobile UI)
+Kullanıcı varlık listesine bakarken, hisselerin hizasında (tercihen "FINAL AI GÜVENİ" kısmının hemen altınında veya Modal'ın içinde) şık bir "Sat" / "QQQ'ya Geç" butonu olacak. 
+
+#### [MODIFY] web/src/components/PortfolioManager.jsx
+- Listelenen her hissenin yanına kırmızı tonlarda şık bir likidasyon ikonu eklenecek.
+- QQQ hissesinin kendisinde bu buton kapalı/görünmez olacak.
+- Butona tıklandığında Onay kutusu çıkacak, "Emin misin?" sorulacak, sonrasında `/api/portfolio/liquidate` çağrılarak Pano güncellenecek.
+
+#### [MODIFY] mobile/src/screens/PortfolioManagerScreen.js
+- Aynı şekilde mobil uygulama arayüzünde ilgili listeleme bloğuna bu "QQQ'ya Aktar" özelliği eklenecek.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - Butonu yalnızca Listede (Asset Card) mi yoksa Detay Modal'ı açıldığında kocaman bir "TÜMÜNÜ QQQ'YA ÇEVİR" butonu olarak mı koyalım? (Modal içi daha estetik ve hatasız olabilir).
+> - Satılan (Sıfırlanan) hissenin listeden tamamen silinmesini mi istersin, yoksa %0 ağırlıkla listede sırası gelince tekrar alınmak üzere radarımızda kalmasını mı?
+
+Planla ilgili onayını verdikten sonra kodlamaya geçebilirim patron!

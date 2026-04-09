@@ -1,0 +1,46 @@
+# Top-Down Yüksek Zaman Dilimi (MTF) Analiz Motoru 
+
+Kullanıcınız sizden "Büyük resimden (1M) başlayıp, küçük resme (1H) inerek örtüşmeleri (confluence) bulan" profesyonel kurumsal düzeyde bir analiz yapısı talep etmiştir.
+
+Şu anki `getAnalysis` motorumuz sadece kullanıcının seçtiği veya varsayılan (1h vb.) TEK bir zaman dilimini hesaplayıp yapay zekaya sunuyordu. Yeni modelle birlikte arka plan mantığı tamamen değişecek ve **Eşzamanlı Çoklu-Periyot (Top-Down)** mimarisine geçilecektir.
+
+## ⚠️ User Review Required
+
+Bu entegrasyon API tarafında ve yapay zeka hafızasında çok şey değiştirecek. Lütfen aşağıdaki kurguyu onaylıyor musunuz belirtin:
+
+### 1- Fibonacci Dizilimi (Yeni Modül)
+Backend üzerindeki matematiksel hesaplamalara "Fibonacci Retracement (Geri Çekilme)" eklenecektir. Her periyot için o döneme ait Zirve (High) ve Dip (Low) arasındaki `0.382`, `0.5 (EQ)` ve en önemlisi Altın Oran `0.618` seviyeleri hesaplanıp Yapay Zekaya verilecektir.
+
+### 2- Top-Down (Yukarıdan Aşağıya) Veri Döngüsü
+Siz "Nereden spot alım yapmalıyım?" diye sorduğunuzda yapay zeka sırasıyla Binance'den şu verileri aynı saniyede çekecek ve hesaplayacaktır:
+1. **1 Aylık (1M)**: Makro trend, devasa destekler.
+2. **1 Haftalık (1W)**: Orta/Uzun vade trend ve makro Fibonacci seviyeleri.
+3. **1 Günlük (1d)**: AVWAP, POC, Günlük Fibonacci ve Orta vade işlem sağlığı.
+4. **4 Saatlik (4h)**: Kısa/Orta vade momentum ve Elliot dalga onayları.
+5. **1 Saatlik (1h)**: Gün içi giriş noktası (Entry), Fakeout tepkileri ve mikro Elliot dalgaları.
+
+### 3- Yapay Zeka (Gemini) System Prompt Revizyonu
+Prompt tamamen yeniden yazılarak Gemini'a şu emir verilecek: 
+> "Sen bir Top-Down analistisin. Bana 1 aylık yatay destekle, 4 saatlik Elliot 4. Dalga düzeltmesinin nerede ÖRTÜŞTÜĞÜNÜ (confluence zone) bul ve en iyi nokta-atışı alım seviyesini çıkar."
+
+## Proposed Changes
+
+---
+
+### AI Soru/Cevap Arayüzü İçin Backend API (`backend/index.js`)
+
+#### [MODIFY] `backend/index.js`
+- `getAnalysis` fonksiyonunun içi tamamen baştan yazılacak.
+- Sadece `interval` çekmek yerine `['1M', '1w', '1d', '4h', '1h']` array'i üzerinde asenkron bir `Promise.all` kurgusu yapılarak 5 periyodun 100 mumluk bilgisi Binance'den eş zamanlı indirilecektir.
+- Çekilen her bir periyot için ayrı ayrı: *Fibonacci (382, 500, 618)*, *AVWAP*, *FRVP (POC)* ve *Elliot Dalgaları* matematiksel olarak hesaplanacak.
+- AI (Gemini) `systemPrompt` metnine bu 5 farklı analiz şablonu art arda beslenerek devasa bir veri tabanı ileülecektir.
+
+## Open Questions
+
+> [!IMPORTANT]
+> - Top-Down analiz sistemi her soru sorulduğunda Binance API'sine 1 yerine eşzamanlı 5 adet istek (request) atacaktır. Bu hız açısından (yaklaşık 1.5 saniye sürer) hiçbir sorun yaratmaz. Ancak Yapay Zekaya devasa bir metin (5 zaman diliminin ayrı ayrı inceleme verisi) gönderilecektir. API jetonlarınız için bu yoğunluğa onay veriyor musunuz? 
+> - Bu MTF analizini Geleneksel Sinyal Motorunuza (`scanner.js`) hiç uygulamayıp SADECE Sizin Özel Sorularınıza (`/api/chat` ekranına) uygulayacağım doğru mudur?
+
+## Verification Plan
+1. Değişiklikler sonrası `node index.js` devasa MTF analizlerini çekmek üzere yeniden başlatılacak.
+2. Arayüzden "Top-Down analiz yapar mısın, nereden alayım?" şeklinde prompt girilerek, yapay zekanın "Aylık grafikteki Fibonacci 0.618 ile Saatlik grafikteki Elliot 4. Dalga seviyesi 62.000$'da mükemmel ölçüşüyor" şeklinde akılcı bir cevap üretip üretmediği teyit edilecek.

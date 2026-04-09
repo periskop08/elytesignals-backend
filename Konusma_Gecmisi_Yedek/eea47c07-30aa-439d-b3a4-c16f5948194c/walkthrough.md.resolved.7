@@ -1,0 +1,34 @@
+# Hedge Fund Makro Motoru - Gelişmiş Entegrasyon
+
+Elyte Signals için geliştirdiğimiz Makro Pusula sistemini bir adım öteye taşıdık ve "Analist" (Quantitative + Qualitative) özellikleri kazandırdık.
+
+## 1. Neler Değişti?
+
+### Backend Veri Motoru (`macroEngine.js`) Güncellendi
+- **Borçluluk Oranı (Debt-to-Equity):** Şirketlerin bilanço risklerini ölçmek için sisteme Toplam Borç ve Equity oranları çekildi.
+- **Tarihsel EPS Büyümesi:** Son 4 çeyreğin Hisse Başına Kâr (EPS) Beklentisi ve Gerçekleşen rakamları Yahoo Finance API'den eklendi.
+- **Yapay Zekâ Entegrasyonu:** Sisteme bir `OpenAI` modülü eklendi. Her hisse için (TSLA, NVDA vb.) son bilanço konuşmasındaki CEO açıklamaları, birikmiş sipariş (Backlog) durumları ve piyasa beklentileri 1-2 paragraflık **Nitel (Qualitative)** bir rapor halinde üretilip önbelleğe alındı.
+
+### Dashboard Arayüzü (`Dashboard.jsx`) Genişletildi
+- Hisseye tıklandığında açılan **Hisse Detay** penceresi yüksek ölçüde genişletildi ve yeniden tasarlandı.
+- İçerisine "Özkaynak Borç Oranı" paneli eklendi.
+- "Son 4 Çeyrek Büyümesi" EPS geçmişini listeleyen özel bir modül entegre edildi.
+- **Yapay Zekâ Analiz Kutusu** (Mavi renkli `Zap` ikonuyla) pencerenin merkezine oturtuldu.
+
+## 2. Sistem Mimarisi
+
+```mermaid
+graph TD;
+    A[Dashboard'da Hisseye Tıklanır] --> B(Detaylı Analiz Modalı Açılır)
+    B --> C{Backend Verileri}
+    C -->|Kantitatif Veriler| D(İleri FK, PEG Rasyosu, Borç Oranı, Çeyreklik Büyüme Rakamları)
+    C -->|Nitel Analiz| E(OpenAI: CEO Konuşması, Backlog, Pazar Beklentisi Özet Raporu)
+    D --> F[Kullanıcı Arayüzü]
+    E --> F
+```
+
+## 3. Deployment (Canlıya Alma)
+1. **Backend:** AWS EC2 sunucusuna aktarıldı ve `pm2` arka planında hata vermeden koşuyor.
+2. **Frontend:** Vercel üzerinden derlenip `elytesignals.com` adresine tam zamanlı `Production Deploy` yapıldı.
+
+Hiçbir sunucu hatasına sebebiyet vermeden yapay zeka ile entegreli bir "Hedge Fonu" analiz tahtasına tamamen kavuştuk!

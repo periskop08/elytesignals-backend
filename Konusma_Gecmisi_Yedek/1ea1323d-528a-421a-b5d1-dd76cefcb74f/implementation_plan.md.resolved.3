@@ -1,0 +1,28 @@
+# Favoriler Sekmesi Mimari Planı
+
+Kullanıcının bir sinyale sadece bakmakla kalmayıp, onu elinin altında tutabilmesi ve takip listesine (Watchlist) alabilmesi mükemmel bir ticaret (trading) alışkanlığıdır! Bunun için bir "Favoriler" (Favorites) sekmesi kurgulayacağız.
+
+İşte bu şık ve fonksiyonel özelliği eklemek için izleyeceğim adımlar:
+
+## 1. Alt Yapı: Kalıcı Hafıza ve Merkezi Yönetim (Context API)
+Uygulamayı kapattığınızda bile "Favoriye aldığınız o güzel sinyallerin" yok olmaması gerekir. Bu yüzden sadece ekran hafızası değil, **Kalıcı (Telefon) Hafıza** kullanacağız:
+*   Expo projesine `@react-native-async-storage/async-storage` paketini kuracağım.
+*   Mobilde `FavoritesContext.js` adında bir yönetim merkezi (State Manager) kuracağız. Böylece ana sayfada (`HomeScreen`) kalbe (★) bastığınız anda, telefonun belleğine o sinyalin `ID`'si kazınacak ve anında 4. Sekmede (Favorilerim) belirecek.
+
+## 2. Navigasyon ve Yeni Sayfa (FavoritesScreen)
+*   Alt menüye (Bottom Tabs) 4. bir seçenek olarak **"Favoriler"** eklenecek. İkon olarak `Star` (Yıldız) veya `Heart` (Kalp) kullanacağız.
+*   **`FavoritesScreen.js`** adında yeni bir sayfa kodlanacak. Bu sayfa, tıpkı ana sayfa gibi çalışacak ancak sadece sizin kalp/yıldız koyduğunuz işlemleri filtreleyip listeleyecek.
+
+## 3. Ana Sinyaller Listesi (HomeScreen)
+*   Sinyal kartlarının sağ üst veya sol üst köşesine şık bir **"Yıldız (veya Kalp)"** ikonu eklenecek.
+*   Yıldızın içi boşsa gri (seçilmemiş), üzerine basıldğında içi tam dolu ve sarı/kırmızı renkte olacak.
+*   Aynı yıldıza bir daha basılırsa işlem favorilerden (ve kalıcı hafızadan) anında çıkartılacak.
+
+---
+
+## User Review Required
+> [!IMPORTANT]
+> Bu planı koda dökmeye başlamadan önce sizden tek bir tercihi rica ediyorum:
+
+1. **İkon Tercihi:** Favoriye ekleme ikonu olarak **Yıldız** (Klasik Favori) mı kullanmak istersiniz yoksa **Kalp** (Beğenme) ikonu mu? İkisinden de içi boş ve dolu animasyonlu şık bir görünüm yapabilirim.
+2. Planın gidişatı ve AsyncStorage eklentisi için bana onay veriyor musunuz?

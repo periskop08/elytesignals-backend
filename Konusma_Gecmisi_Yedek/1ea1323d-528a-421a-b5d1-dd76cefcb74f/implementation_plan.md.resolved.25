@@ -1,0 +1,49 @@
+# Gerçek Oturum ve Telegram Bot Doğrulama Sistemi
+
+Evet, daha önce yaptığımız şey bir **Görsel/Sanal (UI) Entegrasyondu** (planın ilk aşamasında bahsettiğim gibi). Şimdi işin arka kısımlarını tamamen gerçeğe döküyor ve profesyonel bir şirket mantığına geçiyoruz.
+
+## 📌 Hedefler
+1. **Gerçek Google Girişi:** Uygulamadan Google Hesabıyla giriş yapmak.
+2. **Gerçek Telegram Bağlantısı:** Kullanıcıların sizin kuracağınız bir "Aracı Bot" vasıtasıyla kendilerini sisteme tanıtması.
+3. **Gerçek Zamanlı VIP Kontrolü:** Uygulamanın, kullanıcının o gruba gerçekten üye olup olmadığını Bot yardımıyla kontrol etmesi. Grup üyesiyse asla pop-up çıkmayacak; üye değilse ısrarla "Gruba Katıl" ikazı çıkacak.
+
+## User Review Required (SİZİN YAPMANIZ GEREKENLER)
+> [!IMPORTANT]  
+> Bu sistemlerin *gerçekten* çalışabilmesi için dış servislere uygulamanızı kaydetmeniz ve bana şifreler (API Anahtarları) vermeniz gerekiyor. Cihazınızda tek başıma bu anahtarları oluşturamam. Lütfen aşağıdaki 3 adımı yapıp bana bilgileri verin:
+
+### 1) Telegram Aracı Bot (BotFather)
+- Telegram'a girin ve **@BotFather** 'ı bulun.
+- `/newbot` yazarak uygulamanıza ait bir bot oluşturun. (Botun kullanıcı adı örneğin `ElyteAuthBot` olabilir).
+- BotFather size uzun bir **HTTP API Token** verecektir (Örn: `123456789:AAH...`). *Bana bu Token'ı yazın.*
+
+### 2) Telegram Grubunuzu Bota Tanıtmak
+- Yeni oluşturduğunuz o botu, bana verdiğiniz VIP Grubuna (`https://t.me/+Rw9Ea6LPHFgwZDU0`) **Yönetici (Admin)** olarak ekleyin.
+- Bu bot gruptaki üyeleri okuma yetkisine sahip olmalı ki uygulamanın içinde olan birisinin grupta olup olmadığını bilebilsin.
+
+### 3) Google Login (Google Cloud)
+- Cihazdan ve Google'dan `Google Cloud Console`'a girip bir proje oluşturmanız ve `OAuth Client ID` almanız gerekmektedir. Ekranda çok zaman kaybetmek istemiyorsanız, Google Girişini bir süre daha "Sanal" tutup tüm gücümüzü **Telegram** doğrulama sistemine verebiliriz.
+
+## 🛠️ Teknik İş Akışı (Proposed Changes)
+
+### Backend (AWS Sunucusu)
+#### [NEW] `backend/auth.js` ve Telegram Bot Entegrasyonu
+- Sizin verdiğiniz **Bot Token** kullanılarak arka planda sürekli dinleyen bir Telegram botu çalıştırılacak.
+- Kullanıcı mobil uygulamada "Telegram ile Bağlan" butonuna bastığında, onu doğrudan sizin aracı botunuza göndereceğiz (Ekranda özel bir Kod veya Buton çıkacak).
+- Bot, kullanıcının Telegram ID'sini alıp AWS veritabanına kaydedecek.
+- AWS, kullanıcının o an sizin VIP Grubunuzda (`-100...` ile başlayan grup ID'niz) olup olmadığını `getChatMember` isteğiyle anlık olarak soracak.
+
+### Database (SQLite)
+#### [MODIFY] `backend/index.js` (Veritabanı Güncellemesi)
+- Mevcut yapıya bir `users` tablosu (UUID, TelegramID, Ad, Soyad, Auth_Type) eklenecek.
+
+### Mobil Uygulama (Frontend)
+#### [MODIFY] `mobile/src/screens/HomeScreen.js`
+- Eski Modal bağlantısı güncellenerek: Her açılışta `backend`'e *"Bu adam grupta var mı?"* diye sorulacak. Eğer backend `false` dönerse o menü fırlayacak.
+#### [MODIFY] `mobile/src/screens/LoginScreen.js`
+- Sahte giriş yerine geçici bir benzersiz şifre (UUID) üretilip kullanıcı Telegram botunuza yönlendirilecek.
+
+## Open Questions
+> [!NOTE]  
+> En sancılı ama en zevkli kısma geldik!
+> 1) Hemen Telegram'dan `@BotFather` ile bana bir bot kurup Token'ını bana iletebilir misiniz? Ben altyapısını kodlamaya başlayayım.
+> 2) Google Cloud API işlemlerini yapmak mı istersiniz, yoksa sistemi sadece **"Telegram Üzerinden Bağlan"** sistemi olarak kurgulayıp sadeleşelim mi? (Piyasadaki bir çok uygulama bot kontrolü için sadece Telegram zorunluluğu ister).

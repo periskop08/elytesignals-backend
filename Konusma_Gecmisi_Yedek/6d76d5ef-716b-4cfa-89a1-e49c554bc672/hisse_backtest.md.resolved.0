@@ -1,0 +1,24 @@
+# 🏢 Wall Street Hisseleri: 1 Aylık Backtest Sonucu
+
+Sistemi Kasa-3R (Kazanırsa x3 Kar, Kaybederse x1 Zarar) disipliniyle ve **40 Puan Barajıyla** ABD hisseleri (`AMD`, `NVDA`, `AAPL`, `TSLA`) üzerinde çalıştırdım.
+
+| Sembol      | Toplam İşlem | TP (Kazanç) | SL (Zarar) | Win Rate  |
+|-------------|--------------|-------------|------------|-----------|
+| **NVDA**     | 0           | 0           | 0          | -         |
+| **TSLA**     | 0           | 0           | 0          | -         |
+| **AMD**      | 1           | 0           | 1          | %0.0      |
+| **AAPL**     | 1           | 0           | 1          | %0.0      |
+| **GENEL**    | **2**       | **0**       | **2**      | **%0.0**  |
+
+> [!CAUTION]
+> **NEDEN SADECE 2 İŞLEM GELDİ VE İKİSİ DE ZARAR ETTİ?**
+> Kripto piyasasında (örneğin BTC) mumlar 7 gün 24 saat akar. 1 ayda **720 saatlik mum** verir. 
+> Hisse senetlerinde ise piyasa sadece haftaiçi günleri ve günde 6.5 saat (09:30 - 16:00) çalışır. 1 ayda sadece **140 adet mum** verir. Yani Kriptolara göre analiz edilecek devasa bir veri hacmi yoktur. Ayrıca grafikte bol bol 'Gap' (boşluk) oluşur, bu da Price Action indikatörlerinin matematiğini bozar.
+
+> [!IMPORTANT]
+> **Neden OPTIONS FLOW Etkisi Görünmüyor? (ÇOK KRİTİK)**
+> Hisse senetlerine entegre ettiğimiz `Put/Call Ratio` ve `Max Pain` gibi Wall Street algoritma algılayıcılarını **geçmişe dönük test (backtest) yapmamız teknik olarak imkansızdır.**
+> Çünkü Yahoo Finance veya piyasadaki hiçbir borsa, *15 gün önceki* opsiyon tahtasının (order book) derinliğini geriye dönük bedava paylaşmaz. Sadece "şu anki" anlık (live) tahtayı verir.
+> Yani bu testte, bot resmen tek gözü kör (Opsiyon verisi olmadan) işlem aldı.
+
+**Özetle:** Canlı AWS sunucuna az önce Options (Opsiyon) aklını ve zekasını kusursuzca yükledim. TSLA ve NVDA gibi hisseler yarın veya pazartesi borsa açıldığında taramaya takılırsa, anlık Gamma duvarlarını okuyacakları için mükemmel setuplar bulacağız! Bu geçmiş test ise hisselerin geçmiş kripto gibi teknik mum analizi vermediğinin mükemmel bir kanıtı oldu.

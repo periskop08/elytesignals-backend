@@ -1,0 +1,21 @@
+# 🚀 Mobil Uygulama: AI Terminal Güncellemesi Tamamlandı!
+
+Elyte AI Quant Analyzer'ın web sürümündeki mükemmeliyetini doğrudan mobil uygulamamıza aktardım. Kullanıcılar artık telefonlarından anında Hedge Fund stili analizler yapıp raporlara ulaşabilecekler!
+
+## Yapılan Düzenlemeler
+
+### 1. Yepyeni Ekran: `AITerminalScreen` (Glassmorphism & UX)
+Mobil uygulamanın tasarım bütünüyle eşleşecek ve son derece pürüzsüz çalışacak modern bir ekran kodlandı:
+- **Hisse/Varlık Tarama Motoru:** Üst tarafta bulunan özel arama kutucuğuyla (örn. `TSLA`, `BTC`) OpenAI tabanlı asistanımıza analiz yapması emredilebiliyor. Süreç boyunca web'deki gibi geri bildirim animasyonu (Loading) kullanıcıyı karşılıyor.
+- **Canlı Analiz Radarı:** Backend API üzerinden gelen ve yapay zekanın güven/algı puanı (Sentiment %) oranlarına göre listelenen canlı radar ekranı entegre edildi. Renk eşikleri (Kırmızı/Sarı/Yeşil) aynen korundu.
+
+### 2. Kurumsal Yatırım Tezi (Modal)
+Herhangi bir analiz sonucuna tıklandığında, tüm cihaz ekranını tam olarak kaplayan dinamik bir animasyonla **Asset Detail Modal** açılıyor. Modal içerisinde:
+- CEO Skoru, Tech Edge, Insider Hareketliliği, Patent durumları
+- Yapay Zeka tarafından üretilen **Geniş Çaplı Yatırım Tezi (Investment Thesis)** okunabilir, yumuşak bir arayüzle sunuldu.
+
+### 3. Alt Menü (Bottom Tab) Optimizasyonları
+- Navigasyon yönlendiricisine `AITerminal` adında yeni bir rota (route) tanımlandı.
+- Taramalar, Favoriler, İstatistikler'in yanına yepyeni bir **"AI Terminal"** sekmesi getirildi ve şık bir Bot/Yapay Zeka (🟣 Pink) ikonu ile desteklendi.
+
+Artık her iki sürümümüz (Web ve Mobil) birbiri ile %100 eşzamanlı ve aynı özellik kalitesinde!

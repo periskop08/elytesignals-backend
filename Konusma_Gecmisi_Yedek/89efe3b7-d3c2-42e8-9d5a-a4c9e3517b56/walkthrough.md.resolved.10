@@ -1,0 +1,18 @@
+# 🔄 Auto-Rebalance Mekanizması Entegrasyon Raporu
+
+Varlık Yöneticisi arayüzündeki **Auto Rebalance** butonu artık pasif bir element değil, doğrudan arka planda koşan `portfolio_engine.js` ile temas kuran tam fonksiyonlu bir Wall Street robotuna dönüştü! 
+
+## 🛠️ Neler Yapıldı?
+
+### 1. Arka Plan Motoru (Matematiksel Karar Sistemi)
+Yeni yazdığımız `portfolio_engine.js` sistemi şu aşamaları santisaniyeler içinde gerçekleştiriyor:
+- **Zarar Kesici (Drawdown Kuralı):** Sisteme, etkinin izlenebilmesi için `TSLA` (-%16) ve `PLTR` (-%26) sahte zararları işlendi. Motor, %25 üzerindeki zararda (PLTR gibi) hisseden komple çıkarak ağılığını %0'a indirirken, %15-25 arasındaki zararda (TSLA gibi) mevcut ağırlığı yarı yarıya (%50) cezalandırarak düşürüyor.
+- **Karlı Varlığa Kaydırma:** Ceza kesilenlerden kurtarılan paralar (likidite), güven puanı (AI Score) 70'in üzerinde olan başarılı hisselere ve ETF korumasına (QQQ) risk baremi aşılamayacak şekilde **(Maksimum %30/Hisse)** orantısal olarak geri dağıtılıyor.
+- **Veritabanı Güncellemesi:** Yeni kurgulanan yüzdeler anında AWS'deki SQLite veri tabanına yazılıyor.
+
+### 2. Dashboard ve İletişim (API)
+- `POST /api/portfolio/rebalance` köprüsü kuruldu.
+- Varlıklar ekranında butona bastığında artık `Hesaplanıyor...` animasyonu devreye giriyor. İşlem bittiğinde arka plandan yeni yüzdeleri anında çekip, TSLA ve PLTR hisselerindeki "Aktif Zarar" ibareleriyle birlikte senin ekranındaki çubukları, kartları ve yüzdeleri yeniliyor. Otonom makas değiştirme kurgusu kusursuzca görüntülenebilir durumda!
+
+## ✅ Test & Doğrulama
+Web sitesi ve veritabanı başarıyla prodüksiyon ortamında derlendi. Web sitesine girip o butona bastığında, motorun PLTR hissesini nasıl anında portföyden sıfırladığını ve TSLA'nın yüzdesini nasıl erittiğini kendi gözlerinle canlı canlı (Simülasyon tadında) izleyebilirsin. Mükemmel bir komuta merkezi silahı!

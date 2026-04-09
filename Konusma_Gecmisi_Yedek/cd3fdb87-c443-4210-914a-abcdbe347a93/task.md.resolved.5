@@ -1,0 +1,14 @@
+# Sınırsız TradFi (Geleneksel Finans) Tarama Entegrasyonu
+
+- `[x]` 1. `scanner.js` İçin AssetParser Entegrasyonu
+    - `[x]` Mevcut statik `ASSET_SYMBOLS` listesini (Altın, Gümüş, Apple vb. olan 6 paritelik array) sil.
+    - `[x]` Sabit (hardcoded) Endeks ve Emtia eşleşme haritasını (`NCSI` ve `NCCO` için) ekle.
+- `[x]` 2. Dinamik "NC" Yakalama (Crawler) Algoritması
+    - `[x]` `getUsdtPairs()` fonksiyonunu modifiye ederek Kriptoların yanı sıra tüm `NC` (TradFi) varlıklarını çekmesini sağla.
+    - `[x]` `NC` ön ekiyle başlayan BingX paritelerinin, `yahooFinance` için gerekli olan `fetchId` kodlarına (Örn: `NVDA`) otomatik çevrilmesini sağlayacak regex/kırpma mantığını kur.
+- `[x]` 3. Hacim Barajı ve Edge Case Düzeltmeleri
+    - `[x]` TradFi varlıkları (Örn: Hisseler) için hafta sonu (isWeekend) filtrelemesinin yeni döngüye tam uyumlandığından emin ol.
+    - `[x]` Hacmi (Volume) çok düşük olabilecek sahte Sentetik pariteleri elemek için Minimum TradFi Hacim Filtresi (Örn: 500k USD) uygula.
+- `[x]` 4. Sunucu Deploy & Doğrulama (Walkthrough)
+    - `[x]` `deploy.sh` scriptini tetikleyerek PM2'yi yeniden başlat.
+    - `[x]` Sonuç raporu (walkthrough.md) oluştur.

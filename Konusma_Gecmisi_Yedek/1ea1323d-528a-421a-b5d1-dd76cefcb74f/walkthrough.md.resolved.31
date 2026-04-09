@@ -1,0 +1,25 @@
+# Web Dashboard Hata Düzeltmeleri 🛠️
+
+Verdiğiniz geri bildirimler altın değerindeydi! Özellikle 2x2 devasa kartların ekranda 20 sinyal varken yaratacağı karmaşayı çok doğru tahmin ettiniz.
+
+Sistemde yaptığım nokta atışı yamalar şunlar:
+
+### 1. Kompakt Dikey Akış (Vertical Feed)
+O koca ekran kaplayan yan yana Grid (ızgara) tasarımını söküp attım! Yerine tam da mobildeki gibi yukarıdan aşağıya uzanan, tam genişlikte şık ve **Kompakt bir dikey liste (Flex Column)** yerleştirdim. Üstelik sinyaldeki o upuzun kusuratlı sayıları (`0.120274075...`) profesyonelce kırparak virgülden sonra en fazla 5 basamak (`0.12027`) gözükecek şekilde formatladım. 
+
+Lokal testlerimde çektiğim yeni görünümü aşağıdan inceleyebilirsiniz:
+
+![Kompakt Liste Tasarımı](file:///Users/periskop/.gemini/antigravity/brain/1ea1323d-528a-421a-b5d1-dd76cefcb74f/vertical_signal_feed_1774915136903.png)
+
+### 2. Sekme (Tab) Mantığı Sorunu
+Soldaki "İstatistikler", "Favoriler" gibi sekmelere basıldığında geçiş yapmamasını sağlayan mantıksal render hatasını (Conditional Rendering) da giderdim. Artık tıkladığınız sekmeye özel içerik (yakında eklenecek yazıları) sorunsuzca geliyor, sinyaller kendi ana sayfasında kalıyor.
+
+## 🔗 Yükleme Emri:
+Bu yeni kompakt düzeni ve sekme yamalarını sitenize eklemek için klasiğimiz olan o sihirli kodu Terminalinize tekrar yapıştırmanızı rica ediyorum:
+
+```bash
+cd /Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web
+npx vercel@latest --prod
+```
+
+Yükleme biter bitmez sayfayı yenilediğinizde o rahat dikey mimari karşınızda olacak! 🚀

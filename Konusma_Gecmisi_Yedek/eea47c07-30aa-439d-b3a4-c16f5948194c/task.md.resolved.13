@@ -1,0 +1,9 @@
+# Elyte Hedge Fund Cihazı Görev Listesi
+
+## Aşama 1: Temel & Büyüme Analiz Motoru (Option A)
+- `[ ]` Yeni bir `macro_scanner.js` modülü oluştur.
+- `[ ]` Yahoo Finance API entegrasyonu ile (F/K, PEG, EPS, Ciro) verilerini çek.
+- `[ ]` Hisse senedi evreni tanımla (NVDA, TSLA, MSFT, META, GOOGL, LMT, vb.).
+- `[ ]` Büyüme Rasyolarına dayalı "Kırmızı Bayrak" kurallarını uygula.
+- `[ ]` "Fiyatın İçinde Mi?" (Priced-In) matematiksel skorunu hesapla.
+- `[ ]` Test çalıştırması yap ve sonuçları doğrula.

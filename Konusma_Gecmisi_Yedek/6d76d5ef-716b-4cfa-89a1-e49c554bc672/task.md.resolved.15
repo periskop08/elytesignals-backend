@@ -1,0 +1,11 @@
+# Dinamik Skor Motoru Cila İşlemleri (Tweak) Görev Listesi
+
+- `[x]` **Adım 1:** `backend/scanner.js` içerisine Volatilite (ATR) Kuralının (Ani Haber Sapması) eklenmesi:
+  - Son mum boyutu (kapanış - açılış veya high-low), 14 periyotluk ATR ortalamasının 2 katından (2x) büyükse, `-15` Puan kesintisi.
+- `[x]` **Adım 2:** RSI (1H) Aşırı Alım/Satım Tükenmişlik (Over-extension) Filtresi Eklentisi:
+  - Sinyal LONG ve RSI(1h) `> 75` ise `-10` Puan ceza (Aşırı şişik malı alma).
+  - Sinyal SHORT ve RSI(1h) `< 25` ise `-10` Puan ceza (Dipten short açma).
+- `[x]` **Adım 3:** Risk/Ödül (R:R) Bonus Skoru Eklentisi:
+  - Hesaplanmış Risk/Ödül oranı `> 2.0` ise, setup çok kalitelidir; `+10` Ödül Puanı eklenecektir.
+- `[x]` **Adım 4:** Lokal CLI üzerinde söz dizimi testi yapılması (`node -c scanner.js`).
+- `[/]` **Adım 5:** Değişikliklerin AWS Sunucusuna (rsync) aktarılarak servisin (PM2) güncellenmesi.

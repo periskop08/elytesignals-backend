@@ -1,0 +1,23 @@
+# PeriskopAI Yeni Konsept ve Türkçe Optimizasyon Planı
+
+Kullanıcı geri bildirimlerine dayanarak PeriskopAI'ın metinlerini çok daha sade, agresif ve net bir *"Executive Summary (Yönetici Özeti)"* konseptine geçiriyoruz.
+
+## 1. Yeni Prompt Konsepti: "Net ve Hedef Odaklı"
+Şu anki analizlerde AI, kullanıcılara "Elliott Wave nedir, POC nedir" gibi terimsel eğitimler (sözlükler) veriyor ve uzun paragraflar yazıyor. Bu da okumayı zorlaştırıyor.
+**Önerilen Konsept:**
+*   Sözlük / Eğitim kısmını tamamen promptlardan siliyoruz.
+*   Paragrafları kaldırıp, analizi 2 kısa "Bullet Point" (maddeleme) başlığına indirgiyoruz.
+    *   **FUTURES İçin:** `Mevcut Trend` (Kısa özet) ve `Kritik Karar` (Nereden dönmeli, nereden kırılmalı).
+    *   **SPOT İçin:** `Makro Görünüm` (Kısa özet) ve `Aksiyon Planı` (Toplama bölgeleri).
+*   Metnin hemen altına mevcut durumdaki `SUMMARY SETUP` (İşlem Tablosu) direkt olarak eklenecek.
+*   Cevapların maksimum 3-4 cümle + Tablo olacak şekilde sınırlandırılması direktifini promptlara ekleyeceğim.
+
+## 2. Hata Uyarılarının Türkçeleştirilmesi
+Sistemdeki tüm İngilizce `Mate` hitaplı hata kodları tamamen Türkçeye ve sıcak bir tona ("Dostum" / "Kral") çevrilecek:
+*   [MODIFY] `index.js` içerisindeki OpenAI limit aşımı (`429`) hatası: *"Dostum, şu an sistemde yoğun bir trafik var..."*
+*   [MODIFY] Niyeti Anlaşılamayan İstekler: *"Dostum, tam olarak ne tür bir strateji aradığını anlayamadım. Spot mu, Kaldıraçlı mı?..."*
+*   [MODIFY] API Çökmesi / Hata Alınması: *"Kral, şu an sistem aşırı yüklendi veya bir hata verdi..."*
+*   [MODIFY] Coin Bulunamaması: *"Dostum, belirttiğin pariteye Bybit üzerinde ulaşılamıyor..."*
+
+## User Review Required
+Bu yeni *"Sözlükleri kaldıran, maksimum 3-4 cümlelik net yönlendirme yapan"* konsept ve Türkçe hata uyarıları senin için uygun mudur? Onaylarsan hemen `index.js` üzerinde değişiklikleri yapıp sunucuyu güncelleyeceğim. Ayrıca bundan sonraki tüm çalışma dosyalarını ve raporları anadilde (Türkçe) tutacağım.

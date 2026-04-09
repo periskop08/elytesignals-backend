@@ -1,0 +1,35 @@
+# Binance Otomatik Sinyal Tarayıcı (Scanner) Mimari Planı
+
+Bütün pariteleri TradingView'a bağlı kalmadan doğrudan Binance üzerinden periyodik olarak taramak harika bir fikir. Bu sayede uygulamanız dışa bağımlı kalmaz ve kendi tam otonom yapay zeka/algoritma motoruna sahip olur. Karar noktalarını ve analiz metodlarını doğrudan siz kodladığınız için gücü elinizde tutmuş olursunuz.
+
+## Önerilerim ve Ekleyeceğimiz Fonksiyonların Detayları
+
+### 1. Parite (Coin) Listesinin Otomatik Alınması
+Hiçbir `txt` dosyasına ihtiyacımız yok! Binance'in ücretsiz bir API'si var (`/api/v3/exchangeInfo`). Uygulama her çalıştığında veya periyodik olarak, Binance'de anlık işlem gören ve hacimli olan (örn. sadece `USDT` çiftleri) tüm coinlerin listesini otomatik olarak çeker ve tarama listesine alır.
+
+### 2. Tarama Motoru (Scanner Engine)
+*   **Periyodik Döngü (Cron Job):** Backend'e `node-cron` kütüphanesi ekleyeceğiz. Bu kütüphane yazdığımız analiz fonksiyonunu sizin belirleyeceğiniz arka planda sürekli çalıştıracak (Örn: her 15 dakikada bir).
+*   **Binance API Limit Koruması:** Binance API saniyede aşırı istek (rate limit) atılmasını engeller. Tarayıcımızı 350-400 coini saniyede 10-20 tane sorgulayacak şekilde, aralara milisaniyelik beklemeler koyarak ayarlayacağız. Böylece limitlere takılmadan çok temiz veriler elde etmiş olacağız.
+*   **Fırsat (Sinyal) Yakalama:** Yazmış olduğumuz PA (Price Action) logiği bu döngü içinde tüm coinlere uygulanacak. Eğer belirlediğimiz karlı bir yapı görülürse (Örn: Range Low altında likidite temizliği/Dip Deviation), sistem bunu hemen bir **SİNYAL** nesnesine dönüştürecek.
+
+### 3. Sinyal Veritabanı
+*   Oluşan bu muazzam verileri havada bırakmayacağız. Backend içine hafif ama güçlü bir **SQLite** veritabanı entegre edebiliriz (Kurulumu basit ve aynı klasör içinde tutulur, sunucuya ekstra yük getirmez).
+*   Sinyal doğduğunda şu bilgilerle veritabanına eklenecek: `Kripto Parite (BTCUSDT vs)`, `İşlem Yönü (Long/Short)`, `Giriş Fiyatı`, `Hedef Fiyat (Target)`, `Stop Fiyatı (Zarar Kes)` ve `Oluşturulma Tarihi`.
+*   Ayrıca aynı motor her fiyat güncellemesinde, sinyalin hedefine veya stop noktasına gelip gelmediğini kontrol ederek durumu "Başarılı (Win)" veya "Stop Oldu (Loss)" olarak listeleyebilir.
+
+### 4. Mobil "Sinyaller" Ekranı
+*   Backend'imize yeni bir `/api/signals/active` ucu açacağız.
+*   Mobil ana ekranınızdaki (HomeScreen) o boşluk gidecek, yerine şık kartlardan oluşan bir sinyal akışı (News Feed gibi) gelecek.
+*   Gelen datada net olarak Giriş, Çıkış ve Stop fiyatları yazacak.
+
+---
+
+## User Review Required
+> [!IMPORTANT]
+> Bu planı uygulayabilmemiz (kodlamaya geçebilmemiz) için aşağıdaki kritik konularda kararınızı bekliyorum:
+
+1. **Zaman Dilimi (Timeframe):** "Her 15 dakikada bir" tarayalım düşünceniz sistem için çok uygun. **Fakat**, mevcut analiz sistemimizde kodları "1 Günlük (1d)" mumların geçmişine göre ayarlamıştık. Tarama işlemi 15 dakikalık (`15m`) mum grafiklerinde olan değişimlere mi odaklansın, yoksa arka planda günlük mumları (Ana Trendi) tarayıp her 15 dakikada bir bunu tazelesin mi? (Eğer küçük ve hızlı vur-kaç fırsatları arıyorsanız **15m**, **1h** veya **4h** mumlarda range çizmesini önerebilirim).
+2. **Kriter Filtresi:** Tüm coinlerin analizini yapacak olan sistem, *tam olarak hangi durumda* bu analizi "Sinyaller" ekranına yansıtsın? Algoritmamızdaki "Dip Sapması (Tehlikeli Düşüş Sonrası Yükseliş Beklentisi)" ve "Tepe Sapması (Yükseliş Sonrası Çakılma Beklentisi)" koşullarının oluşması bir sinyal olarak atanması için yeterli bir filtre mi? Yoksa sadece orta noktayı kırması yeterli olsun mu?
+3. **Mevcut Webhook:** Başlangıçta boş tasarladığımız TradingView Webhook bağlantısını kaldırıp yerine bu Scanner motorunu oturtmamı onaylıyor musunuz?
+
+Lütfen cevaplarınızı ve eklemek istediklerinizi belirtin, ardından kodlama aşamasına (execute) geçeceğim.

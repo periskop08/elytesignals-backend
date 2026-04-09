@@ -1,0 +1,44 @@
+# Kullanıcı Girişi (Auth) & VIP Telegram Grubu Davet Sistemi
+
+Önceki aşamada sadece arayüz olarak tasarladığımız "Giriş Yap" butonlarının artık gerçek verilerle çalışmasını ve sisteme entegre olmasını sağlayacağız.
+
+## Araştırma Özeti & Teknik Kararlar
+Mevcut durumda `LoginScreen.js` dosyası herhangi bir veri doğrulaması yapmadan doğrudan ana ekrana geçiş yapmaktadır. Kullanıcının **Giriş (Auth)** yapabilmesi, isminin alınması ve ona özel VIP Telegram Linki gösterilebilmesi için React Native tarafında bir "Kullanıcı Oturum Yönetimi (Context/AsyncStorage)" kurmamız gerekmektedir.
+
+## User Action Required (ÖNEMLİ)
+> [!IMPORTANT]  
+> Google ve Telegram üzerinden *gerçek* veri çekebilmek için harici servislerin API anahtarlarına ihtiyaç vardır. 
+> - Ancak süreci yavaşlatmamak adına, ilk etapta **Sanal (Mock/UI) Login Entegrasyonuyla** birlikte asıl **Oturum Mantığını (AuthContext)** kuracağım. 
+> - Siz gerçek API anahtarlarınızı Google Cloud ve Telegram BotFather üzerinden aldığınızda sadece değişkenleri değiştirerek gerçek hayata geçirebileceksiniz.
+
+## Önerilen İş Aşamaları (Proposed Changes)
+
+### 1. Oturum Yöneticisi (AuthContext) Kurulumu
+#### [NEW] `mobile/src/context/AuthContext.js`
+- Kullanıcının "Ad, Soyad, Profil Resmi ve Giriş Yaptığı Platform (Google/Telegram)" bilgilerini cihazın hafızasında (`AsyncStorage`) tutacak merkezi bir sistem kodlanacak.
+- Başlangıçta kullanıcı sisteme yabancı sayılacak (Oturum Açık=Hayır).
+
+### 2. LoginScreen (Giriş Ekranı) Güncellemesi
+#### [MODIFY] `mobile/src/screens/LoginScreen.js`
+- Google ve Telegram butonlarına basıldığında sahte yönlendirme yerine `AuthContext` üzerinden kullanıcı profili çekilecek (Şimdilik Demo bir "Ahmet Yılmaz" veya "Kripto Kurdu" şeklinde profil dönecek şekilde simüle edilecek).
+- Giriş başarılı olduğunda kullanıcı doğrudan `MainTabs` ana ekranına düşecek.
+
+### 3. VIP Telegram Davetiyesi (Hoş Geldin Ekranı)
+#### [MODIFY] `mobile/src/screens/HomeScreen.js`
+- Kullanıcı ilk kez uygulamaya giriş yapıp Ana Sayfaya düştüğünde ortaya şık bir **"Hoş Geldiniz Modal (Pop-up)'ı"** çıkacak.
+- Bu Modal üzerinde: *"Elyte Signals'a hoş geldin [Kullanıcı Adı]! Analizleri canlı tartışmak ve anlık sinyalleri kaçırmamak için özel grubumuza katıl:"* mesajı ve **Telegram Grubuna Katıl** butonu olacak.
+- Bu buton doğrudan sizin `https://t.me/ElyteSignalsVIP` (şimdilik örnek) linkinize yönlendirecek.
+
+### 4. Favoriler (Profil) Ekranı Entegrasyonu
+#### [MODIFY] `mobile/src/screens/FavoritesScreen.js`
+- `AuthContext` sisteminden gelen gerçek `kullanıcı adı` ve `profil fotoğrafı`, daha önce oluşturduğum "Trader Pro" yazan avatar alanına dinamik olarak yerleştirilecek.
+
+## Open Questions
+> [!NOTE]  
+> 1. Sisteme bağlandıktan sonra kullanıcının karşısına çıkacak olan Telegram davet linkiniz şu anda hazır mı? Hazırsa buraya yazın, direkt kodun içine gömeyim (Örn: `https://t.me/+AbcXyz...`). Değilse şablon link koyacağım.
+> 2. Bu planı onaylarsanız teknik kodlamaya, context kurgusuna ve Hoş Geldiniz ekranının tasarımına derhal başlayacağım!
+
+## Verification Plan
+- Giriş yapmadan uygulamanın Ana Ekranına erişilemeyecek şekilde yönlendirme test edilecek.
+- Login butonuna basıldığında cihaz hafızasına "isim ve resim" kaydedildiği ve Favoriler ekranına bu verilerin düştüğü teyit edilecek.
+- VIP Grubuna katılma Pop-up ekranının bağlantısı çalıştırılıp Safari üzerinden Telegram'a yönlendirmesi simüle edilecek.

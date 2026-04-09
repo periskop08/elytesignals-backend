@@ -1,0 +1,13 @@
+# Makro Zırh Şeffaflığı Devrede!
+
+Botun o saliselik sürede yaptığı devasa Makro Zırh analiz verilerini (Ağabey Kriptoların Durumunu) artık çöpe atmıyor, doğrudan listemize mühürlüyoruz.
+
+### Neler Değişti?
+*   `scanner.js` içerisine bir "Data Taşıyıcı" eklendi. Analiz bittiğinde Zırhın arkasındaki BTC ve ETH Trend kararlarını bir string formatına dönüştürüp `warnings` array'inin başına ekler. 
+*   **Artık Gelecek Yeni Format:** `[BTC: BULL, ETH: NEUTRAL] - High R:R Bonus (+10)` şeklinde görünecektir. 
+*   Bu sayede her işlemin neden onay aldığı veya tam o saatte piyasanın yönünün ne olduğu şeffafça arşivlenecek. İşlem geriye dönük incelendiğinde harika bir veri analitiği (Big Data) sunacak.
+
+### Tablodaki Geçmiş Sinyaller Ne Oldu?
+Yeni yazdığım arka plan Scripti ile dünkü 2 işleme `TESTUSDT` ve `BSUUSDT` ulaştım. İlgili saatteki geçmiş piyasa verisini manuel olarak hesaplayıp Tablodaki `Açıklama` hücresinin üzerine tıpkı yeni sistemdeki gibi yazdırdım.
+
+Bot Canlı AWS Sunucusunda başarıyla yeniden başlatıldı ve yeni Zırh Mühürleme yapısıyla ava döndü! 🛡️

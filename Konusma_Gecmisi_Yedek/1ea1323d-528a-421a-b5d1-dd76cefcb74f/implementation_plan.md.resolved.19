@@ -1,0 +1,41 @@
+# Frekans Optimizasyon Planı (Puanlama Sistemi)
+
+Mevcut tamamen kural bazlı (Bool) SMC filtrelerini, `0-100` arası bir Skor Sistemi'ne (Quality Score) geçirerek frekansı %300 artırırken kaliteyi koruyacağız. Sinyaller artık katı redlerle değil, "Uyarılar (Warnings)" ve "Bonus Puanlar" ile değerlendirilecek.
+
+## User Review Required
+> [!IMPORTANT]  
+> Veritabanı (`signals.db`) tablosuna `qualityScore` ve `warnings` adında iki yeni sütun ekleneceği için aktif veritabanının güncellenmesi gerekmektedir. Puan sınırını başarıyla `40` olarak eşikleyeceğim, ancak canlı piyasa koşullarına göre bunu sonradan değiştirebilirsiniz.
+
+## Proposed Changes
+
+### `backend/database.js`
+- `signals` tablosuna `qualityScore INTEGER DEFAULT 0` ve `warnings TEXT DEFAULT ''` güncellemeleri entegre edilecek. 
+
+### `backend/scanner.js`
+#### [MODIFY] `analyzeCoin`
+- **Konfigürasyon Objeleri Eklenecek:**
+  ```javascript
+  const CONFIG = { minRR: 1.2, obLookback: 20, minScore: 40 };
+  ```
+- **Katı Engeller İptal:** OB ve FVG eksikliği sinyali reddetmeyecek. Sadece Sweep ve Reclaim matematiği geçerliyse sinyal üretime geçecek.
+- **Puanlama (Max 100):**
+  - **+25 Puan**: Order Block (OB) son 20 mumda (Lookback) bulunursa.
+  - **+15 Puan**: FVG (Momentum boşluğu) varsa.
+  - **+15 Puan**: RVOL (Hacim) 20 saatlik ortalamanın %20 üstündeyse.
+  - **+15 Puan**: ADX < 25 (Piyasa Range/Yatay rejimde) ise.
+  - **+15 Puan**: Belirlenen TP ve SL hedefine göre RR oranı >= 2.0 ise.
+  - **+15 Puan**: 4 Saatlik (4H) Trend fiyat SMA 50'yi destekliyorsa.
+- **Uyarı (Warning) Mekanizması:**
+  - 4H Trend ters yöndeyse sinyal iptal olmaz, sadece `Counter-trend 4H` uyarısı atılır.
+- **Tetiklenme:** `qualityScore >= 40` ise veritabanına kaydedilir.
+
+#### [MODIFY] `runScan`
+- Yeni `qualityScore` ve `warnings` alanları DB kaydına işlenecek. `console.log` bölümüne detaylı JSON breakdown'ı yazdırılacak.
+
+## Open Questions
+> [!NOTE]
+> Mobil ekranda (Uygulama içinde) veya arayüzde `qualityScore` (Puan) gösterilsin istiyor muyuz? Yoksa bu puanlama şimdilik arka planda (loglarda) test amaçlı kalıp sadece sinyal akışını canlandırmak amaçlı mı kullanılacak?
+
+## Verification Plan
+1. `sqlite3` ile veritabanına kolonları ekle.
+2. `node index.js` başlatılacak. Toplam 400+ çift tarandığında yeni gevşetilmiş kurallarla (Skoru 40'ı geçen) kaç tane sinyal yakalandığı loglanacak. Oran 8-20/gün hedefine yakınsamış mı test edilecek.

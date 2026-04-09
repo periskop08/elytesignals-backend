@@ -1,0 +1,57 @@
+# Bayrak/Flama Formasyonu & R:R Cap Entegrasyon Analizi
+
+Perplexity ile hazırladığınız promptu okudum. Mevcut `scanner.js` mimarimiz (Fitil Sweep + CHOCH + Makro Filtreler) halihazırda likidite avına dayalı bir dönüş (reversal) veya pullback sistemidir. Bayrak ve flama ise trendin devamını (continuation) teyit eden çok güçlü bir momentum formasyonudur. 
+
+Bu formasyonu likidite sweep stratejimizle harmanlamak **harika bir karar**. Neden mi? Çünkü bir sweep (fitil temizliği) sonrası oluşan ufacık bir daralma (flama), "Balinalar likiditeyi topladı, ufak bir dinlenmeyle şimdi ana trene kalkıyorlar" demektir. Hit rate'i (Kazanma Oranı) ciddi şekilde uçurur.
+
+## Sorularına Stratejik Yanıtlarım:
+
+### 1. Bu kuralları `scanner.js`'ye eklemeli miyiz?
+**Kesinlikle Evet!** Anlık sistemimizde hedefler statik yüzdelerle (`%2-3`) veya geniş bir order block hedeflenerek hesaplanıyor. Bayrak "Direk" boyu ile net, hesaplanabilir bir volatilite ölçümü sağlar. "Direk kadar uzar" mantığı, hedefin nerede doygunluğa ulaşacağını matematikselleştirir. Puanlamaya +10 puan ekleyerek sinyal havuzunda (özellikle 45 barajı için) zayıf CHOCH'ların elenip bu yüksek kaliteli formasyonların öne çıkmasını sağlarız.
+
+### 2. R:R Cap (1:3 Limiti) ile çakışma olur mu?
+Hayır, tam tersine **mükemmel bir sigorta mekanizması** oluşturur! 
+Örneğin; formasyondaki "Direk" devasa ise (%10'luk bir hareket), hedef de %10 olur. Fakat stop loss mesafen sadece %2 ise, bu sana 1:5 R:R sunar. Hacimsiz altcoinlerde 1:5 hedefine gitmeden fiyat çoktan geri döner. 
+Önerdiğin "Max TP = SL mesafesinin 3 katı (1:3 Cap)" kuralı sayesinde, direk boyu ne kadar büyük olursa olsun, fiyatı yarı yolda realize etmiş oluruz. Algoritmada çakışma yaratmaz; önce Direk boyuna göre hedefi çizeriz, ardından `if (TP_Mesafe > SL_Mesafe * 3)` ise TP'yi `SL * 3`'e traşlarız (cap).
+
+### 3. FVG / Order Block ile Daraltma Mantıklı mı?
+Bu çok şık bir detay. R:R (1:3) bizi aşırı iyimser hedeflerden korur, üstüne bir de **FVG bölgesinde** önceden kesersek win-rate tavana vurur. Zaten algoritmada son mumlarda oluşan FVG'leri (Fair Value Gap) tarayan ufak bir bloğumuz var, onu Hedef hesaplamasında limit/cap faktörü olarak ikincil filtreye dahil edebiliriz.
+
+### 4. Backtest Planı Ne Olmalı?
+Bu değişikliği doğrudan `scanner.js`'ye uygulamadan önce, AWS sunucusunda arka planda sessizce çalışan bir `scanner_v4_test.js` açabiliriz. Bu test botu, R:R limitli ve bayrak formasyonlu sinyalleri sadece veritabanında (veya log dosyasında) üretip sonuca bakar (Telegram'a atmaz). 3-4 günlük bir kağıt üstünde veri birikimiyle (Paper Trading) win-rate'in %75'in üzerine ulaştığını kanıtlayıp yayına alabiliriz. 
+
+---
+
+## 🛠️ Kod Tweak / Uygulama Planı (Nasıl Yapacağız?)
+
+Aşağıdaki adımları uygulayarak `scanner.js` içine bu logici entegre edebilirim:
+
+### [MODIFY] backend/scanner.js
+
+1. **Direk (Pole) Tespiti:**
+   Sweep gerçekleştiği mumdan geriye doğru 5-10 muma bakıp, net kümülatif büyümenin (yükseliş veya düşüş) %5'ten büyük olup olmadığını matematiksel olarak tespit eden bir döngü yazacağız.
+
+2. **Flama (Flag) Konsolidasyonu:**
+   Son 3 ila 7 mum içerisinde; High ve Low seviyelerinin gitgide daraldığını (`highs[i] < highs[i-1]` ve `lows[i] > lows[i-1]`) ve Hacmin ufalarak kuruduğunu (`volumes[i] < avgVol`) doğrulayan bir kontrol bloğu eklenecek.
+
+3. **Puanlama & Skorlama:**
+   Eğer formasyon bulunursa:
+   ```javascript
+   qualityScore += 10;
+   breakdown.pattern = "FLAG_PENNANT";
+   ```
+   RVOL zaten sistemimizde %120 üzerine `+15` puan veriyor. (Prompttaki RVOL +5'i ekstra bir teyit olarak kombine edebiliriz).
+
+4. **1:3 R:R Cap Kesintisi (Kritik Algoritma):**
+   R:R Hesaplama (`// 6. RISK / REWARD HESAPLAMASI`) döngüsünün tam içine şu sınırlandırıcı mantık enjekte edilecek:
+   > [!IMPORTANT]
+   > Hedef (TP) = Mutlak Değer (Direk Yüksekliği).
+   > Eğer `Entry -> TP` mesafesi `Entry -> SL` mesafesinin 3 katını aşıyorsa:
+   > `Hedef = Entry +/- (SL_Mesafesi * 3)` olarak Capped edilecek (Tıraşlanacak).
+
+---
+
+> [!TIP]
+> **Kullanıcı Kararı / User Review Required:**
+> Fikrim tamamen bu yönde; matematiksel olarak inanılmaz tutarlı ve hacimsiz coinlerdeki "kötü hedef" sorununu kökten çözen bir sistem tasarımı.
+> Eğer bu analiz raporuma onay verirsen, kılıcı çekip anında `scanner.js` dosyasının kalbine girerek tespit döngülerini ve R:R sınırlamasını oya gibi aynı dosyaya işleyeceğim. Teyit bekliyorum!

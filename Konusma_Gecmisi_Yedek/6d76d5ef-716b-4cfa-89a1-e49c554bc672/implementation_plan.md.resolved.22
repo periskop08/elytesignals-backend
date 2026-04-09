@@ -1,0 +1,43 @@
+# Mobil Uygulama Arayüz Güncellemesi (Glassmorphism & Modern UI)
+
+Bu plan, web sürümünde gerçekleştirdiğimiz "Karanlık Tema, Cam Efektleri (Glassmorphism), Dinamik Arkaplan Küreleri ve Gradient" modern tasarım dilinin eksiksiz olarak React Native (Expo) mobil arayüzüne uyarlanmasını kapsar.
+
+## Kullanıcı Onayı Gereken Kararlar
+
+> [!IMPORTANT]  
+> Web arayüzünde kullanılan "Arkaplan Küreleri" uygulamanın ana performansını mobil cihazlarda çok hafif etkileyebilir ancak en güncel `expo-blur` kütüphanesi ile optimize edilecektir. Bunu onaylıyor musunuz?  
+
+
+## Planlanan Değişiklikler
+
+### 1. Temel Geliştirmeler (Dependencies)
+- **`expo-blur`** ve **`expo-linear-gradient`** Expo kütüphaneleri sisteme yüklenecek (Yükleme işlemi halihazırda arka planda başlatıldı).
+
+### 2. Global Arkaplan (AppNavigator & MainTabs)
+- Uygulamanın tüm sayfalarının arkasında devasa, hafif parlayan renkli küreler yer alacak (Cyan, Mavi, Yeşil).
+- Bu kürelerin üzeri dev bir `BlurView` ile örtülecek ve dumanlı, modern bir atmosfer oluşturulacak. Ekranlar bunun üzerine şeffaf arka planla eklenecek.
+
+### 3. Komponent Tasarımları
+
+#### [MODIFY] `mobile/src/navigation/AppNavigator.js`
+- Navigator arka plan rengi tamamen saydamlaştırılacak.
+- Sayfaların altına "Global Glassmorphism Orbs" sistemi eklenecek.
+- Alt Sekme Çubuğu (Bottom Navigation Bar) da yarı saydam `BlurView` arkasına alınacak ve cam etkisi verilecek.
+
+#### [MODIFY] `mobile/src/components/SignalCard.js`
+- Düz siyah renk yerine `LinearGradient` arka plan kullanılacak (`#1e293b` > `#0f172a`, opacity 0.7).
+- İnce `rgba` vihaz çerçeveleri eklenecek.
+- Kar / Zarar ve Metin etiketleri daha soft, premium font ağırlıklarına (Google Inter stili sistem fontlarına) çekilecek.
+
+#### [MODIFY] `mobile/src/components/TopHeader.js`
+- Düz bir çubuk yerine aşağı doğru indikçe hafif blurlaşan **Glassmorphism Header** çubuğu eklenecek. Logo renkleriyle uyumlu hale getirilecek.
+
+#### [MODIFY] Ekranlar (HomeScreen, FavoritesScreen, Statistics vs)
+- Uygulama arka planları `transparent` yapılacak ki Global Arka Plan ortaya çıksın.
+- Filtre butonlarına şeffaf cam efektleri uygulanacak.
+- Liste kaydırmaları için margin boşlukları cam efektinin sınırlarına göre ayarlanacak.
+
+## Test ve Doğrulama
+1. Eklenen `expo-blur` modülü için uygulamanın Metro Bundler üzerinden tekrar hatasız yüklendiği doğrulanacak.
+2. iOS / Android cihazların "Safe Area" bölgelerinin arkaplan ile çakışıp çakışmadığı kontrol edilecek.
+3. SignalCard görünümleri ve performansının FPS düşüşü yaşatmadığı onaylanacak.

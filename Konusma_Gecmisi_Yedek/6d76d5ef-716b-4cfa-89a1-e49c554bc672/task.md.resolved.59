@@ -1,0 +1,16 @@
+# Görev Listesi: BingX API Canlı Bakiye (Net Gelir) Entegrasyonu
+
+- `[x]` **Veritabanı Güncellemesi (`signals.db`)**
+  - `signals` tablosuna `netPnlUsd REAL` eklenecek.
+  - `user_trades` (Favorites) tablosuna `netPnlUsd REAL` eklenecek.
+- `[x]` **Muhasebe Fonksiyonu (`bingx-trade.js`)**
+  - `getNetIncome(symbol, startTime)` fonksiyonu yazılıp BingX Income endpointinden Fee ve PnL toplanacak.
+- `[x]` **Manuel Kapanış (`backend/index.js`)**
+  - `/api/favorites/close` kısmında 2 saniye bekleyip gerçek dolar karşılığı bulunarak kaydedilecek.
+- `[x]` **Otomatik Kapanış (`backend/scanner.js`)**
+  - Scanner TP veya SL tetikleyip emiri kapattıktan hemen sonra BingX'ten faturayı çekip veritabanına mühürleyecek.
+- `[x]` **Arayüz Güncellemeleri (`Dashboard.jsx` & `FavoritesScreen.js`)**
+  - Kapanmış işlemlerde `netPnlUsd` değeri mevcutsa matematiksel fonksiyon ezilip orijinal dolar faturası ekrana yansıtılacak.
+- `[x]` **Sistemin Canlıya Alınması**
+  - PM2 API kısımları (Backend) restart edilecek.
+  - Vercel Frontend deploy edilecek.

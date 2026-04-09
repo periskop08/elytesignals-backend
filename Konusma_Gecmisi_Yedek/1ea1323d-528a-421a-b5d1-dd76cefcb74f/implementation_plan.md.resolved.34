@@ -1,0 +1,26 @@
+# Web Telegram Katılım Modalı (VIP Welcome)
+
+Mobil uygulamadaki `HomeScreen.js` dosyasında yer alan "Kullanıcı VIP (isVip === 0) değilse Telegram kanalına davet et" mantığı birebir Web Platformuna da taşınacaktır. Bu sayede web sitesi kullanıma açıldığında trafik doğrudan Telegram kanalına (VIP gruba) kanalize edilecektir.
+
+## Çözüm Yaklaşımı
+1. **State Yönetimi:**
+   `Dashboard.jsx` içerisine `showVipModal` (boolean) state'i eklenecektir. Uygulama her açıldığında `useEffect` kancası ile `user.isVip === 0` durumu kontrol edilecek ve eğer doğruysa modal görünür hale getirilecektir.
+
+2. **Görsel Modül (UI/UX Tasarımı):**
+   Ekranın tamamını kaplayan, arka planda ana paneli flu (`backdrop-filter`) yapan sabit (fixed) bir Modal katmanı çizilecektir.
+   Bu katman; mobil app ile %100 uyumlu olacak biçimde şunları içerecektir:
+   - Kullanıcının Profil Görüntüsü
+   - "Hoş Geldin, [İsim]!" Başlığı
+   - "Elyte Signals topluluğuna katılarak..." açıklama metni
+   - Mavi (Telegram mavisi) göze çarpan "VIP Gruba Katıl" butonu
+   - "Daha Sonra Belki" iptal butonu
+
+3. **Yönlendirme İşlemleri:**
+   - VIP Gruba Katıl seçildiğinde: `https://t.me/+Rw9Ea6LPHFgwZDU0` adresi yeni sekmede (`_blank`) açılacaktır. Modal kapanacaktır.
+
+## Değiştirilecek Dosyalar
+### [MODIFY] `src/pages/Dashboard.jsx`
+- `useState`, `useEffect` ile modalin tetiklenme mekanizması eklenecektir.
+- Dosyanın JSX döndüren kısmının en sonuna Modal katmanı (absolute/fixed div blokları) yerleştirilecektir.
+
+Lütfen bu tasarımı ve Telegram linkini (`https://t.me/+Rw9Ea6LPHFgwZDU0`) onaylayın, kodu derhal yazmaya başlayacağım.

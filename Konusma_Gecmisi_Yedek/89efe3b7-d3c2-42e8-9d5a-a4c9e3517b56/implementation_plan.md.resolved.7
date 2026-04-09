@@ -1,0 +1,33 @@
+# 📊 Ana Sayfa Genişletmesi: Canlı Kasa ve Performans Kartları
+
+Kullanıcının sisteme girdiğinde sadece makro verileri değil, robota dair güncel sonuçları ve finansal durumu da görebilmesi için "Ana Sayfa" paneline eklenecek yeni bölümün tasarımı:
+
+## ⚠️ Kullanıcı Onayı Gerekenler
+> [!IMPORTANT]  
+> Tasarımı, ilk 3 Makro Dominans kartını bozmayacak şekilde, hemen onların bir alt satırında 2 yatay sekme (Yan yana daha uzun kartlar) olarak planladım. Böylece ekran kalabalık görünmeyecek, veriler nefes alacak. Onaylıyor musun?
+
+## 🛠 Tasarım Planı
+
+### 🎨 1. Canlı Kasa (Live Wallet) Kartı
+BingX API'sinden çektiğimiz gerçek zamanlı bakiye verisiyle doldurulacak ve parlak cam tasarımlı (Glassmorphism) olacak.
+- **İkon:** Cüzdan veya Dolar/USDT (`Wallet` veya `DollarSign`)
+- **Başlık:** BingX Aktif Kasa
+- **Ana İçerik:** Devasa puntolarla `$1,250.45` gibi aktif USDT bakiyesi.
+- **Alt Metin:** Eğer bakiye pozitif yönde güncellenmişse, altında ufak, yeşil bir `+X USDT Net Kar` etiketi bulunacak.
+
+### 📈 2. 7 Günlük Performans (AI Algoritma Performansı)
+İstatistik sekmesindeki (Stats) son verilere ping atıp en kritik kazanma verisini "Ana Sayfa" daki bu karta tünelleyecek.
+- **İkon:** Şimşek veya Büyüme Grafiği (`Zap` veya `TrendingUp`)
+- **Başlık:** Canlı Performans (Son 7 Gün)
+- **Ana İçerik:** `%65.4` gibi kocaman bir **Win-Rate (Kazanma Oranı)**.
+- **Alt Metin:** Bu Win-Rate'in yanına ufak rozetlerle `<Bilinirli İşlem Sayısı> Sinyal | <TP> Başarı | <SL> Hata` gibi mini bir skor tablosu yerleştirilecek.
+
+## Nasıl Görünecek?
+```markdown
+[ 👑 Bitcoin Dominansı ]  [ ⚠️ USDT Dominansı ]  [ 🚀 Altcoin Dominansı ]
+-------------------------------------------------------------------------
+[ 💰 BingX Aktif Kasa: $XXX.XX ]   [ 📈 Son 7 Gün WR: %XX.X - Toplam İşlem ]
+```
+
+## 🧪 Beklenen Davranış
+Bu iki kart eklendiğinde `Dashboard.jsx`'teki var olan `adminBalance` ve `stats` verilerini (Zaten sayfa yüklenirken arkada otomatik çekiliyor) pasif olarak okuyacak, ekstra bir geriye dönük yüke (API Load) girmeyecek. Onayladığın an Dashboard'a Glassmorphism olarak çakıyorum!

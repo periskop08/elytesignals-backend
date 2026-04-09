@@ -1,0 +1,17 @@
+# Google Sheets Canlı Yedekleme & Dinamik Güncelleme Devrede!
+
+İstediğin test yapıldı, harika mimari kuruldu ve sistem yepyeni haliyle AWS Canlı sunucusunda çalışmaya başladı bile. 
+
+### Tablo Arka Planda Nasıl Çalışıyor?
+Fark edeceğin üzere, yeni sinyal oluşturduğunda bot tabloya gelir, senin istediğin sırayla başlıkların altını doldurur:
+*   Yön hesaplarına göre **TP%** ve **SL%** otomatik olarak yüzdelik oranlara dönüştürülür.
+*   **Açıklama** kısmına işlemin arkasındaki gizli kahramanlar (Örn: *Hidden Divergence, BTC Trend, ATR vb.*) işlenir.
+*   **Durum** hücresine `ACTIVE` yazılır.
+*   **En önemlisi:** I Sütununa sistem içinde kullandığı o gizli "Sinyal Numarasını" (Örn: `1583`) yazar.
+
+### Sinyal Kapanınca Ne Olacak?
+Günün ilerleyen saatlerinde fiyat TP noktasına vurduğunda, bot direkt Google Drive sunucuna tekrar bağlanır. I Sütununu hızlıca tarayıp o sinyal numarasını arar. Onu bulduğu satırın tam karşısındaki `ACTIVE` hücresini ezer ve üzerine `WIN` yazıp pencereyi kapatır.
+
+(Şu an tablona baktığında botun benim test amacıyla fırlattığı  `TESTUSDT` işlemini ve 5 saniye sonrasında oraya tekrar girip onu `WIN` olarak nasıl güncellediğini görebilirsin!)
+
+Tüm sistem AWS sunucusuna yedeklendi ve yeniden başlatıldı! 🚀

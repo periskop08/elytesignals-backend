@@ -1,0 +1,8 @@
+# Canlı PnL, İşlem Geçmişi ve Global Navigasyon Tasks
+
+- [ ] Mobile: `App.js` & `AppNavigator.js` yeniden yapılandırılarak `SignalDetail` ekranı `RootStack` içine, `BottomTabNavigator` dışına alınacak.
+- [ ] Backend: `index.js` içerisine `/api/signals/history` endpoint'i yazılacak ve `?status=WIN` veya `?status=LOSS` argümanlarıyla çalıştırılacak.
+- [ ] Mobile: `SignalHistoryScreen.js` oluşturularak başarılı veya başarısız işlemlerin listeleneceği ekran tasarlanacak.
+- [ ] Mobile: `StatisticsScreen.js` içerisindeki Başarılı/Başarısız kutuları tıklanabilir (`TouchableOpacity`) yapıp `SignalHistoryScreen`'a yönlendirecek.
+- [ ] Mobile: `HomeScreen.js` güncellenerek, sinyaller fetch edildikten hemen sonra `https://api.binance.com/api/v3/ticker/price` ile fiyat eşleşmesi yapılıp `% PnL` hesaplanarak `Text` olarak renderlanacak (Yalnızca ACTIVE statüsü için).
+- [ ] Sunucu ve Metro yeniden başlatılacak.

@@ -1,0 +1,7 @@
+# Opsiyon B: Elyte Signals Özel Masaüstü Web Paneli
+
+- `[ ]` 1. Web projesine React, React-DOM ve React Router kütüphanelerinin enjekte edilmesi.
+- `[ ]` 2. Landing Page'in (Vitrin) tamamen React componentlerine dönüştürülüp `/` rotasına bağlanması.
+- `[ ]` 3. `/login` rotasının yaratılıp Özel Telegram Login sisteminin Web'e uygun uyarlanması.
+- `[ ]` 4. `/dashboard` rotasında Masaüstüne/Tabletlere özel yatay ve geniş (Binance tarzı) Sinyal + Yapay Zeka panelinin tasarlanması.
+- `[ ]` 5. Sinyallerin ve VIP doğrulamalarının ana Amazon Sunucusuna bağlanması.

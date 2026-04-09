@@ -1,0 +1,25 @@
+# Sinyal Optimizasyonu ve Grafik Arayüzü Tamamlandı!
+
+Stabil coinlerin gürültüsünü engellemek ve işlemleri incelemek için hazırladığımız filtre ve canlı grafik ekranı (Signal Detail) özellikleri başarıyla entegre edildi. 
+
+### 1. Backend Analiz Motoru (Scanner) Optimizasyonları
+*   Sistem artık `USDC`, `FDUSD`, `TUSD`, `BUSD`, `USDTTRY` gibi asılları fiat veya sabit olan coinleri doğrudan tarama listesinden **çıkartıyor**. Bu sayede motorumuz gereksiz yere bu işlem gören paritelerde yorulmayacak.
+*   "Gürültü / Dar Aralık" filtresi onayladığınız şekilde **%2.5** kâr marjına çekildi. Sistemin Range ve Equilibrium (Orta Nokta) hesaplamaları sonrası eğer işlem potansiyel olarak %2.5'tan az kazanç veriyorsa, işlem kârlı bile görünse riske değmez diyerek otomatik pas geçiliyor!
+
+### 2. Canlı Grafikli Detay Sayfası (Mobil Kullanıcı Deneyimi)
+*   **Navigasyon Omurgası Yenilendi:** Uygulamanın alt bilgi ekranını (Bottom Tabs) bozmadan, içine bir katman (Stack Navigation) eklendi.
+*   **HomeScreen:** Sizin de önerdiğiniz gibi, "İşlem Bekliyor" yazısı da dahil olmak üzere artık listedeki *tüm sinyal kartlarına tıklanabilirlik (TouchableOpacity)* özelliği kazandırıldı. Bir sinyal kartına tıkladığınızda sizi hemen o işlemin özel sayfasına yönlendirecek.
+*   **Signal Detail Screen:** Özel bir tasarım sayfası kodlandı. 
+    *   Sayfanın üstünde temiz bir şekilde, tıkladığınız coine ait "LONG/SHORT" ikonu, giriş fiyatı ve renkli olarak Hedef/Stop (Zarar Kes) fiyatları bulunuyor.
+    *   Sayfanın alt bölümünü tamamen **TradingView İnteraktif Widget**'ı kaplıyor. Hangi coine tıklarsanız API direkt olarak TradingView'ı o coinin (Örn: `BINANCE:BTCUSDT`) **1 Saatlik (1h)** karanlık mod (Dark Mode) grafiğine ayarlayarak anında canlı tabloyu ekrana basıyor. 
+    *   Ekranın sol üstünden Geri okuna basıp liste görünümüne dönebilirsiniz.
+
+---
+
+> [!CAUTION]
+> **Test Öncesi Restart İşlemleri Çok Önemli**
+>
+> 1. Sisteme filtreleri (Backend) eklediğimiz için, kendi bilgisayar terminalinizde çalışan `node index.js` işleminizi **Ctrl+C** ile durdurup **tekrar `node index.js` komutu ile başlatmanız şart.** Aksi halde %2.5 filtresi devreye girmeyecektir.
+> 2. Sisteme (Frontend) canlı grafik paketi (`react-native-webview`) yüklediğimiz için, iPhone Expo uygulamanız bu yeni yerel kodları hafızasına alsın diye kodu başlattığınız terminaldeki (veya telefondaki) **Expo uygulamasını tamamen kapatıp baştan (Yenilenmiş Karekod okutarak) çalıştırın.**
+
+Ekran testinizi yapıp canlı grafiklerin durumunu inceleyebilirsiniz! Yeni fikirleriniz oldukça üzerine konuşalım.

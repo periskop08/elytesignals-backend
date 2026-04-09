@@ -1,0 +1,14 @@
+# Browser Task: Crypto Signal App Dashboard UI Check
+
+## Checklist
+- [x] Read scratchpad and initialize it.
+- [ ] Navigate to http://localhost:5173/dashboard.
+- [ ] Verify if redirection happens to the login page.
+- [ ] If on login, set `web_user` in localStorage and reload.
+- [ ] Wait for the premium mobile UI layout to render.
+- [ ] Verify existence of Signals Panel and AI panel.
+- [ ] Capture the full UI state with a screenshot.
+- [ ] Final summary and return.
+
+## Observations
+- Scratchpad initialized.

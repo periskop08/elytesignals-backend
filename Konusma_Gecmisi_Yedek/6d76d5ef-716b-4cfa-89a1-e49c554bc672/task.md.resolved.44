@@ -1,0 +1,5 @@
+- [x] `scanner.js` içerisine VWAP (Volume Weighted Average Price) algoritmasını ekle ve Hisse Senetleri için +8 Puanlık test koşulunu entegre et.
+- [x] `scanner.js` başlangıcına `isMacroNewsDay` adında global bir opsiyon (toggle) sabiti ekle.
+- [x] Döviz Çifti (EURUSD) analiz edilirken işlem yönüne bakılmaksızın `isMacroNewsDay` AÇIK ise Kalite Puanına "-20" ceza uygulayan koşul ekle.
+- [x] Gap (Boşluk) tarama filtresini Hisse senetlerinin yanı sıra Emtialar (XAUUSD, USOIL, vb.) için de çalışacak şekilde esnet.
+- [x] Eğer bir Emtia'da açık bir GAP tespit edilmişse ve bu GAP, DXY'nin mevcut trendi ile uyumluysa (Örn: DXY düşüyor, ve Altının yukarı Gap'i var), Kalite Skoruna +5 Bonus Puan ekle.

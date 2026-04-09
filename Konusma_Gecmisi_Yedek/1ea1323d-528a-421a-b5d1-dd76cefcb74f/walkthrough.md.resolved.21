@@ -1,0 +1,18 @@
+# Kişisel Performans Paneli (Favorites Dashboard)
+
+Kullanıcının sisteme olan güvenini ve istatistik takibini artırmak için Favoriler sayfasına (My Trades) özel bir arayüz geliştirilmiştir.
+
+## Gerçekleştirilen Yenilikler 🚀
+
+1. **Özelleştirilmiş Matematiksel Analiz:**
+   Uygulamanın genel istatistikleri yerine, sadece kullanıcının yıldızladığı (favoriye aldığı) işlemler taranarak anlık olarak şu değerler hesaplatılmıştır:
+   - TP Hit
+   - SL Hit
+   - Win Rate (Kişisel Başarı Yüzdesi)
+   - +2% Actives (Anlık PnL verisine bakılarak +%2 hedefini geçen açık işlemler)
+
+2. **Dinamik UI Konumu (ListHeaderComponent):**
+   Ekranın kalıcı olarak daralmasını önlemek için analiz tablosu, favoriler listesinin (FlatList) ilk sırasına `Header` olarak eklendi. Kullanıcı sayfayı aşağı kaydırdığında istatistik paneli de liste ile birlikte şık bir şekilde yukarıya gizleniyor.
+
+3. **Premium Tasarım Dokunuşları:**
+   Panel, 2x2'lik bir Grid (Izgara) formatında tasarlandı. Simgeler, her metriğin karakteristiğine uygun neon arkadokusuna (Örn: Yeşil için yatıştırıcı `#4ade80`, kırmızı için neon `#f87171` ve başarı oranı için sarı `#eab308`) sahip yarım-saydam kutuların içine yerleştirildi.

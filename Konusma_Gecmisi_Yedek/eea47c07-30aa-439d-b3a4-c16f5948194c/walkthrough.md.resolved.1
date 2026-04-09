@@ -1,0 +1,18 @@
+# 🚀 Mobil Uygulama: Varlık Yöneticisi Entegrasyonu Tamamlandı!
+
+Web sitemizdeki tüm `PortfolioManager` detayları %100 doğrulukla ve aynı Glassmorphism arayüzleriyle mobil uygulamamıza taşındı. Eski test sayfası (AI Terminal) kalıntısı silinerek uygulama mükemmel bir Premium Hedge Fund hissine ulaştırıldı.
+
+## Yapılan Düzenlemeler
+
+### 1. `Varlık Yön.` Alt Sekmesi ve Ekran Güncellemesi
+- **İkon ve İsim:** Alt navigasyon barındaki Yapay Zeka bot ikonu kaldırılıp, web sitesindeki gibi "Çanta / Briefcase" ikonuna ve **"Varlık Yön."** adına çevrildi.
+- **Portföy İstatistikleri:** Premium Borsa Varlıkları bölümü koda dahil edildi. API'den çekilen tüm varlıklar `assetsGrid` olarak düzenlendi. Hisse ağırlığı (% allocatedPercentage), lot bilgileri ve maliyet/drawdown verileri mükemmel bir matris ile sunuldu.
+
+### 2. Canlı TradingView Entegrasyonu (Asset Detail Modal)
+- `react-native-webview` paketinden faydalanılarak, varlıklara (örneğin $TSLA) tıklandığında açılan büyük Asset Detail Modalının en üstüne **1 Günlük (1D) TradingView Grafiği** yerleştirildi.
+- Grafiğin hemen altında varlığın pazar mikroskorları (CEO, Tech Edge vs.) ve Yapay Zeka Yatırım Tezi (Investment Thesis) yer alacak şekilde dizilim yapıldı. Arayüzün web versiyonunda olduğu gibi kusursuz olması garantilendi.
+
+### 3. Otomatik Yenileme (Pull to Refresh)
+React Native kullanıcılarının alıştığı standart olan "Sayfayı aşağı kaydırarak yenileme" (Pull to Refresh) eklendi ve tüm `/api/portfolio` & `/api/sentiments` verisi canlı ve anında sync olabilecek hale getirildi.
+
+Platform artık mobil tarafta resmen web sitesinden bile daha seri çalışan devasa bir Hedge Fund terminali halini aldı! 📈🔥

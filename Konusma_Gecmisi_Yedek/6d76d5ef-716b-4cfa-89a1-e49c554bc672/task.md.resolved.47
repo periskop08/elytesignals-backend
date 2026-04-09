@@ -1,0 +1,8 @@
+- `[x]` 1. Implement `analyzeOptionsFlow()` asynchronous function using `yahooFinance.options`.
+- `[x]` 2. Add sub-logic to find nearest expiration date and extract Put & Call Data.
+- `[x]` 3. Implement Put/Call Ratio (PCR) calculation.
+- `[x]` 4. Implement Max Pain Calculation logic (minimal intrinsic value).
+- `[x]` 5. Implement Open Interest Peak (Call Wall & Put Wall) calculation.
+- `[ ]` 6. Inject `analyzeOptionsFlow()` into `scanner.js` -> `analyzeCoin()`.
+- `[ ]` 7. Apply Score adjustments (+8, +7, ±10) only for Equities.
+- `[x]` 8. Write a quick local validation script `test-options.js` to ensure the logic runs smoothly before pushing.

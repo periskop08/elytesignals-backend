@@ -1,0 +1,18 @@
+# Hedef
+Price Action (Fiyat Hareketi) kırılımlarının sahte olup olmadığını filtrelemek ve sinyal kalitesini artırmak için profesyonel bir **Hacim Doğrulama (Volume Confirmation)** filtresi eklemek.
+
+## Strateji: RVOL (Relative Volume - Bağıl Hacim)
+İnternetteki profesyonel işlem (Price Action) kaynaklarında en çok kabul gören "Breakout (Kırılım) Onayı" stratejisi "Bağıl Hacim" ölçümüdür. Kural çok basittir: **"Fiyat kırılımı, standart ortalama hacmi ezici bir şekilde aşmıyorsa o kırılım sahtedir (Fakeout)."**
+
+## Önerilen Değişiklikler
+
+### Backend Scanner (`backend/scanner.js`) Güncellemesi
+Botumuz Binance'ten veri çekerken Fiyat bilgisinin yanında Hacim (Volume) bilgisini de alıyor ancak bunu bugüne kadar hiç kullanmadık. Şimdi şu hesaplamaları ekleyeceğim:
+1. **SMA-20 Volume Ölçümü:** Binance'ten gelen son 20 mumluk hacmin ortalaması hesaplanarak paritenin "Standart Hacim Çizgisi" bulunacak.
+2. **Kırılım Hacmi (Current Volume) Kontrolü:** Sinyali üreten mumun hacmi alınacak.
+3. **Filtre Tetiği:** Eğer sinyal üreten mumun hacmi, son 20 saatlik ortalama hacmin **%50'sinden daha büyük değilse (yani 1.5x katı değilse)**, sistem bu kırılımı "Cılız Kırılım / Kurumsal Desteksiz" olarak etiketleyip sinyali YOK SAYACAK.
+
+**Faydası:** Bu ekleme ile botun sadece fiyata değil, fiyata yön veren para havuzunu analiz etmesi sağlanacak. Sinyal sayınız ciddi şekilde düşecek ancak gelen sinyallerin başarı oranı (Win Rate) radikal şekilde artacaktır.
+
+## Onay Bekliyoruz
+Planı ve hacim katsayısını (Ortalamanın 1.5 katı olması) uygun buldunuz mu? Onaylarsanız Scanner sistemimize bu güçlü RVOL motorunu entegre edeceğim.

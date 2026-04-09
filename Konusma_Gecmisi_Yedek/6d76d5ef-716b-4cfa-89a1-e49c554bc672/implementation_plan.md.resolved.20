@@ -1,0 +1,30 @@
+# 🚀 BÜYÜK GÖÇ: BingX'e Taşınma Operasyonu (Implementation Plan)
+
+Madem veriler bize "BingX kazanır" dedi, biz de sistemi kuruşuna kadar o limana yanaştırıyoruz! Sistemi kusursuz ve pürüzsüz bir şekilde Bybit'ten ayırıp BingX'e geçirmek için yapacağımız cerrahi müdahale haritası şu şekildedir:
+
+## 1. Veri Sağlayıcılarının Değişimi (`scanner.js` ve Tarama Modülleri)
+Piyasanın nabzını tutan ve Bybit'in kapısını çalan tüm fonksiyonları söküp atacağız:
+- **[MODIFY] `scanner.js` - Top 100 Coin Taraması:** `turnover24h` aranan Bybit endpoint'i yerine, BingX'in `/openApi/swap/v2/quote/ticker` API'si bağlanacak. BingX'in `quoteVolume > 10000000` filtresiyle, çöpler filtrelenerek sadece ana tokenler haritaya sokulacak.
+- **[MODIFY] `scanner.js` - Mum (Kline) Çekici:** Bybit kline API'si yerine BingX'in `/openApi/swap/v3/quote/klines` adresine bağlanılacak.
+- **[Ayar] Sembol Dilimlemesi:** Bybit "BTCUSDT" anlıyordu, BingX ise "BTC-USDT" şeklinde araya tire (`-`) istiyor. Sistemin tüm sinyal, veritabanı ve kayıt fonksiyonlarına bu isim standartlaştırması otomatik entegre edilecek.
+
+## 2. Emir İletim ve Execution Ağının Değişimi (`bingx-trade.js`)
+Seni Telegram'da sadece haberdar etmekle kalmayıp senin yerine işlemi Borsaya işleyen "Auto-Trade" modülünün fişi BingX'e takılacak.
+- **[NEW] `bingx-trade.js`:** Bybit'in sipariş şifreleme mantığı (`X-BAPI-SIGN`) yerine BingX'in çok daha güvenli olan `X-BX-APIKEY` HMAC-SHA256 altyapısı yazılacak.
+- **[MODIFY] Fonksiyonlar:** 
+  1. `placeOrder(symbol, direction, entry, target, stop)` -> BingX API'sine Limit/Market Emir gönderecek.
+  2. `getPosition(symbol)` -> BingX üzerindeki açık pozisyonu (size vb.) denetleyecek.
+  3. **YENİ TAŞIDIĞIMIZ 'POSITION MANAGER':** `updateStopLoss(symbol)` -> Sistem seni korumak için 1R (Breakeven) tetiğine ulaştığında BingX pozisyonunun Stop-Loss rakamını girişe (+ Komisyon payı) çekecek.
+
+## 3. Sistem Kurulum Gereksinimleri
+Bu plana başlayıp bitirmem için sadece ufak bir onaya ve anahtarlarına ihtiyacım var!
+
+### 🔑 Senden Beklediğim Anahtar
+Gidip onay verdiğinde BingX panelinden çıkartacağın iki şifreyi (`.env` dosyasına yazacağım için) şimdiden buraya hazırlaman gerekiyor:
+- **`BINGX_API_KEY=`**
+- **`BINGX_API_SECRET=`**
+
+> [!WARNING]  
+> API anahtarını alırken **Perpetual Futures (Sürekli Vadeli İşlemler) için Al/Sat yetkisi (Trade Permission)** vermeyi unutma! Çekim (Withdraw) izni KESİNLİKLE kapalı olsun, biz güvende kalalım.
+
+Hazırsan ve API anahtarların elindeyse planı **Onayla**, saniyeler içinde o koca yazılım şasisini BingX limanına sabitleyeyim! 🥂

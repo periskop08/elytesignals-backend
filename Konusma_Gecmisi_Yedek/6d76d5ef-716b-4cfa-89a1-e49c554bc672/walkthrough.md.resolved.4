@@ -1,0 +1,22 @@
+# Dinamik Skor Motoru ve Makro İnce Ayar (Tweak) Özeti
+
+Yapay Zeka'dan (Perplexity) gelen "Kurumsal Risk Yönetimi" önerilerini, sistemin sinyal sıklığını bozmadan "Esnek (Bonus/Ceza) Puanlama" modeline dönüştürerek başarıyla yayına aldık. Bot artık sadece yönü değil, grafiğin karakterini ve kalitesini de algılayabiliyor.
+
+## Uygulanan Filtreler ve Skor Etkileri
+
+### 1- Ani Haber (Fakeout) Volatilite Kalkanı (ATR Spike)
+Piyasalarda bazen tek mumda %5-%10'luk absürt hareketler olur (Haber veya Spekülasyon kaynaklı). Bu tarz aşırı hacimli mumların oluşturduğu setuplar (kırılımlar) genellikle "Tuzak / Fakeout" olarak sonuçlanır. 
+- *Aksiyon:* Eğer kırılımı yaratan son mumun boyutu (ATR), geçmiş 14 mumun ortalamasından **2 Kat büyükse**, bot bu işin içinde bir bit yeniği olduğunu sezer ve sinyale peşin **`-15 Ceza Puanı`** keser. (Çok mükemmel bir konumdaysa yola devam eder, ama sıradan bir setup'sa iptal edilir).
+
+### 2- RSI (Tükenmişlik) Koruma Bölgesi
+Bir altcoin gümbür gümbür yükseliyorken (Örn: RSI 1 Saatlikte 80'i vurmuşken) kırılım geldi diye tepeden "Long (Alış)" işlem açmak ölümcüldür. Bot artık bu "Aşırı Şişmiş" veya "Aşırı İnmiş" bölgeleri de algılıyor:
+- Yön **LONG** ise ve RSI(1h) **> 75** (Aşırı Alım) seviyesindeyse; **`-10 Ceza Puanı`** (Tepe tuzağından koruma).
+- Yön **SHORT** ise ve RSI(1h) **< 25** (Aşırı Satım) seviyesindeyse; **`-10 Ceza Puanı`** (Dip tuzağından koruma).
+
+### 3- Altın Oranlı (R:R) İşlemleri Ödüllendirme
+Perplexity'nin bahsettiği gibi "Kazanacağı paraya değecekse risk al" kuralını güçlendirdik.
+- Sistem; Giriş, Stop ve Hedef yerlerini belirledikten sonra Getiri/Risk alanını (R:R) hesaplıyor. Odakta **`> 2.0`** (Yani 1 riske atıp en az 2 alabileceği) efsanevi oranda bir potansiyel varsa, sisteme **`+10 Ekstra Ödül Puanı`** yansıtılarak o işlemin barajı kesinlikle aşması ve bize ulaşması sağlanıyor.
+
+> [!TIP]
+> **Canlı Yayınlandı!**
+Tüm bu yenilikler sisteme Syntax testi geçilerek işlendi ve **PM2** servisi ile AWS üzerinde canlıya alındı. Kasa yönetimi stratejimizi koruyup (Sabit $3), botun zekasını Wall Street seviyesine çıkartmış olduk!

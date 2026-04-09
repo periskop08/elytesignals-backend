@@ -1,0 +1,8 @@
+# Elyte Signals Landing Page
+
+- `[x]` 1. Vite Projesi Başlatma (Vanilla JS/CSS şablonu ile `web` dizini oluşturma)
+- `[x]` 2. Temel varlıkları, CSS ve HTML iskeletini hazırlama
+- `[x]` 3. Animasyonlu ve Glassmorphism özellikli Premium Dark Tema Tasarımı (style.css)
+- `[x]` 4. Scroll efektleri ve etkileşimleri için JavaScript entegrasyonu (main.js)
+- `[x]` 5. Sitenin canlı derlemesini (build & dev) başlatıp ekran görüntüsü ile test etme
+- `[x]` 6. Son pürüzlerin düzeltilmesi ve Walkthrough sunumu

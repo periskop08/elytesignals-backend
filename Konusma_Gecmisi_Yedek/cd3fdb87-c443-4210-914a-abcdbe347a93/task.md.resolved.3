@@ -1,0 +1,11 @@
+# Otonom Ticaret Limitleri ve Favori Senkronizasyonu Entegrasyonu
+
+- `[x]` 1. `scanner.js` Güncellemesi
+    - `[x]` Aynı günde aynı coine girilme (duplicate) sorgusunun `user_trades` yerine `signals` referans alınarak yapılması.
+    - `[x]` Eğer bugün sinyal daha önce düşmüşse, `placeOrder` fonksiyonunu kırıp sinyalin sadece `signals` olarak pasif kaydedilmesinin (panele yansımasının) sağlanması.
+- `[x]` 2. `index.js` Favori Uç Noktası (Endpoint) Güncellemesi
+    - `[x]` `/api/favorites/toggle` endpoint'inde kâr/zarar (Auto-Trade) fonksiyonunun manuel açılan admin işlemlerine de uyarlanması.
+    - `[x]` İşlem BingX'te başarılı açılırsa, kaydın sadece `favorites` değil aynı zamanda `user_trades` tablosuna da `status = ACTIVE` olarak yazılması.
+- `[x]` 3. Servis Yeniden Başlatma & Test
+    - `[x]` Sunucuya atılırken `.db` dosyalarının korunması için `deploy.sh` tetiklendi ve `pm2 restart ElyteBackend` komutu AWS üzerinde hatasız çalıştırıldı.
+- `[x]` 4. Walkthrough (Sonuç Raporu) Oluşturma

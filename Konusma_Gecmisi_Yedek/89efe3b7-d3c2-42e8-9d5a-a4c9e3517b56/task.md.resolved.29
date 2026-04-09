@@ -1,0 +1,6 @@
+# 🤖 LLM Interaktif Hisse Analiz Radarı Task Listesi
+
+- `[/]` **Kullanıcı Arayüzü (UI):** `PortfolioManager.jsx` içerisine arama kutusu ve "Gönder" butonunun dizayn edilmesi.
+- `[ ]` **Backend API:** `index.js` (Express Server) içerisinde `/api/llm/analyze` isimli "POST" endpoint'inin oluşturulması.
+- `[ ]` **OpenAI LLM Entegrasyonu:** Kullanıcının yazdığı sembolün OpenAI `gpt-4o` asistanına gönderilip JSON formatında puanlar ve raporun üretilmesi. SQLite `ai_sentiments` tablosuna yazılması.
+- `[ ]` **Canlı Dağıtım:** Kodların AWS sunucusunda ve Vercel platformunda çalışır duruma getirilmesi.

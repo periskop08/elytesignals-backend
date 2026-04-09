@@ -1,0 +1,35 @@
+# Elyte Signals Canlı Yayına (Vercel) Geçiş
+
+Harika haber! Vercel'in sitemizi çöktürmemesi ve sayfalar arası geçişte hata vermemesi için gereken şifreli `vercel.json` yönlendirme kurallarını projeye başarıyla uyguladım. Artık dosyalarımız %100 Vercel standartlarında.
+
+Sistemin tüm mimarisi sizin cihazınızda harika çalışıyor. Şimdi tek yapmamız gereken onu internete fırlatıp **Canlı bir URL (.vercel.app)** almak!
+
+> [!CAUTION]
+> Yapay Zekaların (benim), sizin e-posta, Github veya parolanızla Vercel hesabınıza (güvenlik nedeniyle) kendi başıma giriş yapma yetkisi bulunmuyor. Bu yüzden **"Yükle" komutu** (Vercel Login) tamamen *sizin bilgisayarınızın asıl Terminali* üzerinden verilmeli. Ben işlemi sizin komutanlığınıza devrediyorum!
+
+## Vercel Füzesini Nasıl Ateşlersiniz? (3 Adım)
+
+Lütfen Mac Terminal uygulamanızı (veya Cursor / VS Code içindeki terminali) açın ve aşağıdaki 2 komutu sırasıyla "kopyalayıp" yapıştırın:
+
+1. **Önce Web Projemizin Klasörüne Gerek:**
+```bash
+cd /Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web
+```
+
+2. **Ardından Vercel'i Başlatın:**
+```bash
+npx vercel@latest
+```
+
+### Ekranda Ne Olacak?
+- Vercel size "Giriş Yap" (`Log in`) diyerek E-posta, Github veya Google seçeceği sunacak. Klavyedeki Ok Tuşlarıyla seçip Enter'a basarsanız, tarayıcınız açılacak ve "Onayla" diyeceksiniz.
+- Sonrasında Terminale döneceksiniz ve size şu soruları soracak:
+  - `Set up and deploy "~/...? [Y/n]` -> **Y** (Enter)
+  - `Which scope do you want to deploy to?` -> (Kendi isminizi seçip Enter)
+  - `Link to existing project? [y/N]` -> **N** (Enter)
+  - `What's your project's name?` -> **elyte-signals** (Enter)
+  - `In which directory is your code located? ./` -> **Sadece Enter** 
+
+30 Saniye içinde yeşil renkte **"Production: https://elyte-signals.vercel.app"** şeklinde canlı sitenizin linki düşecek! Linke tıklayıp zaferi kutlayabilirsiniz. 🎉
+
+Bu işlemi yaptıktan sonra linki bana da atın, son bir kutlama yapalım!

@@ -1,0 +1,20 @@
+# Gerçekleştirilen Geliştirmeler: RVOL (Bağıl Hacim) Kırılım Filtresi
+
+Botun Fiyat Hareketi (Price Action) doğruluğunu artırmak ve sizi "Fakeout" adı verilen sahte/tuzak kırılımlardan korumak için, sinyal tespit motoruna (`backend/scanner.js`) güçlü bir hacim algoritması entegre edilmiştir.
+
+## Nasıl Çalışıyor? (Mantık)
+Daha önceden bot, Eflot (Dip/Tepe) veya formasyon bölgelerinde sadece **"Fiyat"** o bölgeyi geçip ihlal ettiğinde anında işleme / sinyale giriyordu.
+Peki ya fiyat o bölgeyi kırmasına rağmen piyasadaki gerçek para (insanlar ve kurumlar) bu coin ile ilgilenmiyorsa? İşte burada sönük hacim kaynaklı **"Yalancı Kırılımlar (Fakeout)"** ortaya çıkıyordu ve çoğunlukla zararla stop ediyordu. 
+
+Artık sistem her seferinde şu adımları atıyor:
+1. **Dinamik Standart Ölçümü (SMA-20 Volume):** Fiyat destek veya direnci kestiği anda, bot hemen Binance'in saatlik kapanışlarından önceki 20 saatin hacim ortalamasını (SMA-Volume) buluyor. (Örn: Bu coinde saatlik ortalama hacim 10 Milyon USDT).
+2. **Kırılım Hacmi (RVOL Tepe):** Ardından kırılım olan yakın zaman aralığındaki mumun hacmine bakıyor (Kırılım mumu veya ardılları).
+3. **Onay Kararı (1.5x Çarpanı):** Eğer gelen hacim, ortalamanın **en azından %150'si (Yani 1.5 katı)** değilse, yani normalden büyük bir kurumsal para girişi yoksa, sistem bu fiyat kırılımına "İçi Boş / İlgisiz / Fake" tanımını koyup işlemi reddediyor!
+
+> [!TIP]
+> Konsolda şuna benzeyen loglarla bu filtrelemenin çalıştığını görebilirsiniz:
+> `[VOL-FILTER] TRXUSDT reddedildi. Sahte Kırılım (RVOL Yetersiz). Hedef Hacim: 7.2M, Mevcut: 4.8M`
+
+## Faydası (Sinyal Kalitesi & Miktarı)
+*   **Sinyal Sıklığı Düşecek:** Artık sistem her hareket eden coine girmeyecek, onay olarak Hacmi de zorunlu tutacaktır. Günlük 100 sinyal geliyorsa, hacmin zorlanmasıyla bu rakam 20-30 aralığına düşebilir.
+*   **Win Rate (Kazanma Oranı) Artacak:** Tuzaklara girmek engelleneceği için stop yüzdesi ciddi şekilde azalacak, başarı grafiği stabiliteye kavuşacaktır.

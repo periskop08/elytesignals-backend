@@ -1,0 +1,39 @@
+# Sinyal Detay Sayfası ve Canlı PNL Animasyonu Geliştirme Planı
+
+Kullanıcı, web üzerinde sinyal kartına tıkladığında Mobil Uygulamadaki `SignalDetailScreen`'e benzer spesifik bir görünüme geçilmesini ve sinyal kartlarının üzerine tıpkı mobildeki gibi "anlık kar/zarar (PNL)" oranlarının `Blinking (Çakar Lamba)` animasyonu ile eklenmesini talep ediyor.
+
+## User Review Required
+> [!IMPORTANT]
+> - Sinyal detay sayfasına girdiğinizde TradingView grafiği yüklenecek. React kütüphanesi yükü oluşturmamak için TradingView'un kendi resmi hafif "Iframe" arayüzünü kullanacağız, böylece site asla kasmayacak.
+> - Canlı PNL fiyatlaması saniyede bir ByBit borsasından (API) çekilecek. Eğer kâr oranı %1'i geçerse yavaş yanıp sönme, %2'yi geçerse çok daha hızlı yanıp sönme sağlayan CSS `keyframes` animasyonları eklenecek. Bunlar uygun mudur?
+
+## Proposed Changes
+
+### Web Uygulaması (`web/src/pages/Dashboard.jsx`)
+Sinyal tıklama yönlendirmesi için Stateful (Durumsal) render yapısına geçiş.
+
+#### [MODIFY] [Dashboard.jsx](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web/src/pages/Dashboard.jsx)
+- `const [selectedSignal, setSelectedSignal] = useState(null)` adında yepyeni bir görünüm katmanı tanımlanacak.
+- Sayfa yüklendiğinde ByBit Linear Tickers apisine `setInterval` ile bağlanılarak canlı fiyatlar `livePrices` dict (objesi) içerisine kaydedilecek.
+- Kartlardaki "Type (LONG/SHORT)" yazısının yanına veya üstüne Canlı Yüzde eklenecek.
+- Tıklandığında ekran sağdan sola kayacak (ya da render değişecek) ve **Geri Dön** (ArrowLeft) butonu bulunan Sinyal Detay Görünümü aktif olacak.
+- Bu detay görünümünde TradingView iframe'i yerleştirilecek:
+  `https://s.tradingview.com/widgetembed/?symbol=BYBIT:${coin}.P&interval=60&theme=dark`
+
+### Web Uygulaması CSS (`web/style.css`)
+Animasyonlar ve detay ekranı yapılandırması.
+
+#### [MODIFY] [style.css](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web/style.css)
+- `@keyframes blinkNormal { 0%, 100% { opacity: 1; text-shadow: 0px 0px 5px green; } 50% { opacity: 0.2; text-shadow: none; } }` şeklinde `blinkNormal` ve `blinkFast` isimli canlandırmalar CSS'e eklenecek.
+- Detay sayfasının grafiği için `.tradingview-wrapper` sınıfı eklenecek.
+
+## Open Questions
+> [!NOTE]
+> Mobil uygulamada yer alan **Önceki İşlemler (History)** verilerini de grafiğin altına çekmemi isterseniz onu da yapabilirim ama performansı şimdilik yüksek tutmak adına Sinyal Bilgileri + TradingView Grafiği yeterli mi?
+
+## Verification Plan
+
+### Manual Verification
+1. Vercel lokal ortamdan başlatılıp sinyal kartının üstünde `+%x.xx` yandığı görülecek.
+2. %2 kârı manuel olarak simüle edip animasyon hızı kontrol edilecek.
+3. Karta tıklandığında TradingView grafiğinin karanlık modda eksiksiz yüklendiği teyit edilecek.

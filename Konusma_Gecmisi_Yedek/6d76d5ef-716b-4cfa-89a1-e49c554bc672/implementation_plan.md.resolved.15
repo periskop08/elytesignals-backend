@@ -1,0 +1,27 @@
+# Varlıklar İçin Geleneksel Finans (Kurumsal) Yükseltme Planı
+
+Perplexity'nin önerileri, bizim şu an "Kriptodan" devşirdiğimiz formülleri tam anlamıyla Wall Street standartlarına oturtacak şahane ince ayarlardır.
+
+## Neler Yapacağız? (Önerilerin Kod Analizi)
+
+### 1. MTF FX Filtresi: 1D SMA200 (Günlük 200 Ortalaması)
+- **Problem:** Döviz çiftleri (FX) uzun vadeli merkez bankası makro trendlerine sıkı sıkıya bağlıdır.
+- **Çözüm:** EUR/USD için 1 Saatlik tabloda sinyal yakalasak bile, Günlük (1D) tabloda SMA200'ün altında mıyız üstünde miyiz diye bakacağız. Günlük SMA200 altındaysa LONG sinyalleri "Zayıf Trend" diyerek reddedilecek veya kalite puanı düşürülecek.
+
+### 2. Emtia (Gold/Oil): DXY (Dolar Endeksi) Korelasyonu
+- **Problem:** Altın ve Petrol tamamen ABD Doları'na (DXY) ters korelasyonludur (Tahterevalli gibi).
+- **Çözüm:** Sensörlerimizin arasına `DX-Y.NYB` (Dolar Endeksi) eklenecek. Eğer Altın (XAUUSD) için LONG sinyal çıkarsa, robot saniyesinde Dolar Endeksi'ne dönecek. Eğer Dolar yükselişteyse, Altın işlemi iptal edilecek! Müthiş bir filtreleme olacak.
+
+### 3. Emtia SL Genişletme (ATR x 2.5)
+- **Problem:** Altın çok sert V fitilleri atar, stop patlatıp yola devam eder. Kriptodaki dar StopLoss Altın'da sökmez.
+- **Çözüm:** Normalde Stop dinamik olarak belirleniyor ancak sembol `XAUUSD` veya `USOIL` ise zararkes mesafesi ATR formülü üzerinden 2.5 katına çıkartılacak!
+
+### 4. ABD Hisseleri İçin "GAP Fill (Boşluk Doldurma)" Taktiği
+- **Problem:** AAPL ve TSLA gece kapanıp sabah açıldıkları için fiyat haritasında boşluk (GAP) bırakırlar ve tahtacılar genellikle ilk hedefleri olarak bu boşluğu doldurmayı (Gap Fill) seçerler.
+- **Çözüm:** TSLA/AAPL işlemlerinde dünden kalan bir FVG veya Crossover GAP varsa hedeflerimiz direkt oraya mıknatıslanacak.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bu stratejilerin her biri Geleneksel Piyasalar için hayat kurtarıcı ve çok profesyonel dokunuşlardır. Bence hiçbirini es geçmeden **HEPSİNİ** sisteme dahil etmeliyiz. Ben testlerimi yaptım, Yahoo Finance üzerinden DXY'ı ve Günlük SMA200'ü çekebiliyoruz.
+> Algoritmayı modifiye etmek ve bu yeni "Kurumsal Silahları" sisteme entegre etmek için hazır olduğunda onay vermen yeterli! Onay sonrası kodlamaya geçip Amazon sunucusunu fethedeceğim.

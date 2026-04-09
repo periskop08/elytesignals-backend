@@ -1,0 +1,9 @@
+- `[/]` Sinyal Kartlarını Tablo (Row) Sistemine Çevirme
+  - `[ ]` `web/src/pages/Dashboard.jsx` içerisindeki `renderSignalCard` fonksiyonunun tasarımını `gridTemplateColumns` ile yeniden inşa etmek.
+  - `[ ]` Masaüstü için `1fr 1.5fr 1.5fr 1.5fr 1fr` şeklinde 5 sütun ayarlamak.
+  - `[ ]` Kartların liste görünümünün dışına bir Table Header (başlık) oluşturmak.
+- `[ ]` Responsive ve Mobil Uyumluluk (CSS)
+  - `[ ]` `web/src/index.css` dosyasında `.signal-row` (yatay tablo) ve mobil versiyonu için `@media` query yazmak.
+  - `[ ]` Cep telefonu çözünürlüğünde (max-width: 768px) grid esnetmesi ya da alt alta dizilim eklemek.
+- `[ ]` Test ve Verifikasyon
+  - `[ ]` `Sinyaller` ve `Favoriler` sekmelerinde verilerin tablo tarzında kırılmadan göründüğünü kontrol etmek.

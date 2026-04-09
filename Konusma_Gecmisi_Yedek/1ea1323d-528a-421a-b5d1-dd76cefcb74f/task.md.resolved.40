@@ -1,0 +1,6 @@
+# Görev Listesi (Login UI & Navigation)
+
+- `[x]` 1. `LoginScreen.js` dosyasının yaratılması ve Animasyonlu Radar / Sonaar efektlerinin kodlanması.
+- `[x]` 2. "Continue with Google" ve "Connect with Telegram" butonlarının modern UI standartlarında tasarlanması.
+- `[x]` 3. `AppNavigator.js` üzerinde `Login` rotasının eklenmesi ve kök dizin olarak (initialRouteName) ayarlanması.
+- `[x]` 4. Geçiş (Navigation Replace) testlerinin tamamlanması.

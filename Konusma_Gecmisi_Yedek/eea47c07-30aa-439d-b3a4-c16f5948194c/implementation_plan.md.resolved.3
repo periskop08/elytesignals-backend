@@ -1,0 +1,29 @@
+# Mobil Arayüz Paritesi: Favoriler ve İstatistik Sekmesi Güncellemesi
+
+Web sitesindeki `Dashboard.jsx`'in hem "Favoriler" hem de "İstatistikler" ekranlarındaki "Kişisel Performans Grid'i" ve "Gerçek Anlık Borsa Kasa" yapıları mobilde tam senkron hedeflenmek üzere eksik veya farklı implemente edilmiş. Bu kısımlar 1:1 web görünümüne uygun olarak güncellenecek.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - Favoriler tarafındaki TP Hit / SL Hit butonlarına tıklandığında (Web'de olduğu gibi) alt taraftaki listenin canlı filtrelenmesi ve renk durumunun değişmesi sağlanacak. Önceki "Geçmiş İşlemler Ekranına Yönlendirme" iptal edilecek. Onaylıyor musunuz?
+
+## Proposed Changes
+
+### [MODIFY] `mobile/src/screens/FavoritesScreen.js`
+- `favFilter` adında (ACTIVE, WIN, LOSS, ALL) bir state oluşturulacak.
+- Sayfanın en üstüne "Kişisel Performans" widget'ı (`renderHeader` içerisinde olan) *liste boş olsa dahi* her zaman gösterilecek şekilde kalıcı (sabit scroll view içine) alınacak.
+- Başarılı / Başarısız kartlarına tıklandığında `favFilter` güncellenecek ve kart arka planları (örneğin seçiliyse yeşil veya kırmızı opak zemin) aktif filtre rengine bürünecek.
+- Grid dizilimi `gridTemplateColumns: '1fr 1fr'` yapısına benzer bir native flex düzeniyle dizilecek. Web'deki gibi yanlarında ikonlar olacak.
+
+### [MODIFY] `mobile/src/screens/StatisticsScreen.js`
+- Sayfaya `AuthContext` dahil edilip kullanıcının `isAdmin` olup olmadığı (1194576674 telegram_id) teyit edilecek.
+- Eğer admin ise, arkaplandan `GET /api/admin/balance/:telegramId` isteği yapılacak (Web'de olduğu gibi `setInterval` ile 60 sn'de bir oto-güncellenen yapı kurulabilir).
+- En üstte yer alan cüzdan (Wallet) kartı, web sitesindeki devasa Kasa tasarımına (`Gerçek Anlık Borsa (BingX) Seçkin Kasa` başlığıyla) dönüştürülecek.
+
+## Open Questions
+- Favoriler sekmesinde TP Hit veya SL Hit e tıklandığında aşağıda ilgili işlemler (kapalı sinyaller) listelenecek. Bu kartlarda "Takip Listesinden Çıkar" butonu yerine bir işlem yapılacak mı, yoksa kapalı olduğu için sadece görüntüleme mi yapılsın? (Web sitesinde o an işlem yapmıyor).
+
+## Verification Plan
+### Test Süreci
+- Expo üzerinden uygulamanın İstatistik sekmesi kontrol edilerek Admin telegram hesabı bağlıysa güncel BİNGX bakiyesinin listelendiği görülecek.
+- Favoriler sekmesinde kartlara (TP Hit / SL Hit) basıp filtrelerin değişimi test edilerek listenin canlı filtrelendiğinden emin olunacak.

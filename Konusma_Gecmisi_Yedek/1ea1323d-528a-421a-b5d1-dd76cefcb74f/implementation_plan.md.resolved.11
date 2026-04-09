@@ -1,0 +1,40 @@
+# Sinyal Filtrasyonu: Win-Rate Geliştirme (Versiyon 3.0)
+
+Hedef: Kârı maksimize ederken, kaybettiren sahte sinyallere girme ihtimalini minimize etmek. Önerdiğimiz **3 Katmanlı Filtre Sistemi**ni sinyal motoruna ("backend/scanner.js") entegre edeceğiz.
+
+## Onaylı Geliştirmeler (Senaryo)
+
+### 1. AVWAP Kesin Filtresi (Ağırlıklı Maliyet Reddi)
+- Sinyalimiz `LONG` olsa bile, güncel fiyat **Dipten Dönüp AVWAP'ı kıramamışsa** (satıcıların kontrolünde kalmaya devam ediyorsa), sistem işlemi **reddedecek**.
+- Sinyalimiz `SHORT` olsa bile, fiyat **Tepeden Dönüp AVWAP desteğini kıramamışsa** sistem işlemi reddedecek. 
+
+### 2. MTF (4H) Trend Onayı (Büyük Resim)
+- `scanner.js` 1 Saatlik (1H) grafikte tüm şartların harika olduğunu tespit ettiğinde ("Fiyat, Hacim, Range uygun"), sisteme körü körüne atlamak yerine **Binance'den sadece o coin için 4 Saatlik (4H)** mumları çekecek.
+- 4 Saatlik grafiğin 50 Mumluk Ortalamasına (MA50) bakarak o coinin makro trendini analiz edecek. Eğilim ters yöndeyse işlem riskli sayılıp reddedilecek. Bu algoritma API yükünü şişirmemek için sadece 1H şartlarını geçen coinler üzerinde çalıştırılacak.
+
+### 3. Akıllı ATR Zarar Kes (Dynamic Stop-Loss)
+- Sabit `%1`'lik stop çöpe gidiyor. `technicalindicators` kütüphanesinden `ATR` (Average True Range) hesaplayıcısı sisteme dahil edilecek.
+- Son 14 saatin dalgalanma değeri bulunup, stop mesafesi `Giriş Fiyatı - (ATR * 1.5)` olarak belirlenecek. Bu sayede her coinin kendi oynaklığına göre nefes alma alanı bırakılarak balina iğne (wick) operasyonlarından korunulacak.
+
+## Proposed Changes
+
+---
+
+### Backend Sinyal Motoru (`backend/scanner.js`)
+
+#### [MODIFY] `backend/scanner.js`
+- `const { ATR, SMA } = require('technicalindicators');` kütüphanesi enjekte edilecek.
+- `analyzeCoin` fonksiyonu içinde ATR hesaplaması eklenecek ve statik stop değeri `1.5 * ATR` olacak şekilde güncellenecek.
+- `if/else` bloklarındaki hedef belirleme mekanizmasına "AVWAP yönü" kontrolü eklenecek.
+- Eğer 1H analizi bir sinyal tespit ederse, retura vermeden hemen önce 4H sorgusu açılıp (MTF kontrolü) `SMA(50)` hesaplatılacak. Sadece MTF yönü onaylarsa `return` objesi oluşturulacak.
+
+## Open Questions
+
+> [!CAUTION]
+> Tüm sistem kurgulandığında sinyal sayısı ciddi anlamda düşecektir (Sadece **Ölümcül Fırsatları** değerlendirecektir). Ancak işlem kazanma oranınız (% Win-Rate) tavan yapacaktır. Stopların biraz daha geniş (ATR temelli) olması nedeniyle alacağınız risk seviyesi değişeceği için, kasa miktarınızı her işlem için küçültmenizi (`Stats` üzerindeki sanal simulasyonu değiştirmemize gerek yok, gerçek yatırımınız için) öneririm. 
+> 
+> Bu filtre kurgusunu bu haliyle derlememi onaylıyor musunuz bro?
+
+## Verification Plan
+1. `node index.js` ile baştan başlatılıp taranan coinlerde MTF filtrelerinin çalışıp çalışmadığı console loglarında izlenecek. 
+2. Oluşan bir sinyalin `Stop` noktasının statik `%1` değil dinamik olduğu loglar üzerinden kanıtlanacak.

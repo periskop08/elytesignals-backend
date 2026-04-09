@@ -1,0 +1,32 @@
+# AI Intent Router (Niyet Okuyucu & Dinamik Analiz) Mimarisi
+
+Bu güncellemenin amacı, yapay zekayı düz bir analiz botundan çıkartıp **kullanıcının niyetini anlayan ve buna göre kaynak/zaman tasarrufu yapan akıllı bir sisteme (Agentic Router)** dönüştürmektir.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Sistem artık her istekte borsalardan 5 farklı zaman dilimi verisi çekmek yerine önce niyet okuyup, duruma göre sadece gerekli verileri çekecektir. Bu, API limitlerimizi koruyacak ve vadeli işlemlerde çok daha hızlı yanıt alınmasını sağlayacaktır. Onaylıyorsan hemen uygulamaya geçeceğim.
+
+## Proposed Changes
+
+### [Backend API Sınıflandırması]
+
+Sistemin kalbi olan `getAnalysis` (index.js) fonksiyonunu tamamen baştan, bir Karar Ağacı (Decision Tree) mantığı ile yapılandıracağız.
+
+#### [MODIFY] backend/index.js
+1. **Gemini Niyet Okuyucu (Intent Parser):** Yükü Binance API'sine bindirmeden önce gelen metni Gemini'a hızlıca okutup sadece şu üç kelimeden birini döndürmesini isteyeceğiz: `SPOT`, `FUTURES` veya `UNCLEAR`.
+2. **UNCLEAR (Belirsiz):** Eğer soru çok genelse ("XRP ne olur?"), sistem arkada hiçbir veri *çekmeyecek* ve direkt sana soru soracak: *"Dostum spot sepet için mi soruyorsun yoksa Long/Short mu vuracaksın? Ona göre inceleyeceğim."*
+3. **FUTURES (Kısa Vade):** Eğer soruda Long, Short veya Kaldıraç geçerse sistem *sadece* 1 Saatlik (1H) veriyi çekecek ve sadece yakın destek/dirençlere odaklanan, Stop-Loss içeren çok daha agresif bir analiz sunacak.
+4. **SPOT (Uzun Vade):** Senin asıl stratejin. Eğer spot istenirse, sistem eskisi gibi 1 Aylıktan 1 Saate kadar tüm verileri çekip (Top-Down MTF) derinlemesine PA analizi verecek.
+
+## Open Questions
+
+> [!TIP]
+> Futures/Short-Long işlemleri için yapay zekanın formatını yine "ÖZET SETUP" şeklinde yapayım diyorum ama bu sefer parametreleri `Stop-Loss Noktası`, `Giriş Noktası`, `Kar Al` şeklinde yapalım mı? Spot işlemlerden farklı bir format olsun mu yoksa aynı format kalsın mı?
+
+## Verification Plan
+
+### Manual Verification
+- Sohbet ekranına gidip "XRP Yön neresi" yazıldığında sistemin analiz yapmadan zekice bir geri soru sorması doğrulanacak.
+- "XRP Long gireceğim" yazıldığında sistemin hızlıca sadece 1 Saatlik veriyi okuyup kısa vadeli analiz çıkarması doğrulanacak.
+- "Solana Spot sepet için alım" yazıldığında eski 5 sekmeli derin analizin çalışması doğrulanacak.

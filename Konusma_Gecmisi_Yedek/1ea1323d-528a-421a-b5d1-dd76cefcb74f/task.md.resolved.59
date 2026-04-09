@@ -1,0 +1,9 @@
+# WebApp (PWA) Çevrim Süreci
+
+Kullanıcılara App Store onaysız bir şekilde direkt Safari/Chrome üzerinden "Uygulamayı Ekrana Ekle" özelliğiyle sisteminizi sunmak için **"Opsiyon A"** olan kusursuz kopyalama (Expo Web Export) mimarisine başlıyorum.
+
+- `[ ]` 1. `mobile` projesine PWA (Progressive Web App) manifest.json ve favicon özelliklerini eklemek.
+- `[ ]` 2. Web ortamı için gerekli `react-native-web` gibi kritik paketleri kurmak.
+- `[ ]` 3. Telefon donanımlarına (Kamera, Push Notification) özgü kodların Web'de çökmemesi için uygun köprüleri (polyfills vb.) kurmak.
+- `[ ]` 4. React Native uygulamasını HTML/JS web sitesine çevirecek "Export" (Derleme) emrini çalıştırmak.
+- `[ ]` 5. Tüm paneli yerelde test edebileceğiniz bir önizleme (Walkthrough) sağlamak.

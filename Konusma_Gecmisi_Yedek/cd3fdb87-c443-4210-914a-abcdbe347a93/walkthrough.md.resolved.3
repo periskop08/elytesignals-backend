@@ -1,0 +1,20 @@
+# TradFi Görsel Temizlik ve BingX Native Tercümanı
+
+Web Dashboard'da `724SP500` gibi çirkin görünen ve BingX API'sine giderken "Instrument info not found" hatası yaratarak siparişin açılamamasına sebep olan iki kritik kriz, RAM tabanlı bir "Tercüman Haritası" ile kökten çözüldü.
+
+## Yapılan Mimari Güncellemeler
+
+### 1- RegEx İsim Temizliği (Vizyon Güncellemesi)
+`scanner.js` içerisine kurduğum TradFi süzgecini (Parser) revize ettim:
+- Sistem ismi olarak gelen karmaşık iğrenç ön-ekler (Örn: `724`, `OIL`) tamamen tıraşlandı.
+- Artık BingX sana ne gönderirse göndersin sistem; `724SP500`, `724NASDAQ100`, `OILBRENT` gibi kelimeleri otomatik tıraşlayarak veritabanına sadece **`SP500`**, **`NASDAQ100`**, **`BRENT`** yazacak. Web panelin pırıl pırıl kalacak.
+- *Geçmişe Yönelik Temizlik:* Amazon AWS'deki canlı veritabanına sızıp daha önce hatalı düşmüş olan o iğrenç `724` kayıtlarını SQL komutuyla temizledim. Sayfanı yenilersen düzeldiğini göreceksin.
+
+### 2- In-Memory (Sanal Bellek) Borsa Tercümanı
+Sorunun asıl kalbi olan `placeOrder (İşlem Açma)` hatasını, veritabanına ek kolon ekleyip sistemi hantallaştırmadan çözdüm:
+- Sinyal motoru her 5 dakikada bir çalıştırıldığında kendi RAM'ine bir harita kaydeder: `global.BINGX_SYMBOL_MAP`
+- Bu harita şunu bilir: `SP500 = NCSISP5002USD-USDT`.
+- Sistem Dashboard için "SP500" kelimesini korur. Ancak otopilot BingX'e gidip **İşlem Açacağı (Long/Short), Stop-Loss Daraltacağı veya Pozisyon Kapatacağı zaman**, anında bu RAM Haritasına başvurur ve işlemleri BingX'in kendi dilinde (Native Symbol) gönderir. İşlemler artık takla atarak anında açılacak!
+
+### Doğrulama (Verification)
+Sistem başarıyla `deploy.sh` üzerinden AWS'ye atıldı. Hem görselliğin korundu, hem otopilotun motoru BingX ile aynı dili konuşur hale geldi!

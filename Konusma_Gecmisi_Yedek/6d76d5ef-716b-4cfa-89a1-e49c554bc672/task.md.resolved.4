@@ -1,0 +1,7 @@
+# Max Trade Limit & Backfill Queue Implementation Tasks
+
+- [x] Add `MAX_ACTIVE_TRADES` and `PRICE_TOLERANCE_PCT` to config in `backend/scanner.js`
+- [x] Implement `backfillTrades()` in `backend/scanner.js` to process waiting signals ordered by `qualityScore`
+- [x] Add limit checks (max 10) inside `runScan()` before placing new orders
+- [x] Call `backfillTrades()` at the end of `checkActiveSignals()`
+- [x] Export `backfillTrades` and trigger it in `backend/index.js` inside `/api/user-trades/close` endpoint

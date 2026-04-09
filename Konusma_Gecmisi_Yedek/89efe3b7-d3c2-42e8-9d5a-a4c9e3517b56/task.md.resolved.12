@@ -1,0 +1,8 @@
+# Frontend Ana Sayfa ve Makro Pusula Görevleri
+
+- `[ ]` Backend: `scanner.js` içerisine `getGlobalMarketState` export fonksiyonunu ekle.
+- `[ ]` Backend: `index.js` içindeki `updateMacroStatus` görevini yok et ve API'yi scanner'a bağla.
+- `[ ]` Frontend: `Dashboard.jsx`'de "Taramalar" metinlerini "Sinyaller" olarak değiştir.
+- `[ ]` Frontend: `Dashboard.jsx`'de `Home` (Ana Sayfa) sekmesini ekleyip varsayılan sayfa yap.
+- `[ ]` Frontend: Modern Glassmorphism tasarımlı Macro Dashboard bileşenlerini kodla.
+- `[ ]` Deploy: Sunucuyu yeniden başlat ve Vercel/Github push işlemlerini otomatik gerçekleştir.

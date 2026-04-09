@@ -1,0 +1,10 @@
+# Nasdaq Live Data Integration Tasks
+
+- [x] Create basic cache initialization in `backend/index.js` for Nasdaq components
+- [x] Implement `fetchNasdaqData()` using `yahoo-finance2`
+- [x] Parse `quoteSummary` modules: `price`, `defaultKeyStatistics`, `financialData`
+- [x] Map these parameters into the `stocks` cache object safely
+- [x] Schedule `fetchNasdaqData()` via `node-cron` to execute every 1 hour
+- [x] Trigger an initial execution during server startup
+- [x] Replace the hardcoded `/api/macro-risk` mock block with `global.nasdaqCache`
+- [x] Verify functionality and update walkthrough

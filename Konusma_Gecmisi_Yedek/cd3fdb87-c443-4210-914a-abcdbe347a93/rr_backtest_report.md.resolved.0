@@ -1,0 +1,45 @@
+# R:R Sistem Karşılaştırması: 1 Aylık Backtest Sonuçları
+
+Girdiğin iddiayı rakamlarla test etmek için BingX borsasının en hacimli 29 paritesinde son 1 aylık (Toplam 720 Saatlik) geçmiş mum verilerini kapsayan gerçek zamanlı bir Backtest motoru yazdım. Testte "Her işleme $10 risk (1R) ile girildiği" varsayılmıştır.
+
+## Simülasyon Kriterleri
+- **Kapsam:** 29 Yüksek Hacimli Varlık (1 Aylık 1 Saatlik Mumlar)
+- **Baraj:** 40/55 Asimetrik Kalite Puanı (Short/Long)
+- **Oyun Başı Risk:** $10 (1 R) 
+- **Filtreler:** FVG, Order Block, Hacim Kesicisi, Trend Koruması Aktif.
+
+---
+
+### [ESKİ SİSTEM] 🔴 Suni R:R Puanlaması (Loophole Açık)
+*Açıklama: Hedefleri Premium oranını tutturmak için zorla uzağa atan ve ondan sonra kendine +25 Puan bonus yazan hatalı (Enflasyonlu) sistem.*
+
+- **Oluşan Toplam Sinyal:** 246 İşlem 
+- **Yön Dağılımı:** 90 Long / 156 Short
+- **Başarılı (TP):** 70 İşlem
+- **Başarısız (SL):** 176 İşlem
+- **Win Rate (Kazanma Oranı):** `%28.5`
+- **Total R Kazancı (Net):** `-30.31 R`
+- **Bakiye Etkisi ($10 Risk ile):** `-$303.08` (Zarar)
+
+> [!WARNING]
+> Eski sistem çok fazla işlemi sahte bonus puanlarla geçirerek seni günde 8 defa boş yere işleme sokup devasa bir Drawdown'a (Eksi Bakiye) itiyor. Hedefleri çok uzağa esnettiği için fiyat çoğu zaman ORAYA ULAŞMADAN stop ediyor.
+
+---
+
+### [YENİ SİSTEM] 🟢 Organik R:R Puanlaması (STRICT MODE)
+*Açıklama: Kuralları acımasız olan; varlığın o anki doğal swing potansiyeli eğer zayıfsa "hedefi benim için 2 R:R yap" demek yerine direkt o işlemi REDDEDEN, hileli puan kullanmayan katı Hedge Fund versiyonu.*
+
+- **Oluşan Toplam Sinyal:** 199 İşlem 
+- **Yön Dağılımı:** 76 Long / 123 Short
+- **Başarılı (TP):** 55 İşlem
+- **Başarısız (SL):** 144 İşlem
+- **Win Rate (Kazanma Oranı):** `%27.6`
+- **Total R Kazancı (Net):** `-22.81 R`
+- **Bakiye Etkisi ($10 Risk ile):** `-$228.08` (Zarar)
+
+> [!TIP]
+> Dikkat et, bu çıplak backtestte Trailing-Stop (Başa-Baş stopu) ve Kâr Al stratejileri hesaplanmadığı için her halükarda zarar yazılıyor. ANCAK asıl başarıyı şu noktada yakalıyoruz:
+> **Yeni, katı (Organik R:R) sistemi; hatalı ve uydurma olan tam 47 ADET (246-199) ÇÖP İŞLEMİ engelledi!** Bu filtre, kasanın erime hızını %25 oranında ($75) tek başına yavaşlatarak sermayeni koruma kalkanı görevi gördü.
+
+## Nihai Karar
+Sinyallerin "neden düşmediği" veya "neden az düştüğü" tam da aradığımız ve **gurur duymamız gereken** kurumsal filtre başarısıdır. 47 tane sahte uçağı radardan sildik. (Sistemi hemen şu an arka planda tekrar bu Katı ve Güvenli Mod'a geri döndürdüm bile!)

@@ -1,0 +1,49 @@
+# Elyte Signals Auto-Trading (Periskop Özel Kullanıcı) Implementation Plan
+
+Bu özellik, sistemin bulduğu sinyalleri doğrudan sizin şahsi Bybit hesabınıza ileterek tam otomatik bir "Kişisel Bot" gibi çalışmasını hedefler. Sinyal üretildiği saniye borsa tarafında emir girilecek, TP/SL seviyeleri borsaya iletilecek ve web arayüzünde "Favoriler" ekranından anlık olarak takip edilip istenildiği zaman tek tuşla manuel kapatılabilecektir.
+
+## User Review Required
+> [!IMPORTANT]
+> Bu sistem şahsi borsa hesabınızda işlem yapacağı için `.env` dosyasına API Key tanımlamamız gerekecek. 
+> 
+> Güvenlik açısından Bybit tarafında oluşturacağınız API anahtarının yetkilerinde **sadece "Contract/Derivatives (Vadeli İşlemler) Okuma ve Yazma"** izni olmalı, Para Çekme (Withdraw) izni KESİNLİKLE kapalı olmalıdır. 
+
+## Proposed Changes
+
+### 1. Database Layer
+#### [MODIFY] `backend/database.js`
+Yeni bir tablo oluşturacağız: `user_trades`
+Bu tablo tamamen sizin şahsi işlemlerinizi takip edecek:
+- Sütunlar: `id`, `telegramId`, `signalId`, `symbol`, `type` (LONG/SHORT), `status` ('ACTIVE', 'CLOSED'), `pnl`, `closeReason` ('NATIVE_TP', 'NATIVE_SL', 'MANUAL_CLOSE'), `createdAt`, `closedAt`.
+
+### 2. Backend Layer
+#### [NEW] `backend/bybit-trade.js`
+Borsa entegrasyonu için `ccxt` gibi ağır kütüphaneler yerine tamamen sisteme entegre ve hafif NodeJS `crypto` modülü ile Bybit V5 API bağlantı dosyası:
+- `placeOrder()`: Sinyal ile birlikte Market Emri açar, TP ve SL seviyelerini direkt borsaya gönderir.
+- `closePosition()`: Gönderilen semboldeki işlemi O anki Market Fiyatından zorla kapatır.
+- `getPosition()`: İşlemin borsada kendi kendine TP veya SL olup olmadığını (Position Size = 0 kontrolü ile) teyit eder.
+
+#### [MODIFY] `backend/scanner.js`
+- **Tetikleme (runScan):** Yeni bir sinyal bulunduğunda, algoritma hemen sizin için `user_trades` tablosunu kontrol edecek. **Aynı coine aynı gün içerisinde zaten bir emir girilmişse işlemi atlayacak** (Zaman damgası filtresi). Girilmemişse Bybit'e API üzerinden `placeOrder` atılacak. Başarılı olursa eş zamanlı olarak `favorites` ve `user_trades` tablosuna kaydedilecek.
+- **Kontrol (checkActiveSignals):** Global sinyaller kontrol edilirken, sizin şahsi hesap işlemlerinizin durumunu da borsa üzerinden arka planda sorgulayacak. İşlem borsada kendiliğinden kapandıysa, gerçekte ne kadar PnL ürettiğini alıp `user_trades` tablosuna 'CLOSED' olarak işleyecek ve Favoriler sekmesinden aktif kısmından kaldıracak.
+
+#### [MODIFY] `backend/index.js`
+Yeni arayüz endpointleri:
+- `GET /api/user-trades/:telegramId`: Bireysel işlem geçmişiniz ve aktif pozisyonlarınız.
+- `POST /api/user-trades/close`: Manuel Kapatma butonu tetiklendiğinde `bybit-trade.js` üzerinden borsaya kapama emrini tetikler ve işlemi bitirip veritabanına PnL ile yazar. 
+
+### 3. Frontend (Web Dashboard)
+#### [MODIFY] `web/src/pages/Dashboard.jsx`
+- **Favoriler Ekranı (Favorites Tab):** Gerçekten borsada açılmış olan sinyal kartlarının üzerine büyükçe bir **"İşlemi Kapat"** butonu eklenecek.
+- **Kişisel İstatistikler Tablosu (Favoriler Üst Kısım):** Mevcut Favoriler sayfasındaki istatistik havuzu, artık temsili olarak favoriye alınanları değil; **Gerçekten Bybit'te Açılıp Kapanmış** işlemlerin sonuçlarını (Gerçekleşen TP, SL ve PnL yüzdelerini) ve "İşlemi Kapat" dediğinizdeki net anlık karları yansıtacak.
+- **Canlı Akış (Main Tab) Uyarıları:** Otomatik açılan bir sinyal Canlı Akış sayfasında "Emir Gönderildi" etiketi alacak. Eğer favorilerde manuel olarak kapatırsanız veya kendisi TP/SL olursa Canlı Akış üzerindeki karta *“Bu işlem açıldı ve karla/zararla sonlandırıldı. Tekrar açmayınız.”* uyarısı basılacak.
+
+## Open Questions
+> [!WARNING]
+> 1. **İşlem Büyüklüğü (Margin/Kaldıraç):** Gelen her sinyal için borsaya gönderilecek emrin büyüklüğünü (Örneğin; Her işleme sabit 30 USDT Margin x10 Kaldıraç mı, yoksa bakiyenin %5'i mi?) kodun içinde nasıl sabitlemek istersiniz?
+> 2. Bybit API Testleri için `.env` dosyasına bu ayarları yazmaya hazır mısınız? 
+
+## Verification Plan
+1. Backend üzerinde sanal bir API Key ile Bybit entegrasyonunun HMAC SHA-256 imzalaması (Signing) test edilecek.
+2. `POST /api/user-trades/close` endpointinin sadece bir tuşa basıldığında yetki ile borsaya ulaştığı loglarda teyit edilecek.
+3. Onayınızın ardından kod canlıda yerini alacak.

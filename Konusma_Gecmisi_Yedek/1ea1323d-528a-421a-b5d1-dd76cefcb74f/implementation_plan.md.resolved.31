@@ -1,0 +1,52 @@
+# Backend Entegrasyon Planı: Favoriler Senkronizasyonu
+
+Favoriye alınan işlemlerin her iki platformda (Web ve Mobil) da aynı anda senkronize olması ve en güncel durumlarında (Örn: \`WIN\` veya \`LOSS\` kapattıklarında) kalmaları için aşağıdaki mimari geliştirmeleri hayata geçireceğim. 
+
+## User Review Required
+
+> [!NOTE]  
+> Aşağıdaki plan tüm favori sistemi mimarisini lokal hafızadan (telefonun ve tarayıcının kendi hafızası) alıp **tamamen buluta (AWS)** taşıyacaktır. İşlem sonunda eski lokal favorileriniz silinip tertemiz bir bulut hesabıyla başlayacaksınız. Onaylıyor musunuz?
+
+## Hedefler
+1. Mobil cihazdan bir işlemi "Favoriye Al" dediğinizde web sitenizde de anında görünecek.
+2. Web sitesinden "Favoriden Çıkar" dediğinizde mobil uygulamadan düşecek.
+3. Favoriye aldığınız bir işlem AWS sunucusunda TP (Hedefe ulaştı) veya SL (Stop oldu) olarak kapandığında, **asla "ACTIVE" (Açık) halinde takılı kalmayacak**, her iki platformun favoriler ekranında otomatik olarak kapanmış/sonuçlanmış şekliyle görünecek.
+
+---
+
+## Proposed Changes
+
+### Backend (AWS Sunucu Kodları)
+
+#### [MODIFY] backend/database.js
+- Yeni bir Veritabanı Tablosu yaratılacak: \`favorites\`
+  - Sütunlar: \`id\`, \`telegramId\`, \`signalId\`, \`createdAt\`
+  - Bu tablo, hangi kullanıcının (Telegram ID'si) hangi sinyali takip ettiğini kaydedecek.
+
+#### [MODIFY] backend/index.js
+- Yeni API Endpointleri eklenecek:
+  - **\`GET /api/favorites/:telegramId\`**: Sistem veritabanına bağlanıp kullanıcının takip ettiği sinyallerin **en güncel (anlık)** versiyonlarını (status: WIN/LOSS dahil) getirecek.
+  - **\`POST /api/favorites/toggle\`**: Uygulama favori butonuna basıldığında işlemi veritabanına ekleyecek ya da silecek.
+
+---
+
+### Frontend Sürümleri (Mobil ve Web)
+
+#### [MODIFY] mobile/src/context/FavoritesContext.js
+- **Eski Sistem:** Telefonun lokal hafızasına (AsyncStorage) kaydet.
+- **Yeni Sistem:** \`AuthContext\` içerisindeki kullanıcı kimliğiyle (Telegram ID) kendi AWS sunucumuza (\`13.60.44.209\`) istek atıp favorileri canlı çek.
+- \`toggleFavorite\` metodu, butona tıklandığında işlemi direkt olarak sunucuya işleyecek.
+
+#### [MODIFY] web/src/pages/Dashboard.jsx
+- **Eski Sistem:** Tarayıcının lokal hafızasına (localStorage) kaydet.
+- **Yeni Sistem:** Giren VIP kullanıcının kimliğiyle kendi sunucumuzdan en güncel halini çek ve anlık PnL istatistiğini buna göre taze, senkronize verilerle işle.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. Kullanıcı Web'den giriş yapar ve 1 işlem favoriye alır.
+2. AWS'de \`favorites\` tablosuna kayıt düştüğü sorgulanır.
+3. Kullanıcı Expo Go'dan mobil uygulamaya giriş yaptığında, favorilerinde o işlem otomatik olarak ekranda belirir.
+4. Sunucuda manuel olarak bir işlemin \`status\` değeri \`WIN\` yapılır ve sayfa yenilendiğinde işlemin PnL oranının ve statüsünün "Kapalı(TP)" olarak yansıdığı doğrulanır.

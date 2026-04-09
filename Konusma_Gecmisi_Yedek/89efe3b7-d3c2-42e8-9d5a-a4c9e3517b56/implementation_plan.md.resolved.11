@@ -1,0 +1,36 @@
+# 📊 Varlık Detay Sayfası & AI Yatırım Tezi Entegrasyon Planı
+
+Önerdiğin fikir muazzam! Hedge fonlarındaki "Investment Thesis" (Yatırım Tezi) konseptinin tam karşılığı. Sadece bir hisseyi alıp beklemek yerine, arkasındaki Yapay Zeka zekâsını, hacmini ve TradingView üzerinden canlı tekniğini detay sayfasında sunmak sistemi profesyonel bir terminale (Bloomberg Terminal) yaklaştıracak.
+
+Bu fikri mükemmel şekilde ayağa kaldırmak için aşağıdaki gibi bir mimari planladım:
+
+## 🚨 User Review Required
+> [!IMPORTANT]
+> Hisse detaylarına tıklandığında bütün ekranı kaplayan, arkası bulanık (Glassmorphism) bir "Açılır Ekran" (Modal) sistemi kuracağım. Kapatana kadar bu pencerede tüm detaylara hakim olacaksın. Ayrı bir sekme yerine Sinyaller'deki o şık açılır pencerenin daha gelişmişini onaylıyor musun?
+
+## 🛠️ Proposed Changes
+
+### 1. Backend (Veritabanı ve API) Güçlendirmesi
+Şu an `ai_sentiments` tablosunda sadece ufak bir `summary` (kısa özet) alanımız var. Ancak senin bahsettiğin "Detaylı yatırım raporu" için daha fazla yazı alanına ihtiyacımız var.
+
+#### [MODIFY] `database.js`
+- `ai_sentiments` tablosuna `detailedReport TEXT` kolonunu ekleyeceğim.
+- Test edebilmen için NVDA ve TSLA hisselerine "Hacim artışları, çeyreklik bilanço değerlendirmeleri ve rakiplere karşı üstünlükler" içeren uzun soluklu detaylı metinler (mock data) tohumlayacağım.
+
+### 2. Frontend (Hisse Detay Kokpiti)
+`PortfolioManager.jsx` içerisine mükemmel bir "Hisse Analiz Sayfası" deneyimi inşa edeceğiz.
+
+#### [MODIFY] `PortfolioManager.jsx`
+- **Kartların Butona Dönüşmesi:** Varlık kartlarının (Holdings) üzerine gelindiğinde (hover) kartlar parlayacak, tıklanabilir oldukları belli olacak. Tıklandığında `selectedAsset` State'i tetiklenecek.
+- **Detay Modalı (Ekranı):** Ekranda tıpkı sinyallerdeki gibi yüksek kaliteli bir panel açılacak. Panel 3 Ana Bölüme Ayrılacak:
+  - **Üst Panel (Künye):** Hissenin simgesi, portföy ağırlığı, güncel canlı işlem fiyatı ve o mikro skor şeridi.
+  - **Orta Panel (TradingView):** Sinyallerde kurduğumuz iframe'in aynısını ancak kripto olmayan "NASDAQ/US" (Hisse Senedi/ETF) formatına (`symbol=${asset.symbol}&interval=1D`) modifiye edilmiş halini yerleştireceğiz.
+  - **Alt Panel (Yapay Zeka Yatırım Tezi):** Orta panelin tam altına şık bir "AI Raporu" kâğıdı yerleşecek. `ai_sentiments` API'sinden o hisseye ait yazdığımız devasa `detailedReport` metni ve "Hacim Puanları" haberler tadında okumalık olacak.
+
+## ❓ Open Questions
+- TradingView grafiğinde zaman dilimi (Timeframe) varsayılan olarak `1D` (Günlük) mü başlasın, yoksa Sinyaller sayfasındaki gibi `1H` (Saatlik) ya da `15M` (15 Dakikalık) mı olsun? (Uzun vade sepeti olduğu için Günlük (`1D` veya `W`) daha mantıklı olabilir.)
+
+## 🔎 Verification Plan
+- API üzerinden NVDA veya TSLA için `detailedReport` verilerinin aktığı teyit edilecek.
+- Ekranda bir hisse kartına tıklandığında NVDA Borsa grafiğinin 1D olarak doğru çizildiği (TradingView iFrame) test edilecek.
+- En alttaki AI raporunun hisse değiştikçe (Örn. QQQ ile TSLA arasında) kendi metnini doğru yenilediği kanıtlanacak.

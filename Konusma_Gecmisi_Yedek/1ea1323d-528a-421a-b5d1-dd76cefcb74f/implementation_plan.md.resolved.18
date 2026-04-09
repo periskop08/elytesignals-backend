@@ -1,0 +1,53 @@
+# SMC Tabanlı Gelişmiş Filtreleme (Smart Money Concepts) Entegrasyonu
+
+Bu plan, kripto sinyal tespit motorumuzu tamamen profesyonel "Akıllı Para Konseptleri" (SMC) ile donatarak sahte sinyalleri (fakeout) minimuma indirmeyi hedeflemektedir.
+
+## User Review Required
+
+> [!CAUTION]
+> Aşağıdaki strateji parametreleri, sinyal sıklığını %40-60 oranında ciddi şekilde azaltacak, ancak kalan sinyallerin (Winrate) kalite ve kazanma oranını inanılmaz derecede yüksek tutacaktır. Parametrelerin şiddeti üzerine herhangi bir öneriniz varsa plan aşamasında belirtebilirsiniz.
+
+## Proposed Changes
+
+### [Backend/Scanner Motoru Revizyonu]
+
+Yeni PA stratejimizi SMC filtreleriyle desteklemek için `scanner.js` dosyasındaki `analyzeCoin()` fonksiyonuna aşağıdaki 5 katmanlı modülü ekleyeceğiz.
+
+#### [MODIFY] [scanner.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/scanner.js)
+Yeni modüler kontroller sırasıyla şöyle uygulanacak:
+
+**1. Order Block (OB) Tespiti**
+Bir sapma (Sweep) yakalandığında, o seviyenin kalıcı ve gerçek bir kurumsal "Order Block" (OB) olup olmadığını test edeceğiz.
+- **Bullish OB:** Range Low civarında yakalanan en hacimli ve güçlü gövdeli son düşüş mumu bulunacak. Fiyat sapmadan önce bu gövdenin içerisine temas etmiş mi/tepki almış mı kontrol edilecek.
+- **Bearish OB:** Range High civarındaki güçlü yükseliş mumu baz alınacak.
+
+**2. Fair Value Gap (FVG) / Imbalance Onayı**
+- Sweep gerçekleştikten sonraki mumda FVG arayacağız. (örneğin LONG için: Öncesindeki mumun High'ı ile sonrasındaki mumun Low'u arasında tatmin edici bir boşluk var mı?) FVG yoksa, piyasada kurumsal bir alıcı momentumu olmadığı sayılarak sinyal reddedilecek.
+
+**3. CHOCH / BOS (Trend Kırılımı) & 4H Trend (MTF)**
+- Range Low sweep'i sonrası fiyatın son minör tepenin üzerine geçip geçmediğini kontrol edeceğiz (Change of Character / CHOCH).
+- Eski **MTF (Multi-Timeframe 4H)** hareketli ortalama (SMA50/EMA200) trend onayını geri getireceğiz ki fiyat büyük oyunculara karşı yüzmesin.
+
+**4. Akıllı Hacim (RVOL) ve Risk-Ödül (R:R) Kararı**
+- **RVOL:** Hacmi tekrar devreye alacağız ama biraz esnek tutacağız (20 periyotluk hacmin en az 1.3 - 1.5 katı).
+- **Dinamik R:R (Risk/Ödül):** Kâr mesafesini (TP ile Entry arası mesafe), mevcut oynaklık oranına (ATR * 1.5) böleceğiz. Eğer oran 1.5'in altındaysa kâr marjı az kabul edilip çöpe atılacak.
+
+**5. Matematiksel Teyit ve Rejim Filtresi (ADX)**
+- **Derinlik Testi:** İğnenin uzunluğu (Sweep boyutu) kesinlikle *ATR'nin %80'inden büyük* olmalı. Sığ iğneleri eliyoruz.
+- **Güçlü Kapanış:** Fiyat içeri girdiğinde (Reclaim), iğnenin yarısından fazlasını yutmuş olmalı.
+- **Piyasa Rejimi (ADX):** `technicalindicators` kütüphanesinden ADX çalıştırılıp trend gücü ölçülecek (Örn: ADX > 25 ise trend kuvvetlidir).
+- **Elliott Dalgası:** `analyzeElliottWaves` modülüne bağlanıp, bu sweep hareketinin Wave 4, 5 veya ABC düzeltmesine oturup oturmadığı senkronize gözlemlenecek.
+
+## Open Questions
+
+> [!IMPORTANT]
+> - ADX filtresini doğrudan red kriteri (ADX < 25 ise çöpe at) olarak kesin şekilde eklememi ister misiniz? (Not: Range piyasalarında ADX düşük olur, oysaki bazen muazzam sweep fırsatları tam da ADX düşükken yani Range yatay giderken gelir.)
+> - Order Block ve FVG tespit ederken, kaç mumluk geriye bakıp "Güçlü bir OB" veya "Boşluk" tanımlayalım? Son 20 mumda oluşan gövdeler yeterli mi?
+
+## Verification Plan
+
+### Automated Tests
+- Gerekli kodlamalar uygulandıktan sonra sahte coinler manuel bir tetikleme komutuyla (`node index.js`) baştan başlatılıp sonuçların terminalde elendiği görülecek.
+
+### Manual Verification
+- Birkaç saat canlı veride uygulamanın Sinyaller ekranında sadece A+ (kaliteli) setup'ların düşüşü test edilecek.

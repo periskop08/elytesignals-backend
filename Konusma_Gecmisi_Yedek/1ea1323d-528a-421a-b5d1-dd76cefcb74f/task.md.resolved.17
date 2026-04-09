@@ -1,0 +1,13 @@
+# AVWAP & FRVP (Volume Profile) Entegrasyonu
+
+- [x] 1. Matematik motorunu inşaa et (`backend/scanner.js`)
+  - [x] AVWAP hesaplama mantığını `analyzeCoin` içerisine yerleştir (Cumulative Volume + Typical Price).
+  - [x] FRVP (Fixed Range Volume Profile) için 20 dilimli (bin) bir fiyat kutusu hesapla, her mumun hacmini uygun kutuya at, en yüksek hacimli kutuyu **POC** olarak tespit et.
+- [x] 2. Sinyallere ekle (`backend/scanner.js`)
+  - [x] POC ve AVWAP verilerini sinyal dönüş nesnesine (veya loglamaya) ekle.
+- [x] 3. AI Analist Beklentilerini Güncelle (`backend/index.js`)
+  - [x] Canlı analiz sistemine `getAnalysis` içine aynı AVWAP ve POC fonksiyonlarını kopyala.
+  - [x] System Prompt içine bu iki yeni kritik market verisini değişken olarak enjekte et.
+- [x] 4. Servisleri Yeniden Başlat ve Doğrula
+  - [x] `node index.js` ile sunucuyu restart et.
+  - [x] Logları ve AI analiz çıktılarını gözlemle.

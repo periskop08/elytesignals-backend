@@ -1,0 +1,7 @@
+# Google Sheets Güncelleme Mekanizması Görev Listesi
+
+- `[x]` **Adım 1:** `backend/.env` dosyasına Tablo ID'si eklendi.
+- `[x]` **Adım 2:** `backend/google-api.js` içerisine `updateSheetSignalStatus` fonksiyonu yazıldı (Tabloyu okuyarak ID arama ve hüceyi editleme yeteneği).
+- `[x]` **Adım 3:** `backend/scanner.js` içerisindeki Sinyal formatı kullanıcı isteğine (`[Tarih, Sembol, Skor, Yön, TP%, SL%, Durum, Açıklama, ID]`) göre yenilendi.
+- `[x]` **Adım 4:** `backend/scanner.js` içerisindeki kapanış (WIN/LOSS) değerlendirme aşamasına tablodaki "Durum" sütununu güncellemesi için `updateSheetSignalStatus` fonksiyonu eklendi.
+- `[x]` **Adım 5:** Lokal test kaydı çalıştırıldı, başarıyla sonuçlandı ve ana kodlar AWS sunucusuna aktarılarak Canlıya alındı.

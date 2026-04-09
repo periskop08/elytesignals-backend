@@ -1,0 +1,7 @@
+# 🏢 ELYTE Hedge Fund v2.0 - Renaissance Level
+
+- `[ ]` **Backend (Veritabanı) v2:** `ai_sentiments` ve `portfolio_assets` tablolarına `insiderScore` ve `patentScore` kolonları ekle. (Mock verilerini buna göre güncelle. Örn QQQ ETF'i ve Insider skorlu NVDA dahil edilecek).
+- `[ ]` **Frontend (UI) v2:** `PortfolioManager.jsx` içerisindeki portföy kartlarının içine mikro-göstergeleri (CEO: 9.2, Edge: 9.5 vb.) yerleştir.
+- `[ ]` **Frontend (Radar/Badge):** Kart yapısına Insider Alımı (SEC Form 4) yüksekse şık bir `🚨 INSIDER ALERT` uyarısı/badge'i animasyonu ekle.
+- `[ ]` **Frontend (God Mode):** Ekrana `[Auto Rebalance]` (Animasyonlu) butonu ekle.
+- `[ ]` **Deploy & Test:** Değişiklikleri AWS (Backend) ve Vercel (Frontend) üzerine atarak sistemi canlı test et.

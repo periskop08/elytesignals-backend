@@ -1,0 +1,13 @@
+# Conversational AI (Chat) Entegrasyonu
+
+- [/] 1. Backend NLP Modülü (`backend/index.js`)
+  - [ ] Metinden Coin İsimlerini (Bitcoin -> BTC) ve Sembolleri çıkaran bir Dictionary/Regex yapısı.
+  - [ ] Metinden Zaman Dilimi (1 saat, günlük, 15 dk vs) ayırt etme mantığı (`1h`, `4h`, `1d`).
+  - [ ] `/api/analysis` endpoint'ini bu NLP motorunu kullanacak şekilde güncelle (Gelen prompt'u işleyip samimi bir cevap oluşturacak şekilde).
+- [ ] 2. Frontend Chat Mimarisi (`AnalysisScreen.js`)
+  - [ ] Tekil input/sonuç yapısını `[{id, text, isUser, chartData}]` state tabanlı Chat (Sohbet) yapısına geçir.
+  - [ ] `FlatList` ekle, Chat baloncuklarını (Kullanıcı Sağda, Bot Solda) stillendir.
+  - [ ] Gönderilen her mesajdan sonra `ActivityIndicator` (Yazıyor...) animasyonları ekle.
+- [ ] 3. Restart & Test
+  - [ ] Sunucuyu yeniden başlat (node index.js).
+  - [ ] Doğal dildeki sorguların doğru grafikleri ve PA yorumlarını verdiğini teyit et.

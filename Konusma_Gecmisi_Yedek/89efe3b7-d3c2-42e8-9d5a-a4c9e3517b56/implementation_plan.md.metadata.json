@@ -1,0 +1,7 @@
+{
+  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary":  "Kullanıcının talep ettiği LLM sohbet kutusu (Hisse analiz aracı) için plan.",
+  "updatedAt":  "2026-04-05T23:40:14.930010Z",
+  "version":  "14",
+  "requestFeedback":  true
+}

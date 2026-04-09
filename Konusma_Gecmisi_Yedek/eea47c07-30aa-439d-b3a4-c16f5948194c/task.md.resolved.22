@@ -1,0 +1,7 @@
+# Manual Liquidation Feature Implementation
+
+- [/] Add `POST /api/portfolio/liquidate` to `backend/index.js`
+- [ ] Implement liquidation UI button in `web/src/components/PortfolioManager.jsx` (Modal)
+- [ ] Implement liquidation UI button in `mobile/src/screens/PortfolioManagerScreen.js` (Modal)
+- [ ] Upload backend script to EC2 and restart pm2.
+- [ ] Commit web UI and push, wait for Vercel deploy.

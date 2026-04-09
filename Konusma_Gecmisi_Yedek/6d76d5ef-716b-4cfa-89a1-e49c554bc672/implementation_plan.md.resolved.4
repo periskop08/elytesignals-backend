@@ -1,0 +1,38 @@
+# Perplexity Önerileri Kapsamında Yeni Strateji Entegrasyon Planı
+
+Yapay zekanın (Perplexity) yaptığı değerlendirme gerçekten usta işi bir risk analizi sunuyor. Önerdiği özelliklerin bazıları "Kurumsal Hedge Fonu" seviyesinde olduğu için teknik olarak mevcut K-line (Mum bar) altyapımızla uyuşmazken, bazıları ise tam bizim sisteme göre çok mantıklı "İnce Ayar" (Tweak) niteliğinde. 
+
+Eğer tavsiyelerinin tamamını %100 oranında katı bir kural olarak (Reddetme/Bloklama) yaparsak, dediğin gibi günde sadece `0 veya 1` sinyal anca gelir ve bot felç olur. Bunun yerine, "Ceza/Ödül Puanlaması" (Scoring) sistemiyle sinyal akışını daraltmadan kalitesini yukarı çekecek bir entegrasyon tasarladım.
+
+## 🔴 Uygulanamayacak / Reddedilen Öneriler (Nedenleriyle)
+
+- **CVD (Kümülatif Hacim Deltası) veya Emir Defteri Dengesizliği:** 
+  - *Perplexity ne dedi?* Sırf mum fitil attı diye güvenme, Emir Defterini oku.
+  - *Neden Eklemiyoruz?* Bu tarz veriler Borsa API'lerinde (Level-2 Tick Data) saniyede 1000 satır veri çeken devasa altyapılar gerektirir. Biz 15 dakikalık periyotlarla tarama yaptığımız için sistemi yorar ve API rate-limit bariyerini anında patlatır. Bizim Hacim (RVOL) kuralımız bunun için zaten yeterlidir.
+- **Pozisyon Boyutu Entegrasyonu (Dinamik Büyüklük):**
+  - *Perplexity ne dedi?* Dominans düşerse işleme 10 dolarla gir, çıkarsa 2 dolarla gir.
+  - *Neden Eklemiyoruz?* Çünkü biz seninle bir önceki planlarımızda "Fixed Fractional" (Sabit $3 USD Kasa / 10x Kaldıraç) kuralında anlaştık ve bunu sisteme mükemmel entegre ettik. Psikolojiyi koruyan en iyi kasa yöntemi budur.
+
+---
+
+## 🟢 ONAYINI BEKLEYEN DEĞİŞİKLİKLER (Sinyal Sayısını Öldürmeyen Kurallar)
+
+Perplexity'nin mantıklı bulduğum ve sinyal akışını yavaşlatmadan **"Skorları Manipüle Edecek"** şekilde koda yedireceğim 3 yeni kuralı aşağıda sunuyorum:
+
+### 1- ATR (Volatilite / Fakeout) Ani Haber Filtresi
+- *Mantık:* Fed Faiz kararı, ani bir savaş haberi gibi dakikalar içinde aşırı uzayan anormal mumlarda (Fakeout) işleme girmemek. 
+- *Aksiyon:* Eğer son mumun boyu (Mevcut ATR), geriye dönük 14 mumun ortalama boyutundan `2 Kat` (%200) daha büyükse (anormal şişmişse), sinyal iptal edilmez ancak kalite puanından **`-15 Puan`** düşülür. (Barajı aşarsa yine işlem açar ama riski fiyatlamış oluruz).
+
+### 2- RSI Uç Nokta Uyarıcısı (RSI Over-extension)
+- *Mantık:* Çok yükselmiş trendin (RSI aşırı şişik) tam tepesinden Long açıp terste kalmamak veya aşırı çakılmış bir coin'e diplerden Short açmamak.
+- *Aksiyon:* Eğer Sinyal **LONG** ise ve Altcoindeki 1H RSI `> 75` (Aşırı Alım) seviyesindeyse; Puanına **`-10 Puan`** ceza kesilir. Tepeden alma hevesi kırılır. (*Tam tersi Short & RSI < 25 duruma da aynı ceza kesilir*).
+
+### 3- R:R (Risk/Ödül) Bonus Sistemi
+- *Mantık:* Riski 1 dolar alıp ödülü 2 dolar veya daha yüksek olan fırsat veren işlemlere öncelik tanımak.
+- *Aksiyon:* Hesaplanmış İşleme Giriş-Stop ve Hedef oranımız olan (R:R) `2.0` veya daha büyük çıkarsa; bu gerçekten "Kaliteli ve kazançlı" bir Setup tır. Peşinen **`+10 Puan`** ödül bonusu verilir. 
+
+## User Review Required
+
+> [!IMPORTANT]
+> Yukarıda onayına sunduğum **Yeşil (🟢)** kısımdaki 3 kural, "işlemleri kesin bloklamak" yerine "fena fırsat değilse biraz notunu kırmak, mükemmel fırsatsa notunu yükseltmek" prensibine dayanıyor. Yani sinyal frekansı çok ciddi kesilmeyecek, sadece barajı geçen coinler daha rafine olacak.
+> Bu üç yeni özelliği puan sistemimize (+10 / -15 gibi) entegre edeyim mi, yoksa şu anki hali zaten yeterli, kodları daha fazla kurcalamayalım mı dersin? (Onay verirsen hemen `scanner.js` içerisindeki puanlama motoruna bu yeni kuralları ilave edeceğim).

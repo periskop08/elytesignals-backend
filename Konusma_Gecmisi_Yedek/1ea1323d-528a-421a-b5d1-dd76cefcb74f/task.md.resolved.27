@@ -1,0 +1,11 @@
+# Görev İzleyici: AI Kripto Hafıza ve Bağlam Çıkarıcı
+
+Yapay zekanın sohbet geçmişindeki kripto para hedefini (örneğin XRP) ve asıl vade niyetini tam isabetle yakalaması için gerekli hafıza aktarımı.
+
+- [x] `mobile/src/screens/AnalysisScreen.js` üzerinden `history` (son 10 mesaj) array'inin API yüküne eklenmesi
+- [x] Backend tarafında (index.js) API rotasının `prompt` ve `history` objelerini düzgün alacak şekilde güncellenmesi
+- [x] `getAnalysis` fonksiyonuna `history` parametresinin eklenmesi
+- [x] `parsePrompt` fonksiyonunun işlevini yitirip, yerine Gemini System Instruction (JSON Modu) ile akıllı `symbol` & `intent` bulucu prompt tasarlanması
+- [x] Çıkan bağlam JSON verisine göre Binance API sorgularının sorunsuz çalıştırılması
+- [x] Hata veya UNCLEAR durumunda bağlama dönük zekice geri sorular sorulması
+- [x] Yeniden Başlatma & Test

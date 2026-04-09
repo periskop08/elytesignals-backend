@@ -1,0 +1,6 @@
+# 🚀 ELYTE V2.6 Task Listesi
+
+- `[x]` **ADX Trend Düzeltmesi:** Düşük ADX (Range) ödülü iptal edilerek; `ADX > 25` (Güçlü Trend Onayı) +10 Puan olarak güncellendi. `ADX < 20` durumunda ise -10 Ceza uygulanması kodlandı.
+- `[x]` **Order Flow Delta Agresifliği:** Hacimsel Delta'da %60'lık majör üstünlük (`buyRatio > 0.60` veya `sellRatio > 0.60`) kurulmadığı sürece hacim onayı puanı eklenmemesi / ceza kesilmesi ayarlandı.
+- `[x]` **Portfolio Correlation Filter:** Aynı işlem yönünde 2'den fazla majör varlığın (BTCUSDT, ETHUSDT, vb.) sinyal açması durumunda, sepet riskini önlemek için `-12 Ceza (Diversification Penalty)` filtresi devreye alındı.
+- `[x]` **Canlı Sistem Entegrasyonu:** Yenilenmiş V2.6 kodlarının hedef AWS Hedge Fund sunucusuna gönderilip `pm2 restart all` ile canlıya alınması başarıyla tamamlandı!

@@ -1,0 +1,29 @@
+# Yeni Özellik: "Analist Chat" (Yapay Zeka Destekli Sohbet)
+
+Uygulamanızdaki eski ve sıkıcı "Analiz Arama" sayfasını tamamen silip, yerine sizinle mesajlaşabilen, dediklerinizi anlayan **Kişisel Kripto Analisti (Chat)** arayüzünü entegre ettim! Üstelik bu sistemi dışarıya hiçbir API ücreti ödemeden, uygulamanın kalbine gömdüğümüz yerel bir "Doğal Dil İşleme (NLP)" motoru ile başardık.
+
+## Neler Değişti?
+
+### 1. Telegram/ChatGPT Tarzı Arayüz
+Artık ekran bir arama motoru gibi değil, **WhatsApp veya ChatGPT** gibi çalışıyor. 
+*   Kendi yazdığınız mesajlar sağda (Yeşil Baloncuk), botun cevapları solda (Gri Baloncuk) birikiyor.
+*   Geçmiş konuşmalarınız listede `(FlatList)` kaybolmadan duruyor, böylece arka arkaya farklı coinleri sorup hepsini aynı ekranda okuyabiliyorsunuz.
+*   Ayrıca bot cevap ararken ekranda şık bir *"Analist grafikleri inceliyor..."* animasyonu dönüyor.
+
+### 2. Akıllı Cümle Çözümleyici (NLP Engine)
+Backend sunucusuna o kadar akıllı bir filtre yazdık ki, artık robotik komutlar (`BTCUSDT`, `1d`) girmek zorunda değilsiniz. Kendi ana dilinizde, sohbet eder gibi emirler verebilirsiniz:
+
+> **Siz:** *"Bana Solana için 4 saatlikte yön nereye gider analiz ver"*
+> **Sistem:** Bu cümleyi okur, içindeki kelimeleri ayrıştırır. `Solana` kelimesinden `SOLUSDT` olduğunu, `4 saatlik` kelimesinden `4h` periyodunu, `yön nereye` kelimelerinden de hedef ve yön merak ettiğinizi saniyeler içinde anlar.
+
+### 3. Samimi ve Kişiselleştirilmiş İletişim
+Sistem eğer sizin ona "yön" sorusu sorduğunuzu anlarsa (örn. *"kardeşim yön yukarı mı"*), direkt analiz datalarını vermek yerine önce Eflot analizini konuşturup size insan gibi cevap verir:
+
+*   *"Selam dostum! İstediğin gibi Solana grafiğine (4 saatlik) baktım.*
+*   *Sorduğun yön sorusuna cevabım: Bence yön YUKARI 🚀*
+*   *Nedeni ise: Dipten çok güçlü bir likidite temizliği (fakeout) yaptı ve yönünü yukarı çevirdi..."*
+
+Ve ardından her zamanki görsel Range grafiğini ve MA50/RSI istatistiklerini raporlar.
+
+> [!TIP]
+> Hemen uygulamaya geçip **Analiz Sor** sekmesine girin ve ilk mesajınızı denemek için gönderin! Örn: *"Bitcoin 15 dakikalık grafikte nereye gidiyor"*

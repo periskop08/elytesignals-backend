@@ -1,0 +1,18 @@
+# Hedef
+"Analiz Sor" sayfasındaki basit arama çubuğunu ve tekdüze metin ekranını, "Yapay Zeka Destekli Sohbet (Chat)" arayüzüne dönüştürmek ve backend tarafına kullanıcının serbest metinlerini (Örn: *Bana Bitcoin için 1 saatlik analiz ver*) anlayabilen bir (NLP) Algılayıcı Motor eklemek.
+
+## Tasarım & Uygulama Planı
+
+### 1. Frontend (Mobil Arayüz) Değişikliği
+Sayfanın mevcut statik (tek bir sonuç gösteren) yapısını **ChatGPT / Telegram Tarzı** bir sohbet baloncuğu akışına çevireceğiz.
+*   **Mesaj Geçmişi (Chat History):** Ekran artık sadece son analizi değil, tüm konuşma geçmişinizi tutacak.
+*   Sizin yazdığınız baloncuklar sağa yaslı (koyu gri/yeşil), Botun yazdığı analizler ve grafikler sola yaslı şekilde gösterilecek.
+
+### 2. Backend (NLP) Yönlendirici Algoritması
+Herkesin API (Gemini/ChatGPT vs) parasına ihtiyacı kalmasın diye, uygulamanızın kalbine "Özel bir Kripto Doğal Dil İşleyicisi" kodlayacağım. Bu motor cümlenizi kelime kelime analiz edip şunları bulacak:
+*   **Coin:** "Bitcoin", "Ethereum", "Avax", "Rpe", "Solana" gibi isimleri `BTCUSDT`, `ETHUSDT` formatlarına çevirecek.
+*   **Zaman Dilimi (Timeframe):** "1 saatlik", "günlük", "4h" gibi kelimeleri süzüp Binance API'sine (1h, 1d, 4h formatında) yollayacak.
+*   **Yönlendirme (Intent):** "yön ne?", "yukarı mı aşağı mı?" gibi bağlamlara uygun doğal dilde, samimi analiz cümleleri (`-Dostum, grafikte çok bariz bir likidite alımı var...` şeklinde) dönecek.
+
+## User Review Required
+Bu özellik uygulamayı sıradan bir göstergeden "Kişisel Analist Asistanına" dönüştürecektir. Üstelik dışarıya API ücreti ödemeden "Akıllı Regex Çözümleme" ile yapacağız. Tasarımı ve NLP yapısını uygulamam için onaylıyor musunuz? Onayınızın ardından Chat mekanizmasını kodlamaya başlayacağım.

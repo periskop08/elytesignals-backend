@@ -1,0 +1,20 @@
+# Yeni Versiyon: Akıllı Elliot Dalgaları 🌊
+
+Harika promptunuzdan ilham alarak, Price Action stratejimizi tamamen destekleyecek o muazzam algoritmaya can verdim. Artık sistem hem geleneksel hacim metriklerini hem de çok karmaşık bir dalga sayım sistemini kendi kendine çözüyor.
+
+## 🛠 Neler Yaptık?
+
+### 1. Dinamik ZigZag (ATR Tabanlı)
+Promptunuzdaki en kritik yapıtaşı olan Pivot noktalarını (tepe ve dipleri) belirleme işini, sabit bir yüzdeyle değil **ATR (14)** ile ölçüyoruz. Bir mum hareketinin geçerli bir "Elliot Dalgası" sayılabilmesi için o coinin kendi ortalama dalgalanmasının en az 2 katı kadar bir dönüş sergilemesi gerekiyor. Bu sayede sahte ve gürültülü piyasa hareketleri filtreleniyor.
+
+### 2. Altın Kuralların Koda Dökülmesi
+En güncel son 5 Pivot noktası bulunduktan sonra o 3 Altın Kural devreye giriyor:
+1.  **Dalga 2**, asla Dalga 1'in altına sarkamaz (Sarkarsa, 'Geçersiz Kılındı' dönüyor).
+2.  **Dalga 4**, asla Dalga 1'in zirvesiyle kesişemez (Örtüşürse 'Geçersiz Kılındı' dönüyor).
+3.  **Dalga 3**, dalga boyları arasında en kısası olamaz. Eğer kısaysa geçersiz kılındığı seviye dinamik olarak raporlanıyor.
+
+### 3. Hedef ve Entegrasyon
+Eğer sistem tamamen kurallara uyan bir 1-4. dalga silsilesi tespit ederse yapay zekaya JSON formatında şunu döndürüyor:
+*"Dalga Durumu: Kusursuz Boğa Yapısı (5. Dalga yolda), İptal Olacağı Seviye: 45.000, 5. Dalganın Tahmini Fib Hedef Bölgesi: [52.000 - 55.000]"*
+
+**Analiz Sor (AI)** bölümünde botunuz bu JSON analizini yutup, "Dostum şu an 5. itki dalgasındayız" gibi profesyonel cevaplar verecektir! 🤖 Sinyal motoru da arka planda kendi taramaları için bu sistemi kullanmaya başladı. Test etmek size kaldı!

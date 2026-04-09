@@ -1,0 +1,12 @@
+# Frekans Optimizasyon (Skor) Uygulama Görevleri
+
+- `[/]` 1. **Veritabanı Güncellemesi**
+  - `signals` tablosuna `qualityScore` (INTEGER) ve `warnings` (TEXT) sütunlarını ekle.
+- `[ ]` 2. **Konfigürasyon (CONFIG) Ayarları**
+  - `scanner.js` içerisine esneklik yönetimi için global `$CONFIG` değişkenleri tanımla.
+- `[ ]` 3. **Puanlama Kriterleri (analyzeCoin)**
+  - Mevcut 'hard reject' engelleyicileri (FVG, OB, RVOL, 4H Trend, R:R) sadece puanlama (0-100) yapan esnek bir sisteme çevir.
+- `[ ]` 4. **Log JSON Çıktısı**
+  - Promptta istenen `qualityScore`, `breakdown` ve `warnings` çıktı formatını (backtest için) `console.log` ile sağla.
+- `[ ]` 5. **Sunucu Yeniden Başlatma**
+  - Değişiklikler aktifleşene kadar `node index.js`'i tekrar çalıştırıp skorları canlı bir şekilde test et.

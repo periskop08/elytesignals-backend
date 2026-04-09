@@ -1,0 +1,28 @@
+# AI Niyet Okuyucu (Agentic Router) Kurulum Özeti
+
+Yapay zekanın kullanıcı girdisini sınıflandırarak dinamik analiz senaryoları uyguladığı büyük güncellemeyi başarıyla tamamladım.
+
+## 🎯 Ne Değişti?
+
+Eskiden her analizi tek tip (1M'den 1h'ye kadar) bir şablonda çözen `getAnalysis` sistemi tamamen yıkılarak yerine **3 Katmanlı Niyet Router'ı** yerleştirildi:
+
+### 1. Katman: "Niyet Okuma" (Intent Parsing)
+Sen mesajı attığın anda sistem bunu doğrudan Binance'e sormak yerine önce saniyelik olarak küçük bir Gemini filtresinden geçirir: "Kullanıcı Spot yatırım mı istiyor, Futures mu yoksa ne istediği belli değil mi?"
+
+*Eğer belli değilse (Örn: "Doge ne zaman çıkar?"):*
+Sistem backend tarafında **hiçbir veriyi yormaz**. İptal edip sana geriye şu akıllı soruyu sorar: *"Spot olarak uzun vadeli sepete mi istiyorsun, yoksa Long/Short kaldıraçlı fırsat mı yakalamak istiyorsun?"*
+
+### 2. Katman: FUTURES (Kaldıraçlı İşlem / Kısa Vade)
+*Eğer soruda "Short gireceğim, Long, Kaç x kaldıraç" gibi şeyler varsa:*
+Sistem devasa aylık/haftalık verileri tamamen çöpe atar. Yalnızca **1H ve 4H** (Saatlik periyotlar) verilerini çeker. Hedefleri tamamen kısa vadeli belirler ve ÖZELLİKLE sana özel **ÖZET VADELİ SETUP** çıkarır:
+* İşlem Yönü: ...
+* Giriş Seviyesi: ...
+* Zarar Kes (Stop-Loss): ...
+* Alınacak Kar (Take-Profit): ...
+
+### 3. Katman: SPOT (Uzun Vadeli Yatırım)
+*Eğer soruda "Dipten almak, Hold etmek, Sepet yapmak" varsa:*
+Sistem bildiğimiz klasik 5 zaman dilimli (1M-1w-1d-4h-1h) Price Action ağırlıklı ağır taramasını yapar ve sana Spot maliyet çıkarma tablosu sunar.
+
+> [!TIP]
+> Artık yapay zeka tam bir **Portföy Yöneticisi** gibi davranıyor. Cümlelerindeki niyetini süzecek ve API'mizi sadece o yönde kullanacak. Çok daha akıllı, hızlı ve az hata yapan bir makineye dönüştürdük! İstediğin senaryoyu test edebilirsin.

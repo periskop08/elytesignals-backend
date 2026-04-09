@@ -1,0 +1,44 @@
+# Ultra Etkileşimli (Emoji Destekli) Formata Geçiş Planı
+
+Perplexity'nin önerisi kesinlikle kullanıcı deneyimi açısından "roket gibi" bir etki yaratacak! Uzun metinleri tamamen öldürüp tamamen rakamlara, karlara ve aksiyona (AL/SAT) odaklanan bu şablonları PeriskopAI'a entegre edeceğim.
+
+## 1. Niyet ve Kaldıraç Çıkarma (Intent Parsing) Güncellemesi
+[MODIFY] `index.js`
+Yapay zekanın kullanıcıdan sadece sembol ve niyeti (SPOT/FUTURES) anlamasını değil, **kaldıraç miktarını da (Örn: 20x)** tek seferde analiz etmesini sağlayacağım. Kullanıcı kaldıraç belirtmezse sistem varsayılan olarak **10x** kullanacak.
+
+## 2. Futures (Kaldıraçlı) Format Güncellemesi
+FUTURES dalındaki ChatGPT "System Prompt"unu, tam olarak istediğin formata revize edeceğim. İçerisine Periskop Modeli verilerini (Fiyat, Hedefler, Stoplar) dahil edeceğim:
+*   Yapay zekanın hesabı yapabilmesi için arka planda **500$ Kasa ve %2 ($10) Risk** kuralını matematiksel bir prompt matrisi olarak OpenAI'a vereceğim.
+*   Böylece LLM (Yapay Zeka) sadece % yüzdelerini değil, direkt kazanılacak veya kaybedilecek Dolar ($) miktarını da tabloya basacak.
+
+```text
+⚡ TSLA 10X KALDIRAÇ ⚡
+
+💰 GİRİŞ: 360$ 
+🎯 TP1: 372$ (+%3 = +$120 kâr*)
+🎯 TP2: 385$ (+%7 = +$280 kâr*)
+🛑 STOP: 351$ (-%2.5 = -$100 risk)
+
+⚠️ KALDIRAÇ UYARISI: 10x riskli! 
+📊 PeriskopAI Futures
+*500$ kasa, %2 risk hesabı
+```
+
+## 3. Spot Format Güncellemesi
+Spot tarafında ise açıklamaları, kafa karıştıran kelimeleri tamamen siliyorum. Yerine hedefe odaklanan "Emoji-Aksiyon" paneli geliyor:
+
+```text
+🔥 AAPL SPOT SİNYALİ 🔥
+
+💰 AL: 245$ 
+🎯 TP1: 266$ (+%8 kâr)
+🎯 TP2: 288$ (+%13 kâr)
+🛑 STOP: 235$ 
+
+✅ KARAR: AL (Güvenli)
+
+📈 PeriskopAI Spot
+```
+
+## User Review Required
+Bu formatların entegrasyonu ve arka plandaki $500 kasa %2 risk matematik hesaplamasının yapay zekaya öğretilmesini içeren bu kod değişikliği planını onaylıyor musun? Onayladığın an kodu değiştiriyoruz! 🚀

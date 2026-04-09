@@ -1,0 +1,8 @@
+# Gerçek Oturum ve Telegram Bot Doğrulama Sistemi
+
+- `[x]` 1. `backend/database.js` içine oturumlar (sessions) için şema ekle.
+- `[x]` 2. `backend/auth.js` oluştur (Telegram Bot API, Express endpoint'leri).
+- `[x]` 3. `backend/index.js` içine `auth.js` route'larını bağla.
+- `[x]` 4. `mobile/src/context/AuthContext.js` ve `mobile/src/screens/LoginScreen.js` dosyalarını yeni backend API'sine entegre et (Deep Link ve Session Polling).
+- `[x]` 5. `mobile/src/screens/HomeScreen.js` Modal mantığını `isVip` backend sonucuna göre düzenle.
+

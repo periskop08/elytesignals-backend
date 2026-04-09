@@ -1,0 +1,35 @@
+# Ana Ekran ve Giriş Akışı (Login Flow) Geliştirmesi
+
+Bu plan, uygulamanın karşılama ekranına profesyonel ve premium bir görünüm kazandırılmasını ve Telegram/Google kimlik doğrulama seçeneklerinin kullanıcı arayüzüne eklenmesini detaylandırmaktadır. 
+
+## Önerilen Değişiklikler
+
+### 1. `LoginScreen.js` Bileşeninin Oluşturulması
+Uygulamanın `src/screens/` dizinine tamamen yeni bir giriş ekranı inşa edilecektir.
+#### UI / Tasarım Detayları:
+- **Arka Plan:** Derin lacivert (`#0D1623`) tema.
+- **Odak Noktası (Radar Efekti):** Ekranın merkezinde "hedef arayan bir periskop" veya radar hissini simüle eden, iç içe geçmiş ve nabız gibi atan (pulsing) flu çember (sonaar) animasyonları. Bu animasyon tamamen `react-native`'in yerel `Animated` kütüphanesi ile optimize edilerek yazılacaktır.
+- **Marka Kimliği:** Şık bir tipografi ile marka adı ve sloganı.
+- **Butonlar (Giriş Yöntemleri):** 
+  - Göz yormayan, premium hissiyatlı **Continue with Google** butonu.
+  - Dikkat çekici **Connect with Telegram** butonu (Telegram mavisi tonlarında).
+
+#### [NEW] [LoginScreen.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/mobile/src/screens/LoginScreen.js)
+
+### 2. `AppNavigator.js` Güncellemesi
+Mevcut navigasyon kurgusu (Route Stack) giriş ekranını destekleyecek şekilde güncellenecektir.
+- Yığın (Stack) mimarisinin en üstüne `Login` rotası eklenecektir.
+- Kullanıcı giriş yaptığında uygulamanın geri butonu ile tekrar Login ekranına düşmesini engellemek için `navigation.replace('MainTabs')` veya initial route yaklaşımı kullanılacaktır.
+
+#### [MODIFY] [AppNavigator.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/mobile/src/navigation/AppNavigator.js)
+
+---
+
+> [!IMPORTANT]  
+> **Kullanıcı Onayı İsteniyor (User Review Required):**
+> 1. Bu ekranda Telegram ve Google giriş butonlarının "Tasarımını ve Geçişini" şu aşamada görsel & deneyimsel düzeyde ekleyeceğiz. Seçtiğiniz butona tıkladığınızda şimdilik animasyonlarla birlikte doğrudan Ana Sayfaya yönlenmesini simulatif (mock) olarak kodlayacağım. İsterseniz Firebase Auth, Google Cloud ve Telegram Bot Father'dan alacağımız özel API Key ve Secret'ları sisteme daha sonra gerçek (backend'e bağlı) verilerle bağlayabiliriz. Şu an sadece UI tasarımını entegre etme fikrini onaylıyor musunuz?
+
+## Doğrulama Planı
+1. `LoginScreen` uygulamanın ilk açılış ekranı (initial route) olacak şekilde derlenecek.
+2. Radar animasyonu, 60fps akıcılığında titreşimsiz sonsuz döngü (loop) yapabilmeli.
+3. Butonlara tıklandığında `MainTabs` isimli ana menü yapısına temiz ve hatasız bir geçiş yapılmalı.

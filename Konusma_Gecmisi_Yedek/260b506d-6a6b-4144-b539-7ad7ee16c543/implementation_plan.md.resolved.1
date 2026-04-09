@@ -1,0 +1,31 @@
+# Canlı Amazon (AWS) Sunucusu Dağıtım Planı
+
+40 puan baraj kalkanımız ve yepyeni olan Google Sheets modülümüz masaüstündeki bu yerel bilgisayarda hazır durumda ve problemsiz çalışıyor. Şimdi bu gücü, 7/24 piyasayı takip eden ve Elyte Signals internet sitene veri yollayan canlı **Amazon AWS** sunucuna taşıyacağız! Sistemde o 35 skorla sırıtıp duran işlemleri de oradan sileceğiz.
+
+Bunu en güvenli ve hızlı şekilde yapabilmemiz için aşağıdaki kararları/bilgileri netleştirmemiz gerekiyor.
+
+## User Review Required
+
+> [!IMPORTANT]
+> İlerlemeye başlamadan önce şu noktalarda onayınıza/bilginize ihtiyacım var:
+> 
+> 1. **Sunucuya Bağlantı Türü:** Amazon EC2 (Sanal Makine) kullanıyorsan, sunucuya genellikle Terminalden bir `SSH` anahtarı (`.pem` formatlı dosya) ile bağlanılır. Uygulamayı bu şekilde mi yönetiyorsun? VEYA kodları bir GitHub Reposuna yolladığında sunucu oradan otomatik mi çeker (CI/CD)?
+> 2. **IP Adresi:** Sunucunun IP adresini bana yazar mısın? (Örn: `18.232.10.45` gibi)
+> 3. **SSH Anahtarı:** Eğer bağlantı `.pem` anahtarı ile yapılıyorsa, lütfen anahtarın içindeki şifreyi buraya YAZMA! Onun yerine anahtar dosyasını Masaüstüne atıp bana sadece "Masaüstünde `amazon-key.pem` adlı dosyayı bul" de. Geri kalan gizli bağlantıyı ben sistem içinden halledeceğim.
+
+## Proposed Changes
+
+### 1- Bağlantı (SSH) Adımı
+- Sunucu IP adresini ve SSH anahtarını (veyahut eğer varsa kullanıcı adı/şifreni) kullanarak terminalden **Amazon AWS sunucuna güvenli bir tünel (SSH)** açacağım.
+
+### 2- Dosya Transferi (RSYNC)
+- Lokal bilgisayarda demin yazdığımız ve testini başardığımız dosyaları (`backend/scanner.js`, `backend/google-api.js`, güncellenmiş `backend/.env` dosyası ve `package.json`) Amazon sunucusundaki proje klasörünün üzerine yazacağım (`SCP` veya `Rsync` ile).
+
+### 3- Temizlik ve Yeniden Başlatma 
+- Amazon sunucusuna bağlandıktan sonra canlı sistemin arka planındaki o `signals.db` veritabanına özel bir SQLite komutu atarak 40 puanın altında girmiş o saçma 35'lik sızıntı işlemlerini **ilelebet sileceğim**. 
+- En son adımda sunucudaki Node.js/PM2 arka plan servisini (Backend) yeniden başlatacağım ki kurduğumuz o yeni sağlam 40-Puan kalkanı ve Google Sheets eklentisi devreye girsin!
+
+## Verification Plan
+
+### Manual Verification
+Canlı sunucuyu (PM2'yi) restartladıktan hemen sonra `elytesignals.com/dashboard` adresine tekrar girip sayfayı yenilemeni isteyeceğim. O sızan 35'lik HIGHUSDT ve AZTECUSDT kayıtlarının artık siteden tamamen uçtuğunu ve her şeyin 40 ve üstü puan limitinde tertemiz aktığını kendi gözlerinle göreceksin! Hazır mıyız?

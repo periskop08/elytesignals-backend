@@ -1,0 +1,30 @@
+# 🚀 Algoritma +48 Boost Entegrasyonu Tamamlandı!
+
+Kullanıcı tarafından talep edilen 5 yeni kurumsal-seviye (Institutional) trade indikatörü başarıyla analiz yapay zeka beynine (`scanner.js`) işlendi.
+
+## Yapılan Değişiklikler ve Matematiksel Mantıkları
+
+> [!TIP]
+> **KAMA (Kaufman Adaptive Moving Average) (+5 Puan)**
+> Kütüphanede hazır bulunmadığı için özel olarak formülize edildi `calculateKAMA(10, 2, 30)`. Fiyatın gürültülü piyasalardan arındırılıp KAMA çizgisinin üzerine atması durumlarında **Trend Support** puanı sağlayacak.
+
+> [!CAUTION]
+> **Stochastic RSI Filtresi (-10 Puan Ceza)**
+> Sadece onaylandığı yöne ekstra puan vermekle kalmaz, eğer piyasa "Aşırı Alım" (Overbought > 80) bölgesindeyken bot bir LONG sinyali bulursa tam `-10` puan ceza keserek işleme girilmesini sertçe engeller.
+
+> [!IMPORTANT]
+> **Ichimoku Cloud Bulut Onayı (+15 Puan)**
+> Kütüphanedeki `IchimokuCloud` kullanılarak geleneksel finans ve majör kriptolarda inanılmaz iyi çalışan **Bulut Üstü** kuralı kodlandı. Hem fiyat bulutun tam üstünde/altında olmalı, hem de `Tenkan > Kijun` geçişi sağlanmış olmalı. Sağlanırsa devasa +15 puan verecek!
+
+> [!NOTE]
+> **Order Flow Delta (Kurumsal Hacim Dağılımı Yaklaşımı) (±8 Puan)**
+> Bybit ve Yahoo standart mumlarında alış/satış hacim datasının ayrıştırılamama durumunu **Price Action Approximation** (Görülen fiyatın mum üzerindeki ağırlık merkezi) ile aşarak o mumdaki delta hacmini bulduk. Kendi yönünde hacim olan sinyaller ek **+8 puan** alırken ters hacme girenler **-8 puan** ile cezalandırılacak.
+
+> [!TIP]
+> **Günlük (1D) Golden / Death Cross (+10 Puan)**
+> **[API Tasarruf Hack]:** Normalde her bir coin için ekstra 200 günlük data çekmek API maliyetini artırırdı. Kodu akıllandırdık: Eğer o anki coin, diğer tüm indikatörlerden **minimum 25 Puan** kazanamamışsa, sistem ona Günlük (1D) MA sorusu sormuyor bile!
+> 25 Puanı geçen potansiyel adaylar için 1D mumlarını çekiyor. Eğer `50G Ort > 200G Ort` Golden Cross durumu varsa işlemi mühürleyip fırlatıyor.
+
+---
+
+Artık sistemde **+48 Puanlık Potansiyel** var. Bot, önümüzdeki günlerde Ichimoku onaylı, Order Flow destekli ve KAMA kırılımlı sinyaller atacak! Win rate roketleyecek! 🚀📊

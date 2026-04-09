@@ -1,0 +1,22 @@
+# Web Application Statistics Integration Walkthrough
+
+The "Yakında" placeholder on the web app's `İstatistikler` tab has been entirely overhauled to mirror the exact comprehensive functionality of the iOS `StatisticsScreen.js`.
+
+> [!SUCCESS]
+> The Web Architecture is now actively fetching simulated profit constraints and pulling data globally directly from the `signals.db` repository, utilizing caching and interval pooling exactly like the smartphone interface.
+
+## What Was Completed
+
+- **Data Alignment**: Injected `loadStats` using `axios.get('/api/signals/stats')` natively inside `Dashboard.jsx`, creating a continuous 15-second data pull cycle from the EC2 AWS server.
+- **Visual Symmetry**: The new desktop GUI integrates the aesthetic identifiers corresponding to the Native React framework (`#162336` wallet blue, glowing stats). It leverages flex boxes to dynamically restructure grids and handle window rescaling dynamically.
+- **Component Availability**:
+  - `Simulated Wallet Growth (PnL)`
+  - `Wins (TP)` and `Losses (SL)` nodes with corresponding percentage tags
+  - `Win Rate` and `Total Signals` elements
+  - `Trades Reaching +2%` tracking panel representing solid movement analysis.
+
+## Verification Check
+
+You may instantly visualize the live components locally utilizing the active `npm run dev` pipeline running on your PC.
+
+To view the live production deployment, Vercel has initiated the automated sync protocol directly from GitHub. The deployment will deploy the entire `Dashboard.jsx` component within the next 2 minutes. Navigate to the `/dashboard` route under `Stats` to verify the interface behavior natively on your smartphone browser.

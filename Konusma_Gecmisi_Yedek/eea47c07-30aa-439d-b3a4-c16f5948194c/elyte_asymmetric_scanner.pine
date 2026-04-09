@@ -1,0 +1,181 @@
+//@version=5
+indicator("Elyte Smart Money System (Backend Sync)", overlay=true, max_labels_count=500)
+
+// =========================================================================
+// 1. KULLANICI AYARLARI & BARAJLAR
+// =========================================================================
+minLongScore = input.int(55, title="Minimum LONG Skoru (Örn: 55)")
+minShortScore = input.int(40, title="Minimum SHORT Skoru (Örn: 40)")
+showFailedSignals = input.bool(true, title="Sinyal Olmayan(Düşük Skorlu) Sweep'leri Gri Göster")
+
+// =========================================================================
+// 2. TEMEL GÖSTERGELER & HESAPLAMALAR
+// =========================================================================
+atrVal = ta.atr(14)
+avgATR = ta.sma(atrVal, 14)
+currentATR = atrVal == 0 ? close * 0.015 : atrVal
+
+rangeHigh = ta.highest(high, 100)
+rangeLow = ta.lowest(low, 100)
+
+recentLow = ta.lowest(low, 6)
+recentHigh = ta.highest(high, 6)
+
+lowestOffset = math.abs(nz(ta.lowestbars(low, 6), 0))
+highestOffset = math.abs(nz(ta.highestbars(high, 6), 0))
+targetHigh = high[lowestOffset]
+targetLow = low[highestOffset]
+
+dipDeviation = (recentLow <= rangeLow * 1.005) and (close > rangeLow) and (close > targetHigh)
+tepeDeviation = (recentHigh >= rangeHigh * 0.995) and (close < rangeHigh) and (close < targetLow)
+
+var int direction = 0
+direction := 0
+if dipDeviation
+    direction := 1
+else if tepeDeviation
+    direction := -1
+
+// ==== İNDİKATÖRLER ====
+rsiVal = ta.rsi(close, 14)
+stochK = ta.sma(ta.stoch(close, high, low, 14), 3)
+
+[diPlus, diMinus, adxValue] = ta.dmi(14, 14)
+
+volAvg = ta.sma(volume, 20)
+rvol = volAvg == 0 ? 1 : volume / volAvg
+
+tenkan = math.avg(ta.highest(9), ta.lowest(9))
+kijun = math.avg(ta.highest(26), ta.lowest(26))
+spanA = math.avg(tenkan, kijun)[26]
+spanB = math.avg(ta.highest(52), ta.lowest(52))[26]
+
+// MTF SMA 50 (4H) & 1D Cross
+sma50_4H = request.security(syminfo.tickerid, "240", ta.sma(close, 50))
+sma50_1D = request.security(syminfo.tickerid, "D", ta.sma(close, 50))
+sma200_1D = request.security(syminfo.tickerid, "D", ta.sma(close, 200))
+// =========================================================================
+
+// =========================================================================
+// 3. PUANLAMA ALGORİTMASI (Senkronize)
+// =========================================================================
+var float score = 0
+score := 0
+
+if direction != 0
+    // 1. FVG (+15)
+    if (direction == 1 and high[2] < low[0]) or (direction == -1 and low[2] > high[0])
+        score += 15
+
+    // 2. ORDER BLOCK (+25)
+    hasOB = false
+    obLower = direction == 1 ? rangeLow - (currentATR * 1.5) : rangeHigh - (currentATR * 1.5)
+    obUpper = direction == 1 ? rangeLow + (currentATR * 1.5) : rangeHigh + (currentATR * 1.5)
+    for i = 6 to 36
+        if direction == 1 and close[i] < open[i] and close[i] <= obUpper and close[i] >= obLower and high[i-1] > high[i]
+            hasOB := true
+            break
+        if direction == -1 and close[i] > open[i] and close[i] >= obLower and close[i] <= obUpper and low[i-1] < low[i]
+            hasOB := true
+            break
+    if hasOB
+        score += 25
+
+    // 3. RVOL (+15)
+    if rvol >= 1.2
+        score += 15
+        
+    // 4. ADX ±10
+    if adxValue > 25
+        score += 10
+    else if adxValue < 20
+        score -= 10
+        
+    // 5. Ichimoku (+15)
+    if direction == 1 and close > spanA and close > spanB and tenkan > kijun
+        score += 15
+    if direction == -1 and close < spanA and close < spanB and tenkan < kijun
+        score += 15
+        
+    // 6. Order Flow Delta (±15)
+    buyVol = volume * ((close - low) / math.max(high - low, 0.0001))
+    sellVol = volume - buyVol
+    buyRatio = volume == 0 ? 0 : buyVol / volume
+    sellRatio = volume == 0 ? 0 : sellVol / volume
+    if direction == 1
+        if buyRatio > 0.60
+            score += 15
+        else if sellRatio > 0.60
+            score -= 15
+    if direction == -1
+        if sellRatio > 0.60
+            score += 15
+        else if buyRatio > 0.60
+            score -= 15
+
+    // 7. StochRSI ve RSI Penalties (-10)
+    if direction == 1 and stochK > 80
+        score -= 10
+    if direction == -1 and stochK < 20
+        score -= 10
+    if direction == 1 and rsiVal > 75
+        score -= 10
+    if direction == -1 and rsiVal < 25
+        score -= 10
+        
+    // 8. Volatilite ATR Spike Ceza (-15)
+    if currentATR > avgATR * 2.0
+        score -= 15
+        
+    // 9. MTF 4H Trend (+15 / -5)
+    if direction == 1
+        if close > sma50_4H
+            score += 15
+        else
+            score -= 5
+    if direction == -1
+        if close < sma50_4H
+            score += 15
+        else
+            score -= 5
+
+    // 10. 200 SMA Soft Filter (Sert Ceza Sistemi -15)
+    sma200_1H = ta.sma(close, 200)
+    if direction == 1 and close < sma200_1H
+        score -= 15
+    if direction == -1 and close > sma200_1H
+        score -= 15
+            
+    // 11. 1D Cross (±10)
+    if direction == 1
+        if sma50_1D > sma200_1D and close > sma200_1D
+            score += 10
+        else if sma50_1D < sma200_1D
+            score -= 10
+    if direction == -1
+        if sma50_1D < sma200_1D and close < sma200_1D
+            score += 10
+        else if sma50_1D > sma200_1D
+            score -= 10
+
+// ==== EKRAN ÇİZİMLERİ ====
+bgcolor(direction == 1 ? color.new(color.green, 90) : na, title="Sweep Long Adayı")
+bgcolor(direction == -1 ? color.new(color.red, 90) : na, title="Sweep Short Adayı")
+
+isValidLong = (direction == 1) and (score >= minLongScore)
+isValidShort = (direction == -1) and (score >= minShortScore)
+isFailedLong = (direction == 1) and (score < minLongScore) and showFailedSignals
+isFailedShort = (direction == -1) and (score < minShortScore) and showFailedSignals
+
+if isValidLong
+    label.new(bar_index, low - currentATR, text="LONG\nSkor: " + str.tostring(score), color=color.rgb(11, 161, 56), textcolor=color.white, style=label.style_label_up, size=size.small)
+if isValidShort
+    label.new(bar_index, high + currentATR, text="SHORT\nSkor: " + str.tostring(score), color=color.rgb(197, 24, 24), textcolor=color.white, style=label.style_label_down, size=size.small)
+
+if isFailedLong
+    label.new(bar_index, low - currentATR, text="Zayif L\nSkor: " + str.tostring(score), color=color.gray, textcolor=color.white, style=label.style_label_up, size=size.tiny)
+if isFailedShort
+    label.new(bar_index, high + currentATR, text="Zayif S\nSkor: " + str.tostring(score), color=color.gray, textcolor=color.white, style=label.style_label_down, size=size.tiny)
+
+alertcondition(isValidLong, title="🟢 Elyte LONG Sinyali", message="Elyte AI: LONG şartları sağlandı! Skor yeterli.")
+alertcondition(isValidShort, title="🔴 Elyte SHORT Sinyali", message="Elyte AI: SHORT şartları sağlandı! Skor yeterli.")

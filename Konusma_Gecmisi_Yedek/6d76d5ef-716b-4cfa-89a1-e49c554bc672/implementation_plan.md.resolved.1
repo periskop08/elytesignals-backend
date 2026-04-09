@@ -1,0 +1,49 @@
+# Max İşlem Limiti ve Havuzdan Yedekleme (Backfill) Sistemi
+
+Bu özellik, sistemin aynı anda maksimum 10 açık pozisyonda kalmasını sağlayacak ve boşalan slotları yeni sinyal gelmesini beklemeden geçmişteki havuzdan (0.3% tolerans ile) otomatik dolduracak devasa bir "Risk Yönetimi" geliştirmesidir.
+
+## User Review Required
+> [!IMPORTANT]
+> Bu kurgu sistemin çalışma yapısını oldukça profesyonel bir portföy yönetimi mantığına çevirir. Kurallarımız şunlar olacak:
+> 1. Sistemin her dakikada çalışan tarayıcısı (cron) Bybit ile haberleşip aktif açık işlem sayını kontrol edecek.
+> 2. Kapanan işlem sonucunda sayımız (Örn: 9'a) düşerse sistem hemen "Bekleyen/Aktif Global Sinyaller" havuzuna bakacak.
+> 3. Bu sinyaller arasında **henüz Bybit'e göndermediğimiz** bir coini bulacak ve fiyatı giriş seviyesinden maksimum **±%0.3** uzaklaşmışsa pozisyonu açacak.
+> 
+> Bu planı onaylıyor musun?
+
+## Proposed Changes
+
+### Backend Layer
+
+#### [MODIFY] `backend/scanner.js`
+1. **Config Güncellemesi (Limitler ve Toleranslar):**
+   `MAX_ACTIVE_TRADES = 10`
+   `PRICE_TOLERANCE_PCT = 0.3` tolerans değişkenlerini tanımlayacağız.
+
+2. **Yeni Fonksiyon: `backfillTrades()`** 
+   - `SELECT COUNT(*) FROM user_trades WHERE status = 'ACTIVE'` ile mevcut doluluğu ölçecek.
+   - Eğer doluluk 10'un altındaysa (Örn: 8), 2 adet boş slotumuz var demektir.
+   - Tüm global `ACTIVE` sinyalleri tarar, `user_trades` tablosunda kaydı olmayanları çeker.
+   - Live(Canlı) Bybit fiyatını çeker. `Math.abs((CurrentPrice - EntryPrice) / EntryPrice) * 100 <= 0.3` şartı sağlanıyorsa borsa emrini gönderir ve slotu doldurur.
+
+3. **`checkActiveSignals()` Entegrasyonu:**
+    - Her dakika borsadaki aktif pozisyonları kontrol edip TP/SL olanları kapatan sistemin en son satırına `await backfillTrades()` eklenecek. Böylece bir pozisyon kendiliğinden kapandığında **en fazla 1 dakika içerisinde** yerine yenisi otomatik açılır.
+
+4. **`runScan()` Entegrasyonu:**
+    - Yeni bir sinyal piyasaya anlık düştüğünde, borsaya emir göndermeden önce `user_trades` üzerindeki aktif işlem sayısı kontrol edilecek.
+    - Sayı 10 ise, emir borsaya *gitmeyecek*, sadece global `signals` tablosuna yazılacak. (Yani havuza atılacak, sıra bekleyecek).
+
+#### [MODIFY] `backend/index.js`
+1. **Manuel Kapatma Tetiklemesi:**
+   - `/api/user-trades/close` endpointinde kullanıcı "İşlemi Kapat" butonuna bastığında ve borsa tarafı kapatıldığında arka planda `startScanner()` modülünden `backfillTrades()` tetiklenecek. Böylece manuel kapamadan saniyeler sonra havuzdaki yedek sinyal sıradan işleme girecek.
+
+## Open Questions
+> [!WARNING]
+> 1. Havuzdan seçilecek bekleyen sinyallerde önceliğimiz ne olmalı? En yakın tarihli son çıkan sinyali mi önce alalım, yoksa Kalite Skoru (qualityScore) en yüksek olanı mı önce alalım? (Bence Kalite Skoru daha kârlı olabilir)
+
+## Verification Plan
+### Automated Tests
+- Sınır limiti (MAX_ACTIVE_TRADES = 10) manuel bir sayaçla 10 simülasyon kaydı oluşturularak Bybit Testnet üzerinde tetiklenecek ve 11. sinyali alıp almadığı kontrol edilecektir.
+
+### Manual Verification
+- Havuz (Backfill) fonksiyonu sahte bir giriş fiyatı (şu anki fiyatla aynı) olan mock bir veritabanı kaydı üzerinden test edilecek.

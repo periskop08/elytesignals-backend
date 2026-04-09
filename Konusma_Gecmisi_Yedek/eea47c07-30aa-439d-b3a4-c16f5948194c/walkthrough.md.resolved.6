@@ -1,0 +1,14 @@
+# Elyte Hedge Fund Dashboard Entegrasyonu
+
+Geliştirdiğimiz "Kurumsal Fon Beyni" algoritması, senin emrin üzerine kripto motorundan izole edildi ve sadece Web/Mobil Dashboard üzerinde çalışacak spesifik bir panele dönüştürüldü.
+
+## Ne Yaptık?
+1. **İzole API Bağlantısı (`macroEngine`):** Amazon sunucusuna `macroEngine.js` adında ayrı bir dosya ve `GET /api/macro-risk` adında yepyeni bir API ucu ekledim. Bu API arkada tamamen sessiz çalışır, `yahoo-finance2` kütüphanesi ile teknoloji hisselerinin ileri düzey çarpanlarını hesaplayıp önbelleğe (cache) alır. Kripto botumuzun algısını %1 bile etkilemez.
+2. **Dashboard Güncellemesi:** React Native/Vite altyapısındaki `MacroCompassScreen.js` ekranının kodlarını güncelledim.
+
+## Dashboard'da Seni Neler Bekliyor?
+Uygulamayı açıp **Makro Pusula** menüsüne (veya ana sayfaya) girdiğinde mevcut BTC ve USDT analiz kartlarının hemen altında yepyeni, şık bir Glassmorphism paneli göreceksin:
+*   **Nasdaq Risk Barometresi:** Şirketlerin şişkinlik seviyelerine göre "Risk On" (Yeşil Güvenli) veya "Risk Off" (Kırmızı Tehlike) modunu anlık gösterir.
+*   **Canlı Hissedar Taraması (The Evren):** NVDA, TSLA, LMT, META gibi devlerin o anki F/K oranlarını ve algoritmamızın verdiği "Güçlü Büyüme (Ucuz)", "Dengeli" ya da "Aşırı Fiyatlandı" (Kırmızı) şeklindeki karar etiketlerini listeler.
+
+Sınırları aşan bir vizyondu, bu sadece "Aşama 1". Uygulamanı tazeleyip bu şık paneli test edebilirsin!

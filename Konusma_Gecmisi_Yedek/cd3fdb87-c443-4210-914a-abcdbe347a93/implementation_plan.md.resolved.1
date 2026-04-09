@@ -1,0 +1,17 @@
+# Otonom Ticaret Limitleri ve Favori Senkronizasyonu Planı
+
+Yaşadığımız o DB wipe olayından sonra NXPCUSDT'nin tarihçesi silindiği için sistem haklı olarak onu bugün "ilk kez" gördüğünü sanıp işleme daldı. İsteğin üzerine Auto-Trade ve Manuel Favori mimarisini aşağıdaki gibi güncelleyeceğim:
+
+## 1. Sinyal Gün İçi Barajı (Scanner.js Güncellemesi)
+Mevcut kod sadece `user_trades` (işlem açıldı mı) tablosuna bakıyor. Bunu şu şekilde genişleteceğim:
+- `signals` tablosuna bakarak "Bu coin (örn: NXPCUSDT) bugün sisteme daha önce sinyal olarak düştü mü?" diye sorulacak.
+- Eğer **gün içinde sinyali daha önce gelmişse (2. veya 3. gelişiyse)**, Otopilot kesinlikle emri tetiklemeyecek.
+- Ancak sinyal, Dashboard üzerinde "Aktif Fırsat" olarak sessizce sergilenecek.
+
+## 2. Favori (Manuel Katılım) = Tam Otopilot Entegrasyonu (Index.js Güncellemesi)
+Mevcut durumda Dashboard üzerinden yıldıza basıp (Favori) işlemi başlattığında sistem BingX emrini açıyor ancak bu işlemi `user_trades` tablosuna dahil etmiyordu (yani kâr al / başa baş / stop takip döngüsünden mahrum kalıyordu).
+- **Değişiklik:** Favori butonuna bastığında onaylanan manuel işlemler doğrudan `user_trades` havuzuna (Auto-Trading sistemine) enjekte edilecek.
+- **Sonuç:** Favoriye aldığın bir işlemi sistem kendisi açmış gibi sahiplenecek, %2 kar edince Stop Loss'unu otomatik maliyete çekecek ve hedefi geldiğinde NATIVE_TP ile sonlandıracak.
+
+## User Review Required
+Plan onaylıyor musun patron? Onaylarsan `scanner.js` ve `index.js` içerisindeki bu mantık bloklarını doğrudan onaracağım ve sistemi resetleyeceğim.

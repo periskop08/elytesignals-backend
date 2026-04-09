@@ -1,0 +1,13 @@
+# Geleneksel Varlık İsimlendirme ve Borsa Emir İletim Köprüsü
+
+- `[x]` 1. `scanner.js` Regex ve Parser Temizliği
+    - `[x]` `724` ve `OILBRENT`/`OILWTI` gibi stringsizleştirme (Örn: `724NASDAQ100` -> `NASDAQ100`, `OILBRENT` -> `BRENT`) mantığının kodlanması.
+    - `[x]` Tarama anında bellekte (RAM) tutulacak olan `global.BINGX_SYMBOL_MAP` haritasının yaratılması. `[cleanSymbol]: bingxSymbol` şeklinde.
+    - `[x]` `getNativeBingxSymbol(symbol)` adında veritabanındaki temiz ismi arayıp Native BingX ismini döndürecek bir tercüman fonksiyonunun yazılması.
+- `[x]` 2. Auto-Trade (Otopilot) Entegrasyonu
+    - `[x]` `bingx-trade.js` içerisindeki `resolveBingxSymbol()` fonksiyonuna doğrudan `global.BINGX_SYMBOL_MAP`'ten dönen `NCSISP500...` formatının enjekte edilmesi.
+    - `[x]` Tüm API çağrılarının (`placeOrder`, `updateStopLoss`, `getPosition`, `closePosition`, `getNetIncome`) Native BingX sembolünü kullanması için haritadan yararlanmasının sağlanması.
+- `[x]` 3. Veritabanı ve Sinyal Temizliği Düzeltmesi
+    - `[x]` Eski bozuk DB Sinyallerinin temizlenmesi ve Live Test yapılması (AWS'teki `724NASDAQ100` verileri `NASDAQ100` olarak temizlendi).
+- `[x]` 4. AWS Sunucu Deploy
+    - `[x]` `deploy.sh` scriptini tetikleyerek kodları yükle.

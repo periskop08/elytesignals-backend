@@ -1,0 +1,22 @@
+# Macro Dashboard Entegrasyon Planı
+
+Kripto sinyal motorunu tamamen bağımsız hissetmek için, "Hedge Fund" ve "Nasdaq Risk İştahı" mekanizmalarını asla `scanner.js` içerisine sokmayacağız. Sistemler tamamen birbirinden ayrık (decoupled) çalışacak.
+
+## Önerilen Değişiklikler
+
+### 1. Ana Sunucu (API) Güncellemeleri
+Yeni bir yan-motor oluşturacağız: `macroEngine.js`. Bu motor sadece borsaları (NVDA, TSLA, MSFT vb.) ve "Nasdaq Risk İştahı"nı hesaplayıp hafızada tutacak.
+*   **[YENİ] Endpoint**: `GET /api/macro-risk` adında yeni bir API kanalı açacağız.
+*   Bu kanal sadece hisse çarpanlarını ve genel Nasdaq trendinin "Risk On" (Alım İştahı Yüksek) veya "Risk Off" (Pahalı/Tehlikeli) durumunu özetleyecek.
+*   Kripto sinyal botu (`scanner.js`) bu veriyi **okumayacak**, kendi işine devam edecek.
+
+### 2. Frontend (Mobil/Web Dashboard) Güncellemeleri
+Ana sayfadaki (veya Makro Pusula sayfasındaki) arayüze kurumsal fon izleme panelini ekleyeceğiz.
+*   **[GÜNCELLEME]** `MacroCompassScreen.js`: Ekrana bağlanarak yeni oluşturduğumuz `/api/macro-risk` endpoint'inden verileri çekecek.
+*   Ekranda "Nasdaq Risk İştahı" barometresi ve testini yaptığımız hisselerin (NVDA, TSLA vb.) skorları, şık bir Glassmorphism paneliyle sunulacak.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bu mimari sayesinde kripto sinyal motorumuz %100 izole kalırken, senin ekranda bir "Hedge Fund Yöneticisi" gibi Nasdaq makrosunu görebilmeni sağlayacağız. 
+>  Planı onaylıyorsan API yolunu açmaya ve Dashboard tasarımına geçiyorum?

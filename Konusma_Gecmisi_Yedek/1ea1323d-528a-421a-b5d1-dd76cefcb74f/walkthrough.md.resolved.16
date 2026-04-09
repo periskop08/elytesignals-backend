@@ -1,0 +1,13 @@
+# OpenAI (ChatGPT) Motoruna Başarılı Göç!
+
+Önceki aşamalarda sürekli tosladığımız o sinir bozucu Google Gemini API "Kota/Limit" sorunundan temelli kurtulmak için, backend motorunu senin ayarladığın bakiye yüklü **OpenAI (ChatGPT)** API'sine tam ve sorunsuz şekilde aktardım.
+
+## 🚀 Motor Değişikliğinde Neler Yapıldı?
+
+1. **Altyapı Temizliği:** Node.js sunucusundaki tüm eski `@google/genai` klasörlerini uçurdum ve yerine son sürüm `openai` resmi kütüphanesini kurdum.
+2. **Güvenli Key Transferi:** Bana attığın `sk-proj...` ile başlayan o ChatGPT özel gizli anahtarını, Github veya ortalığa sızmaması için sunucunun şifreli kasasına (`.env` dosyasına) `OPENAI_API_KEY` adıyla gömdüm.
+3. **Zeka Transferi (GPT-4o-Mini):** 
+   - **Niyet Okuyucu Bağlamı:** Eski yapay zeka gibi kelimeleri yanlış anlayıp bozmaması için OpenAI'a özel `json_object` format sistemine geçtim. Artık sana geriye soru sorma mantığını (Spot mu Vadeli mi) gram şaşmadan çok zeki bir şekilde anlıyor.
+   - **Analiz Çıktısı:** Saniyede yüzlerce kelime basabilen ve dünyanın en mantıklı finansal kurgularını yapan `gpt-4o-mini` modeli, senin gönderdiğin 5 pencereli Top-Down Price Action sistemini resmen içmeye ve süper hızlı analiz atmaya başladı.
+
+Şu andan itibaren **"Bot Yoğun"**, **"Çok soru sorduk limit doldu"** gibi hata sayfalarına veda edebilirsin! OpenAI'ın kendi öde-kullan limitlerini açtığın için istersen saniyede 50 kere analiz iste, sistem asla yorulmayacaktır. Hazırsan gidip test edebilirsin kahraman! ⚡️

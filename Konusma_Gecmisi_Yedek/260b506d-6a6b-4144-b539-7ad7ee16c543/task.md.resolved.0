@@ -1,0 +1,6 @@
+# Google Sheets Entegrasyonu Görev Listesi
+
+- [ ] `googleapis` paketinin projenin backend'ine kurulması.
+- [ ] Backend dizininde `google-api.js` servis dosyasının oluşturulması (Authentication ve veri ekleme işlemleri).
+- [ ] `scanner.js` içerisindeki `sendNightlyReport` fonksiyonunun modifiye edilmesi (Google Sheets API entegrasyonu).
+- [ ] Kullanıcı için GCP Service Account adımlarını anlaşılır bir metin olarak hazırlamak.

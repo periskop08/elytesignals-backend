@@ -1,0 +1,26 @@
+# Sinyal Optimizasyonu ve Detay (Grafik) Ekranı Planı
+
+Belirttiğiniz noktalar bir uygulamanın profesyonelliğini belirleyen en ince ve harika detaylar! Stabil coinlerin (fiyata sabitlenmiş varlıkların) sinyal üretmesi ve 0.0001 sentlik kâr aralıklarının (dar trade) sisteme girmesi bir "Gürültü" (noise) yaratıyor. Ayrıca alınan karara göre grafiği inceleyebileceğiniz özel sayfa mantığı harika bir kullanıcı deneyimi (UX) sunacaktır.
+
+Bu istekleriniz için yapacağımız optimizasyonların planı şu şekildedir:
+
+## 1. Backend: Stabil Coin ve "Dar İşlem (Gürültü)" Filtresi
+*   **Stabil Coin/Fiat Temizliği:** Tarama motoru (`scanner.js`), pariteleri çekerken `USDC`, `FDUSD`, `TUSD`, `BUSD`, `EUR`, `USDP`, `DAI`, `USD1`, `USDE`, `AEUR` gibi fiat ve sabit değerli varlıkların USDT paritelerini görmezden gelecek.
+*   **Kâr/Zarar (Risk/Ödül) Oranı Filtresi:** Algoritmaya matematiksel bir filtre ekleyeceğiz. Eğer hedeflenen Kâr Oranı (Giriş ile Hedef arasındaki yüzde fark) **%2.0'den az ise** veya 100 saatlik mumların en yüksek ve en dip noktası arasındaki uçurum (volatilite) **%3.0'dan az ise**, sistem bu grafiğe hiç bulaşmayıp fırsatı "Yetersiz Kâr Marjı" veya "Sığ/Dar Aralık" diyerek atlayacak.
+
+## 2. Mobil: Signal Detay ve Canlı Grafik Ekranı
+*   **Navigasyon Değişimi:** Sinyal kartına tıkladığınızda menünün alt sekmelerinden bağımsız olarak yeni bir Stack (Sayfa) açılması için navigasyon omurgasını güncelleyeceğiz.
+*   **Signal Detail Screen (Yeni Sayfa):** Sinyale tıklandığında açılacak sayfanın tasarımı:
+    *   *Üst Kısım:* Sinyalin tipi (LONG/SHORT), anlık durumu, giriş, hedef ve stop fiyatları büyük puntolarla detaylıca yer alacak.
+    *   *Alt Kısım (Canlı Grafik):* Piyasada standart olan **TradingView Canlı Grafik Widget'ını** arayüze gömeceğiz. `react-native-webview` kütüphanesini kullanarak tam o sinyalin ait olduğu paritenin (örneğin BTCUSDT) 1 saatlik canlı ve interaktif grafiğini ekrana getireceğiz. Bu sayede işlemi kendi gözünüzle de teyit edebileceksiniz.
+
+---
+
+## User Review Required
+> [!IMPORTANT]
+> Bu mimari değişiklikleri koda dökmeden önce aşağıdaki maddelerde izninizi rica ediyorum:
+
+1. **Minimum Kâr Yüzdesi:** Bir sinyalin yayınlanması için "Giriş Fiyatı ile Hedef Fiyat" arasında minimum yüzde kaçlık (`%`) bir potansiyel kâr olmalı? Varsayılan olarak **%2**'yi sınır belirlemeyi düşünüyorum (Yani %2'den az kazanç vaat eden çok dar işlemleri çöpe atacağım). Sizce bu oran iyi mi?
+2. **Kütüphane Yüklemesi:** Mobil grafikleri gösterebilmem için Expo projesine (`mobile` klasörüne) `react-native-webview` isimli güvenilir kütüphaneyi kurmam gerekiyor, onaylıyor musunuz? (Kurulum ardından telefondaki Expo Go'yu bir kez kapatıp açmanız gerekebilir).
+
+Cevaplarınızı aldıktan sonra hemen çalışmaya başlayacağım!

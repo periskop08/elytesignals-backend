@@ -1,0 +1,12 @@
+# Görev Listesi: BingX Admin Fee Entegrasyonu
+
+- `[/]` **Web Paneli Cüzdan Hesaplamaları (`Dashboard.jsx`)**
+  - Aktif İşlemler PnL'inden -0.11$ Komisyon (Açılış Fee) Düşümü Eklenmesi.
+  - Kapalı İşlemler Kârından -0.22$ Komisyon (Açılış+Kapanış) Düşümü Eklenmesi `user.isAdmin` bazlı.
+- `[ ]` **Mobil Uygulama Cüzdan Hesaplamaları (`FavoritesScreen.js`)**
+  - Aktif İşlemler PnL'inden -0.11$ Açılış Fee Düşümü.
+  - Kapalı İşlemler Totalinden -0.22$ Komisyon Düşümü `user.isAdmin` bazlı.
+  - Arayüzde kasanın net olduğu bilgisi.
+- `[ ]` **Sistemin Canlıya Alınması**
+  - Vercel Deployment.
+- `[ ]` **Walkthrough Güncellemesi**

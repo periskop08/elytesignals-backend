@@ -1,0 +1,9 @@
+# Manuel BingX Trader Entegrasyonu
+
+- [ ] `backend/database.js`: `favorites` tablosuna `bybitOrderId` kolonu eklenecek.
+- [ ] `backend/index.js`: `/api/favorites/toggle` route'u içerisine BingX `placeOrder` mantığı eklenecek.
+- [ ] `backend/index.js`: `/api/favorites/close` route'u içerisine BingX `closePosition` fonksiyonu eklenecek.
+- [ ] `web/src/pages/Dashboard.jsx`: Sinyalleri favorilere eklerken güvenli işlem onayı sorma promptu eklenecek.
+- [ ] `web/src/pages/Dashboard.jsx`: `favFilter` mantığı kapatılan sinyalleri listeden gizleyecek şekilde güncellenecek.
+- [ ] AWS Sunucu Güncellemesi: Kodlar AWS'e yüklenecek ve PM2 restart edilecek.
+- [ ] Vercel Yayını: Güncellenen React frontend kodları `npx vercel` ile canlıya alınacak.

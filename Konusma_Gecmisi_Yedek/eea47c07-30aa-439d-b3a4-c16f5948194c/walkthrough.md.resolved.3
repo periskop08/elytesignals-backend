@@ -1,0 +1,18 @@
+# 🚀 Mobil Uygulama: İstatistik ve Favoriler Paritesi!
+
+Eksik kalan ince ayarlar yapılarak Mobil uygulamanın `Favoriler` ve `İstatistik` sekmeleri, web sitemizdeki Dashboard ekranının tamamen **1:1 kopyası** haline getirildi. Kasa bakiyeleri, admin yetkileri ve canlı dinamik filtreleme işlemleri native olarak entegre edildi.
+
+## Yapılan Düzenlemeler
+
+### 1. Favoriler Ekranı (Kişisel Performans Grid'i) 📈
+- **Sabit Performans Başlığı:** Sayfanın en tepesine tıpkı web'deki gibi, işlem geçmişiniz boş dahi olsa her zaman görünen "Kişisel Performans" tablosu (TP Hit, SL Hit, Kazanma Oranı, Güncel Kasa) çakıldı.
+- **Dinamik Canlı Filtreleme (favFilter):** Web'de olduğu gibi `TP Hit` sekmesine tıkladığında aşağıda sadece Win olmuş geçmiş işlemler; `SL Hit`'e tıkladığında zararla kapanan işlemler listelenecek şekilde canlı filtreleme yeteneği devredildi. Yeşil ve kırmızı vurgu butonları oluşturuldu.
+- **Anlık PnL Hızlandırıcıları:** Açık olan açık PnL pozisyonlarının kârı arttıkça animasyonların yanıp sönme hızını hesaplayan makine sorunsuz entegre edildi.
+
+### 2. İstatistik Ekranı (Devasa BingX Kasası) 💰
+- **Büyük Kasa Görünümü (Gerçek BingX):** Webte olduğu gibi en tepeye büyük rakamlarla Kasa/Wallet durumu çekildi.
+- **Kimlik Entegrasyonu (AuthContext):** Eğer sayfaya giren kişi **Admin** ise, arka planda sistem anlık bybit/bingX güncel cüzdan tutarını çekerek web'deki gibi "Gerçek Anlık Borsa (BingX) Seçkin Kasa" yazısıyla güncel bakiyeyi gösterecek şekilde tasarlandı. Admin değilse "Güncel Kasa Bakiyesi ($500)" mantığına devam edilecek.
+- **Yüzdelik Oran Vurguları (Badge):** TP / SL kutularından web sitesindeki gibi yeşil `+%xx` ve kırmızı `-%xx` başarı oran markörleri eklendi.
+
+Böylelikle web paneline özgü hiçbir widget (kart) mobilde eksik bırakılmadı. Kusursuz Wall Street arayüzü elverir halde! 🚀
+

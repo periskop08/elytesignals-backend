@@ -1,0 +1,22 @@
+# 🏡 Frontend Ana Sayfa (Home) ve Makro V2 Entegrasyon Raporu
+
+İstemiş olduğun kullanıcı arayüzü revizyonları ve API optimizasyonu sorunsuz bir şekilde canlıya (Vercel & AWS) aktarıldı. 
+
+## 📲 1. Tasarım ve Kullanıcı Arayüzü (UI)
+- **Yeni Menü Hiyerarşisi:** Hem Mobil alt gezinti çubuğunda (BottomNav) hem de Web yan sekmesinde (Sidebar) artık **Ana Sayfa (Home İkonu)** varsayılan olarak seçili gelmektedir.
+- **Sinyaller İsimlendirmesi:** "Taramalar" olarak yazılı olan menü başlıkları daha teknik ve anlaşılır olan **Sinyaller** kelimesiyle değiştirildi.
+- **Glassmorphism Tasarım Harikası:** Artık arayüze ilk giriş yapıldığında kullanıcıyı `Periskop Makro Pusula` başlığı ve **3 Adet Dev Boyutlu Glassmorphism Widget** karşılıyor:
+  1. **👑 Bitcoin Yönü:** Hedefe kilitleyen bir tasarımda (BULL/BEAR) durumu.
+  2. **⚠️ USDT Dominansı (Korku):** Gerçek zamanlı Tether dominans barı (Yüzde 5 barajı geçerse Kırmızı Neonla uyarır).
+  3. **🚀 Altcoin Dominansı:** Altcoin dominansı akışıyla harmanlanan ilerleme barı ve ETH referansı.
+
+## ⚙️ 2. API ve Backend Optimizasyonu (Arka Planda Ne Oldu?)
+Eski yapıda web sitesine "Makro Pusula" değerlerini aktarmak için, `index.js` dosyası 30 dakikada bir Yahoo Finance'e ve Bybit'e ek sorgular atıp API yükü yaratıyordu. 
+- Bu gereksiz döngüyü tamamen sildim! 🧹
+- Arayüz tarafındaki `GET /api/macro` komutu artık doğrudan, yapay zekanın (Periskop AI Tarayıcısının) bizzat kendi kullandığı `scanner.js`'nin can damarından (Global Market State) besleniyor.
+- Yani artık robot hangi rakamı okuyup karar veriyorsa, kullanıcı makro ekranda **saniye gecikmesiz olarak** direkt onu görüyor.
+
+## 🌐 3. Yayına Alma (Deployment)
+1. Backend motorundaki API değişiklikleri SSH ile **AWS Cloud** sunucusuna atılıp `pm2 restart` ile ayağa kaldırıldı.
+2. React arayüzündeki yeni "Ana Sayfa" tasarımları **Vercel CLI** ile Production versiyonu olarak pushlandı.
+3. Şu anda `www.elytesignals.com` canlı adresinden kendi gözlerinle o eşsiz "Makro Pusula V2" tasarımını deneyimleyebilirsin! 🎉

@@ -1,0 +1,36 @@
+# Elyte / Periskop AI - TradingView Pine Script Translation
+
+Sistemimizin kalbi olan Node.js `scanner.js` algoritmasındaki "Quality Score" (Kalite Puanlama) sistemini, TradingView üzerinde görebilmen için kapsamlı bir Pine Script (v5) indikatörüne çevirmeyi planlıyorum.
+
+Böylece grafiğe baktığında sistemin arka planda gördüğü sinyalleri "Neden 40 puanı geçti veya geçemedi?" sorularının cevaplarıyla birlikte oklu sinyaller olarak TradingView ekranında görebileceksin. 
+
+## User Review Required
+Pine Script dilinin Node.js'ten biraz farklı çalışma sınırları vardır. Tüm mekanizmaları (OB, FVG, RVOL, Ichimoku, ADX vb.) sorunsuz çalışacak şekilde uyarlayacağım. Özel olarak bir ayarı (örneğin hareketli ortalama, renk temaları veya baraj puanı değerini) grafikten (Input olarak) değiştirebilmek ister misin? Standart olarak her şeyi `scanner.js` formüllerine birebir sabitliyorum (Örn: Baraj=40).
+
+## Özelllik Aktarım Planı (Node.js -> Pine Script v5)
+
+### 1. Ana Kondisyon Kontrolü (Sweep / Deviation)
+- Son 6 barda swing low veya swing high tespiti.
+- Range (EQ bölgesi) hesaplaması.
+
+### 2. Kalite Puanlama Mekanizmaları (Score Engine)
+Pine Script içerisine aşağıdaki matematiksel sistem aynen geçirilecek:
+- **OB (Order Block) (+25):** 30 bar geriye giderek gövdenin fitilden ufak olduğu, fiyatın tersine kapandığı son destek/direnç blokları.
+- **FVG (+15):** Güçlü boşluk mumları.
+- **RVOL (+15):** Son mum hacminin önceki 20 mumun ortalamasını 1.2x geçmesi.
+- **Ichimoku Eğilimi (+15):** Bulut (Kumo) ve Tenkan/Kijun pozitif veya negatif kesişimi.
+- **ADX Filtresi (+10 / -10):** Trend regimi kontrolü (ADX > 25 güçlü, ADX < 20 zayıf).
+- **Hacim Deltası (Order Flow) (+15 / -15):** Mum fitilleri üzerinden tahmini Alım vs Satım baskısı ölçümü.
+- **KAMA (+5):** Dinamik trend desteği uyumu.
+- **Stochastic RSI (-10):** Aşırı Alım (>80) veya Aşırı Satım (<20) giriş geciktiricisi.
+
+### 3. Çıktı ve Görsellik (Visuals)
+- **Sinyal Etiketleri:** Şartları sağlayan ve minimum barajı (`>=40`) geçen ilk mumun tam altına yeşil/kırmızı **"LONG (Score: X)"** yazılı ok simgeleri çizdirilecek.
+- Ekleme olarak ekranda Dashboard (Table) gösterilip o anki Market Eğilimi puanı izlenebilir yapılacak. Dilersen Pine Script'i sana `.pine` uzantılı bir dosya olarak verip kopyala-yapıştır yapmanı sağlayacağım.
+
+## Verification Plan
+TradingView'ın `Pine Editor` kısmına direkt koyup sorunsuz derlenebilecek temiz bir kod üreteceğim.
+
+## Open Questions
+> [!IMPORTANT]  
+> Pine Script içerisinde, backtest için giriş-çıkış stratejisi tetikleyen "Strategy" modülü mü (Para/Kasa simülasyonu yapar) yazayım, yoksa sadece ok çizen ve grafik üzerinden kolayca incelenen "Indicator" (Table ile skoru yazan) türü mü olsun? Çoğu manuel takipçi Indicator'ı daha yararlı bulur, onayınla "Indicator" olarak derlemeye başlayacağım.

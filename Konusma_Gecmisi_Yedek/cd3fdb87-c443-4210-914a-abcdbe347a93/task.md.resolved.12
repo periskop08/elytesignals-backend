@@ -1,0 +1,13 @@
+# TELEGRAM PNL KARTI ENTEGRASYONU - GÖREV LİSTESİ
+
+- `[/]` 1. Altyapı Hazırlığı
+  - `[ ]` Base PNL arkaplan imajını backend klasörüne kopyala
+  - `[ ]` `npm install jimp` bağımlılığını kur
+- `[ ]` 2. Çizim Motorunun Yazılması
+  - `[ ]` `pnl-generator.js` dosyasını oluştur
+  - `[ ]` Metin yazma, koordinat konumlandırma, ve buffer render işlemlerini kodla
+- `[ ]` 3. Test ve Optimizasyon
+  - `[ ]` VIP Telegram Grubuna deneme amaçlı gerçek bir PNL resmi fırlat
+- `[ ]` 4. Otopilot Entegrasyonu
+  - `[ ]` `scanner.js` içerisinde TP ve SL anlarında bu test edilmiş kodu canlıya al
+  - `[ ]` Deploy et

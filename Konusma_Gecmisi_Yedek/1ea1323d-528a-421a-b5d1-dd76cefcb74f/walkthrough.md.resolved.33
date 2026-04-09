@@ -1,0 +1,31 @@
+# Favoriler Senkronizasyonu (Cloud Sync) 🔄☁️
+
+**Web Sitesi ve Mobil Uygulama (Elyte Signals)** arasında, kullanıcının "Favoriye Aldığı" sinyallerin gerçek zamanlı ve platformlar-arası (cross-platform) senkronizasyonunu başarıyla tamamladım. Artık her iki platform da sadece kendi önbellekleriyle çalışmak yerine direk **AWS Veritabanınız (SQLite)** üzerinden haberleşiyorlar!
+
+Ayrıca belirttiğiniz **"Sitede sinyalin durumu donuyor (Sürekli aktif kalıyor), mobil uygulamada kapanıyor"** hatası (bug) da bu yapısal değişiklikle kalıcı olarak çözülmüş oldu. Favoriye alınan her sinyal, veritabanındaki "gerçek" kopyası üzerinden çekildiği için sistemde \`WIN\` veya \`LOSS\` olduğu anda eş zamanlı olarak hem web'de hem de mobilde "Kapalı" durumuna geçecektir.
+
+---
+
+## 🛠 Neler Değişti?
+
+### 1. Backend (AWS API ve Veritabanı)
+*   SQLite veritabanına **\`favorites\`** tablosu eklendi. Bu tablo \`telegramId\` (kullanıcı kimliği) ve \`signalId\` (sinyal kimliği) eşleştirmesini tutar.
+*   İki yeni köprü (Endpoint) oluşturuldu:
+    *   **GET** \`/api/favorites/:telegramId\` -> Kullanıcının verilerini buluttan anlık çeker.
+    *   **POST** \`/api/favorites/toggle\` -> Kullanıcı favori butonuna bastığında işlemi DB'ye işler veya siler.
+*   \`database.js\` ve \`index.js\` AWS sunucusunda güncellenerek \`PM2\` ile yeniden başlatıldı.
+
+### 2. Web Sitesinde (React & Vercel)
+*   **Kaldırılan Yapı:** \`Dashboard.jsx\` dosyasındaki \`localStorage.getItem('web_favorites')\` kodu (Tarayıcı hafızası) tamamen silindi.
+*   **Eklenen Yapı:** Backend ile anlık (60 saniyede bir otopilot) haberleşen ve statü güncelleyen \`axios.get()\` yapısı eklendi. Sinyalin anlık Kar/Zarar durumlarının hesaplanmasında meydana gelen \`coin\` ve \`symbol\` çakışmaları düzeltildi.
+*   Tüm bu web UI değişiklikleri otomatik Vercel yayını için **GitHub'daki elytesignals-web** projenize push edildi! 🎉 (Site an itibariyle canlı verileri kullanıyor)
+
+### 3. Mobil Uygulamada (React Native & Expo)
+*   **Kaldırılan Yapı:** Uygulamanın \`@favorite_signals\` isimli iç hafızası (`AsyncStorage` logic) komple kaldırıldı. 
+*   **Eklenen Yapı:** \`FavoritesContext.js\` artık kullanıcının VIP / Telegram kimliğini (\`AuthContext\`) dinliyor ve sunucudan favorilerini çekip Global State'e basıyor.
+*   **UI Bug Fix:** \`FavoritesScreen.js\` ekranında daha önce API'den gelen karmaşık veri tipinde yaşanan PnL hatası tamamen giderildi. Artık backend ile tam entegre çalışacak şekilde Entry, Target, Stop veri ayrımları düzeltildi.
+
+> [!TIP]
+> Artık Vercel sitenize bilgisayarınızdan girip 1 tane işlemi favoriye aldığınızda, telefonunuzdaki Expo Go uygulamasını açtığınız anda o sinyali uygulamanızın da "Favoriler" kısmında göreceksiniz! 
+
+Tebrikler periskop, projenizde adeta bir zincir gibi tüm platformları birbirine kenetlemiş olduk. 🎉 Başka nasıl yardımcı olabilirim?

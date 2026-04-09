@@ -1,0 +1,31 @@
+# Auth & VIP Telegram Davet Sistemi Raporu
+
+Kullanıcıların **Giriş (Auth)** yapabilmesi, platform bazlı kişiselleştirme sunabilmesi ve sizin ana grupta toplayabilmeniz için Oturum Yöneticisi altyapısı başarıyla kuruldu!
+
+## 🚀 Yeni Özellikler ve Değişiklikler
+
+### 1. Oturum Bekçisi Kuruldu (AuthContext)
+- Artık giriş yapmayan hiçbir kullanıcı rastgele uygulamanın içine giremez. Uygulama açılışta `AppNavigator` üzerinden cihaz hafızasını (AsyncStorage) tarar.
+- Eğer giriş yapan kimse yoksa direkt kapıdaki **Elyte Signals (Login)** ekranında bekletilir.
+
+### 2. Sosyal Giriş Butonları (Google & Telegram)
+- İlk baştaki süs butonlar artık gerçek birer "Oturum Açma" tetiğine dönüştürüldü.
+- **Google** ile bağlanan kullanıcıya *"Pro Signal Master"*, **Telegram** ile bağlanana ise *"Elyte VIP"* avatarı atanıyor. (İleride siz API key verdiğinizde bu isimler direkt kullanıcının gerçek Google adıyla değişecektir).
+
+### 3. VIP Gruba Katılma (Hoş Geldin) Penceresi
+- Kullanıcı ilk kez oturum açıp Ana Sayfaya (Dash/Signals) düştüğünde, cihaz hafızasına kazınmış mükemmel bir **Pop-up Modal** çıkıyor.
+- Bu pencere, sadece **hayatında ilk kez** giriş yapmış kullanıcıya özel olarak çıkmaktadır. İçinde kullanıcının adı, resmi ve "VIP Telegram Grubuna Katıl" butonu bulunur.
+- Butona basıldığında telefonun tarayıcısını kırarak doğrudan **Telegram** uygulamasını açar ve gruba yönlendirir! (Şimdilik `t.me/ElyteSignals` linkine gidiyor).
+
+### 4. Dinamik Profil (Favoriler)
+- "Favoriler" ekranındaki sağ üst köşedeki eski "Trader Pro" yazısı artık hangi platformdan bağlandığına göre *aktif kullanıcının adını ve profil fotoğrafını* çekmektedir.
+
+## 📱 Hemen Deneyin!
+Sizin tarafınızdaki Expo'da değişiklikler şu an anında güncellenmiştir. Eğer telefonunuzdaki *Expo Go* açık kaldıysa şunları deneyin:
+1. Sinyaller kısmına girmeye çalıştığınızda artık sizi "Login" karşılıyor mu?
+2. Telegram butonuna basıp giriş yapın.
+3. Karşınıza o muazzam VIP Davet Penceresi çıkacak!
+4. Favorilere gidin ve isminizin değişip değişmediğine bakın.
+
+> [!NOTE]  
+> VIP Telegram grubunuzun size ait olan gerçek bağlantısını ne zaman isterseniz iletebilirsiniz, saniyeler içinde o linki güncellerim! Ayrıca uygulamadan "Çıkış Yap" (Logout) butonu da eklememizi isterseniz Ayarlar gibi bir sayfa kurgusu tasarlayabiliriz. Ne dersiniz?

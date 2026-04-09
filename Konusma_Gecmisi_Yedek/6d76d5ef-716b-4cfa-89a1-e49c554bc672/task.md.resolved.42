@@ -1,0 +1,6 @@
+- [x] `fetchCandles` fonksiyonuna hisse senetleri (gap tespiti) ve günlük mum (1D SMA200) özellikleri için destek ekle.
+- [x] Global Market Sensor (Kripto sensörlerinin yanı sıra) `DX-Y.NYB` Dolar Endeksi (DXY) makro trendini analiz edecek altyapıyı ekle.
+- [x] Tarama döngüsünde (Scanner), Emtia (XAUUSD, USOIL) cinsi varlıklarda StopLoss mesafesini ATR x 2.5'e çıkar.
+- [x] Tarama döngüsünde (Scanner), Emtia'larda DXY ile ters korelasyon filtresi çalıştır (Eğer DXY Bull ise Altın Long'u iptal et vb.).
+- [x] Tarama döngüsünde, Döviz (EURUSD) varlıklarında Günlük SMA200 (1D SMA200) filtresi koy.
+- [x] ABD Hisseleri (AAPL, TSLA) için Gap (boşluk) var mı kontrol et, varsa Gap noktasını TP (Target Price) hedefi olarak önceliklendir.

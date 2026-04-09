@@ -1,0 +1,31 @@
+# 🛡️ Breakeven Trailing Stop - Position Manager Walkthrough
+
+Elyte Algoritmasını profesyonel kurumsal fon yönetim standartlarına çıkartacak olan **"1R Koruma Kalkanı"** başarıyla koda işlenmiştir. 
+
+## Neler Yapıldı?
+
+1. **`database.js` Mimarisi Güçlendirildi**
+   Açık işlemleri (user_trades) tutan tabloya `isBreakeven` adında yeni bir "hafıza (flag)" sütunu eklendi. Sistem, her fiyat kontrolünde Stop Loss'u defalarca taşıyıp borsayı yormamak için, korumaya aldığı işlemleri bu veritabanında "Korundu (isBreakeven = 1)" olarak mühürlüyor.
+
+2. **`bybit-trade.js` Cerrahi Müdahalesi**
+   Mevcut Bybit v5 entegrasyonu sadece "Ateşle ve Unut" prensibiyle yeni emir açabiliyordu. Buraya `updateStopLoss()` adında yepyeni bir fonksiyon yazdım. Açık olan Limit/Market pozisyonunun Stop-Loss rakamını *komple emri kapatmadan* güncelleyebiliyor.
+
+3. **`scanner.js` Zeka Katmanı (Her Dakika Atan Kalp)**
+   Uygulamanın arka planında her 60 saniyede bir çalışan `checkActiveSignals()` döngüsü modifiye edildi.
+   - Sistem girdiği işlemin 3R'lık Ana Hedefini hesapladığı gibi, artık **1R (İlk Direnç)** noktasını da `(Giriş + Risk)` formülüyle biliyor.
+   - Dakikalar ilerleyip güncel fiyat 1R çizgisine dokunduğu an...
+   - Sistem **Entry Price (Giriş Fiyatı) * %0.15 Komisyon Kurtarma Payı** matematiğiyle Stop'u yukarı çekiyor.
+
+> [!TIP]
+> *Komisyon Kurtarma (Fee Cover Cushion):* Fiyat geri dönüp işlemi kapatsa bile, kasandan "sıfır (0)" çıkmaz, ufak bir kârla çıkıp o coine girdiğin alım/satım komisyon ücretini sana geri öder!
+
+```diff
+-  // Eski Sistem: Kâr 2R'ye bile gelse fiyat aniden dönüp SL Vurabiliyordu
++  // Yeni Sistem: İşlem +1R ye ulaştığı an riski SIFIRLAR. SL Giriş fiyatına çıkar!
+```
+
+## Telegram Bildirimi:
+Kullanıcı işlem yaparken veya uyurken bile, sistem Stop seviyesini değiştirdiği an VIP Telegram grubuna şu özel mesajı düşürür:
+`"🛡️ KORUMA DEVREDE! [xxxUSDT] İşlem İlk Kâr Hedefine (1R) ulaştı. Zarar Etme Riski Sıfırlandı, Stop Loss maliyetin hemen önüne çekildi!"`
+
+Sistem kullanıma hazırdır! İşlemleri test etmek için botu başlatabilirsin.

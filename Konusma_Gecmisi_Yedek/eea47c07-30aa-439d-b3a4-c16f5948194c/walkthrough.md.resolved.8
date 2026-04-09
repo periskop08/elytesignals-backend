@@ -1,0 +1,18 @@
+# Nasdaq Live Data Integration Walkthrough
+
+## Summary 
+Successfully replaced the mock (static) data in the Hedge Fund Nasdaq Dashboard with real-time financial data fetched from **Yahoo Finance**. A cron-based background caching system was implemented to retrieve the live key statistics of top 10 Nasdaq companies without hitting frontend rate limits.
+
+## Changes Made
+1. **Node-Cron Caching System:** Added `node-cron` scheduler inside `backend/index.js` to execute `fetchNasdaqData()` exactly on every hour mark (`0 * * * *`).
+2. **Yahoo Finance API Integration:** Correctly instantiated `yahoo-finance2` version 3 object, pulling modules:
+   - `price` (Regular Market Price, Daily Change %)
+   - `defaultKeyStatistics` (Trailing PE, Forward PE, PEG Ratio, EPS Growth)
+   - `financialData` (Debt to Equity Ratio, Total Debt)
+3. **Data Mapping:** Mapped `forwardPE` and `debtToEquity` correctly to render the `redFlag` conditions algorithmically.
+4. **Mock Replacement:** Refactored `/api/macro-risk` endpoint to return the freshly filled `global.nasdaqCache` object seamlessly to the dashboard.
+
+## Validation Results
+- Code passed syntax checks (`node -c index.js`).
+- Yahoo Finance API verified to return correct JSON arrays for AAPL locally within milliseconds.
+- Dashboard gracefully renders the data as its structure remains identical to the original mock format.

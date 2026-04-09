@@ -1,0 +1,37 @@
+# 🔄 Auto-Rebalance Motoru (Portfolio Engine) Planı
+
+O zaman lafı uzatmadan Hedge Fonumuzun beynini (Auto-Rebalance Motorunu) kodlamaya başlıyoruz! Sistemin sadece görsel kalmaması, matematiksel olarak portföy yüzdelerini (Ağırlıkları) yapay zeka skorlarına göre optimize etmesi için aşağıdaki işlem planını hazırladım.
+
+## 🚨 User Review Required
+> [!IMPORTANT]
+> Ağırlık limitlerini (bir hisseye en fazla kasanın yüzde kaçının girebileceğini) maksimum **%30** olarak kısıtlıyorum (Risk yönetimi için). Kurallarımız Perplexity'nin kurgusundaki gibi olacak (Sert düşenleri keseceğiz). ONAYLIYOR MUSUN?
+
+## 🛠️ Proposed Changes
+
+### 1. Backend İşlem Motoru (Smart Rebalance Logic)
+
+#### [NEW] `portfolio_engine.js` (Yeni Asistan Dosyası)
+Arka planda çalışacak bu asistan; veritabanından tüm portföyü çekecek ve hisse ağırlıklarını (`allocatedPercentage`) şu kural matrisine göre baştan hesaplayıp veritabanına yazacak:
+- **KURAL 1 (Kesici Kural):** Eğer hissenin Drawdown (Zarar Düşüşü) %25'ten fazlaysa, sistem o hisseyi de-liste eder (Ağırlık = %0).
+- **KURAL 2 (Riski Kısma):** Eğer hissenin Drawdown oranı %15 ile %25 arasındaysa (Trend zayıfladıysa), sistem o hissenin portföydeki maksimum ağırlığını %50 oranında zorla düşürür.
+- **KURAL 3 (Yapay Zeka Ağrılığı):** Kalan tüm boş nakit/likidite; AI Güven Skoru (FINAL SCORE) yüksek olan (Örn: Skoru 94 olan NVDA) hisselere orantısal olarak paylaştırılır.
+- **KURAL 4 (Balina Tavanı):** Güvenlik için hiçbir varlık portföyün **%30'undan fazlasına** hükmedemez. Kalan fazla para, sepetteki ETF'e (QQQ) park edilir.
+
+#### [MODIFY] `index.js` (API Endpointleri)
+- Mevcut `index.js` sistemine dışarıdan tetiklenebilecek yepyeni bir endpoint eklenecek:
+  `POST /api/portfolio/rebalance`
+- Bu uç çağırıldığında `portfolio_engine.js` devreye girip matematiği bitirecek ve güncel SQL tablosunu geriye dönecek.
+
+### 2. Frontend İletişimi (Komuta Tetikleyicisi)
+
+#### [MODIFY] `PortfolioManager.jsx`
+- Sayfadaki janjanlı `[Auto Rebalance]` butonunu aktif hale getireceğiz.
+- Tıklandığında anlık olarak bir yükleme (spinning) animasyonu çıkaracak.
+- Arka planda `POST` isteği atacak ve motorun hesaplaması bitince sayfadaki tüm hisse ağırlıkları (Örn: %28 olan NVDA anında %30'a, skor düşen TSLA ise %10'a) gözünün önünde değişecek!
+
+## ❓ Open Questions
+- Rebalance yaparken, kasadaki zararları (Drawdown değerlerini) rastgele ufak yüzdelerle mocklayalım mı ki butonun matematiğini ekranda görelim? (Örneğin PLTR %16 düşmüş gibi ayarlayalım ki Rebalance ederken onun yüzdesini nasıl acımadan kestiğini canlı izleyelim).
+
+## 🔎 Verification Plan
+- AWS loglarında yeni endpoint tetiklemesi izlenecek.
+- UI üzerinden butona basıldığında JSON olarak dönen yeni "allocatedPercentage" oranlarının Matematik kurallarımızla uyuşup uyuşmadığı hesaplanılacak.

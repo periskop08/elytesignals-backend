@@ -1,0 +1,7 @@
+# 📊 Varlık Detay Sayfası & AI Yatırım Tezi Task Listesi
+
+- `[ ]` **Backend Veritabanı:** `database.js` dosyasında `ai_sentiments` tablosuna `detailedReport TEXT` alanını ekle (ALTER TABLE komutuyla uyumlu geçiş).
+- `[ ]` **Backend Mock Data:** `NVDA` ve `MSFT` için Wall Street dilinde (hacim, teknoloji, gelecek beklentileri kurgulu) devasa `detailedReport` kayıtları seed (tohum) et.
+- `[ ]` **Frontend (UI) Bağlantısı:** `PortfolioManager.jsx` dosyasına `selectedAsset` State'ini ekle ve Portfolio holding gridindeki kartları `cursor: pointer` tıklanabilir hale getir (`onClick={() => setSelectedAsset(asset)}`).
+- `[ ]` **Frontend Modal UI:** Seçili hisse varken "1 Günlük TradingView Grafiği" ve "AI Raporu" sunmak üzere Sinyaller sayfasındakine benzer ancak devasa ekran boyutlu bir Blur / Glassmorphism Modal inşa et.
+- `[ ]` **Canlıya Alma (Deploy):** Backend sistemini (database.js) AWS'ye yükle, pm2 restart komutu çalıştır ve Frontend klasörünü `--prod` olarak Vercel ortamında inşa et.

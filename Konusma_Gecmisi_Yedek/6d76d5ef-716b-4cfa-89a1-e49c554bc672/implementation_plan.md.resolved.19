@@ -1,0 +1,35 @@
+# 🛡️ Elite Kasa Koruması: Breakeven Trailing Stop Planı
+
+Perplexity'nin %35'lik Win Rate grafiğindeki riski tamamen minimize edip kârlılığı "Korunan (Protected) İşlemlerle" tavan yaptıracak o hayati kod modülünü "Position Manager" (Pozisyon Yöneticisi) olarak sisteme entegre ediyoruz.
+
+Bunu yapmak için ana tetikleyici (trigger) mimarisinde ve Bybit bağlantısında ufak ameliyatlar yapacağız:
+
+## 🔧 Yapılacak Geliştirmeler
+
+### 1. `backend/bybit-trade.js` (Borsa API Katmanı)
+> [!NOTE]
+> Mevcut kodumuz sadece "Sıfırdan Emir Aç" ve "Bütün İşlemi Kapat" komutlarını biliyordu. Şimdi borsadaki canlı işleme "Müdahale Etme" yeteneği ekleyeceğiz.
+
+#### [MODIFY] bybit-trade.js
+- `updateStopLoss(symbol, newStopLoss)` adında yepyeni bir fonksiyon yazacağım.
+- Bu fonksiyon Bybit V5 API'sinin en derin komutlarından biri olan `/v5/position/trading-stop` endpoint'ine (adresine) tetik gönderip, **sen uyurken bile açık olan işlemin Stop Loss çizgisini alıp yukarıya (veya aşağıya) taşıyacak.**
+
+### 2. `backend/scanner.js` (Zeka Katmanı ve Auto-Trading Yönetimi)
+> [!IMPORTANT]
+> `checkActiveSignals()` adında arka planda her 1 DAKİKADA BİR dönen bir çarkımız var. Bu çark şu anda sadece "İşlem kâr/zararla kapanmış mı?" diye bakıyor. Şimdi bu çarkı "Aksiyon Alan" bir robota çevireceğiz.
+
+#### [MODIFY] scanner.js
+- Çark, `user_trades` (açık işlemlerin) arasında dönerken şu hesabı yapacak:
+  1. Bu işlemin Ana Hedefi 3R (Örn: 60$). Peki 1R kâr noktası ne kadardı? (`risk = |Entry - StopLoss|`) -> (`TP1 = Entry + Risk`)
+  2. Piyasadaki güncel fiyat (`currentP`) o an TP1 (yani +1R kâr) çizgisine değdiği an...
+  3. Daha önce Stop noktasını Girişe (Entry Price) çekip çekmediğini kontrol edecek. Eğer çekmediyse hemen `updateStopLoss(symbol, entryPrice)` komutunu fırlatacak.
+  4. İşlemin veri tabanındaki `stopPrice` verisini de güncelleyip (veritabanında `isBreakeven` gibi bir flag de kullanabiliriz) bir daha tetiklenmemesini sağlayacak.
+  5. Sana Telegram Vip Grubu'na muazzam bir bildirim atacak:
+     `"🛡️ KORUMA DEVREDE! [BTCUSDT] İşlemi ilk hedefe ulaştı. Zarar Etme Riski Sıfırlandı, Stop Loss girişe çekildi!"`
+
+## ❓Açık Soru & Kullanıcı Onayı
+
+1. Zarar durdur (Stop Loss) seviyesini tamı tamına **Giriş Fiyatına (Entry Price)** çektiğimizde borsanızın keseceği "Komisyon (Fee)" ufak bir eksi bakiye yansıtabilir. 
+İstersen kârı korurken komisyonu da çıkartmak için Stop'u `Entry Price` noktasına değil de, Giriş Fiyatının "Yüzde 0.1 veya 0.2 üzerine/altına" (Komisyon Kurtarma Payı) çekeyim mi? Yoksa direkt saf matematiksel olarak Giriş Fiyatına mı yapıştırayım? 
+
+Onayını ve komisyon payı tercihini verdiğin an kodları yazmaya (ve Bybit tarafına test etmeye) başlıyorum koca yürekli fon yöneticim! 🚀

@@ -1,0 +1,58 @@
+# Gelişmiş Hacim Filtreleri Geliştirme (AVWAP & FRVP)
+
+Bu güncelleme, sistemin sinyal kararlarını salt Fiyat Hareketi (Price Action) yerine doğrudan **Tahta Maliyetlenmesi (Hacim Düğümleri)** mantığına dayandırması için tasarlandı. Sinyal kalitesini muazzam bir şekilde artıracaktır.
+
+## ⚠️ User Review Required
+
+Bu çok stratejik bir değişikliktir. Aşağıdaki filtreleme algoritmasını onaylıyor musunuz?
+
+**Planlanan Matematiksel Modeller:**
+1.  **Fixed Range Volume Profile (FRVP) - POC Hesabı:** Son 100 saatlik grafikte, tüm mumların hacimleri fiyat aralığına göre 20 farklı sepete (`bin`) bölünecektir. En çok hacmin döndüğü seviye **POC (Point of Control / En Yüksek Hacim Düğümü)** olarak belirlenecektir. POC çok güçlü bir mıknatıs ve direnç/destektir.
+2.  **Anchored VWAP (AVWAP):** Son periyottaki tüm mumların (Tipik Fiyat * Hacim / Toplam Hacim) formülüyle kümülatif **Ağırlıklı Ortalama Fiyatı** bulunacaktır.
+
+**Filtreleme ve Raporlama Mantığı:**
+*   Sinyaller (`scanner.js`): Eğer sistem bir **LONG** sinyali verecekse ve fiyat hacim profili merkezinin (**POC**) çok altında eziliyorsa, riskli görülüp "Şartlı Geçiş" verilecek veya sinyal kalitesi AI'a "DİKKAT: Ana hacim direncinin altında" olarak bildirilecek.
+*   Yapay Zeka Promptu (`index.js`): Gemini'a artık "AVWAP Seviyesi: X" ve "FRVP POC (En Yüksek Hacim Düğümü): Y" verileri doğrudan beslenecek. Böylece Gemini kullanıcıya *"Dostum şu an POC direncinin altındayız dikkat et"* şeklinde tamamen profesyonel kurumsal trader diliyle konuşabilecek.
+
+## Proposed Changes
+
+---
+
+### Sinyal Motoru (`backend/scanner.js`)
+
+**FRVP ve AVWAP Matematik Motoru:**
+Binance'den çekilen son 100 kline verisi üzerinde çalışacak iki döngü eklenecek:
+*   Tipik mum fiyatı `(H+L+C)/3` hesaplanıp, kümülatif hacimle AVWAP bulunacak.
+*   En Yüksek (High) ve En Düşük (Low) fiyat arası 20 eşit kutuya bölünüp her mumun hacmi düştüğü kutuya eklenecek. En dolu kutunun orta fiyatı `POC` olarak atanacak.
+*   **LONG** sinyal çıkarken mevcut fiyat ve POC mesafesi hesaplanıp sinyal nesnesine eklenecek.
+
+#### [MODIFY] `scanner.js`
+*   `analyzeCoin` fonksiyonu içerisine AVWAP ve POC hesaplama algoritmaları yerleştirilecek.
+*   Dönen sinyal nesnesine `avwap` ve `poc` değerleri eklenecek.
+*   Sinyal filtrelemesi olarak, POC seviyesi EQ (Orta Nokta) hedefine entegre edilecek (Yeni Hedef veya Ana Direnç olarak POC gösterilecek).
+
+---
+
+### Analiz API (`backend/index.js`)
+
+#### [MODIFY] `index.js`
+*   Chat arayüzünden gelen "Analiz et" sorularında Binance'den çekilen canlı veriler içerisinde AVWAP ve POC hesaplanacak.
+*   Gemini (LLM) `systemPrompt` içerisine:
+    - `- AVWAP (Ağırlıklı Maliyet): ${avwap}`
+    - `- FRVP POC (Hacim Düğümü): ${poc}`
+    satırları eklenecek.
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. FRVP (Sabit Aralık Hacim Profili) için POC seviyesini yeni **Hedef (Target)** noktamız olarak belirleyelim mi, yoksa mevcut EQ (Range Orta Noktası) hedefini tutup POC'u sadece yapay zekaya "Güçlü Direnç/Destek" olarak rapor mu edelim? (Benim önerim her ikisini de kullanmak).
+> 2. AVWAP'ı son 100 saat (Analiz edilen periyot) başından itibaren mi çapalayalım (Anchor), yoksa spesifik olarak son tepe/dipten mi başlatalım? (Basitlik için 100 saatin başı çok daha verimli çalışır).
+
+## Verification Plan
+
+### Automated Tests
+- `node index.js` ile backend yeniden başlatılıp hata analizi yapılacak.
+- AVWAP rakamının ve POC rakamının gerçek TradingView verileriyle ortalama düzeyde eşleştiği `console.log` ile kontrol edilecek.
+
+### Manual Verification
+- Arayüzden bir coinin analizi yapılıp Yapay Zekanın VWAP ve POC terimlerini ne kadar mantıklı kullandığı doğrulanacak.

@@ -1,0 +1,25 @@
+# Geleneksel Varlık İsimlendirme ve Borsa Emir İletim Çözümü
+
+Gönderdiğin ekran görüntüsündeki `724SP500` ve İşlem Açılamaması (BingX Error) sorununun kök nedeni tam olarak BingX'in Arka Uç (API) mimarisiyle bizim Dashboard mimarimizin dilinin uyuşmamasıdır:
+*   Dashboard "SP500" gibi temiz, okunabilir isimler istiyor.
+*   BingX API'si ise emir açarken illa `NCSISP5002USD-USDT` gibi iğrenç sistem isimlerini kullanmanı (Native Symbol) istiyor.
+
+Kod BingX API'sine `724SP500` gönderdiği için "Instrument info not found" hatası aldık ve sipariş açılamadı. 
+
+Bunu mükemmel bir Köprü (Mapping) mimarisiyle çözeceğim:
+
+## 1. RegEx Ticker Temizliği (724 Sorunu)
+`scanner.js` içerisindeki Parser koduna ek yapıp, BingX'in `724` veya benzeri kirli kalıntılarını isimden söküp atacağım. 
+- `724NASDAQ100` -> `NASDAQ100`
+- `724SP500` -> `SP500`
+- `724OILBRENT` -> `BRENT` (olarak ekranda pırıl pırıl gözükecek).
+
+## 2. In-Memory Native Symbol Haritası (Otopilot Köprüsü)
+Veritabanımıza yeni bir kolon ekleyerek sistemi yormak (Migration krizine girmek) yerine:
+- Sinyal tarayıcısı her çalıştığında sistem belleğine (RAM) `BINGX_MAP["SP500"] = "NCSISP5002USD-USDT"` şeklinde sessiz bir harita çizecek.
+- Sinyaller Dashboard'a `SP500` temiz ismiyle düşecek, veritabanına böyle yazılacak (böylece istatistik raporların vs bozulmayacak).
+- AI Motoru `SP500`'ü görüp Yahoo Finance araması ile doğru bilançoyu getirecek.
+- Fakat son aşamada, Otopilot **BingX'e kaldıraçlı Emir Gönderirken (Long/Short açarken)** veya Stop-Loss güncellerken bu haritaya başvurup anında "BingX Dilinde" siparişi paketleyip borsaya fırlatacak! (Böylece BingX hata vermeden varlığı bularak işlemi açacak).
+
+## User Review Required
+Aklımdaki bu C-Tipi Köprüleme Mimarisi ve görsel/isim temizliklerini onaylıyor musun patron? Onaylarsan kod mimarisinde Map köprüsünü kurup, sinyali de düzeltip sistemi güncelleyeceğim!

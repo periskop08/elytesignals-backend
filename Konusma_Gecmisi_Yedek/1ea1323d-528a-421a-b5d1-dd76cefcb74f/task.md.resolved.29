@@ -1,0 +1,11 @@
+# OpenAI Migration Görev Listesi
+
+Sistemi Google'dan ChatGPT (OpenAI) ekosistemine taşıyoruz. Hız ve kalite artacak.
+
+- [x] Sunucunun durdurulup `@google/genai` klasörlerinin silinmesi
+- [x] Terminalden `openai` NPM paketinin kurulması
+- [x] Yeni `OPENAI_API_KEY` numarasının sistem kasasına (`.env`) gizlenmesi
+- [x] `backend/index.js` içerisinden arama ve AI fonksiyonlarının `openai.chat.completions` metoduna geçirilmesi
+- [x] Niyet Okuma (Intent Parsing) aşamasının kesin bir JSON nesnesi dönen GPT `json_object` formatına zorlanması
+- [x] Analiz (MTF Generation) aşamasında ChatGPT-4o-mini formatına ve hata mesajlarının bu yeni modele göre güncellenmesi
+- [x] Sunucunun temiz yeniden başlatılması ve limit devrinin kapanması!

@@ -1,0 +1,6 @@
+# Ana Sayfa Dashboard Eklemeleri
+
+- `[x]` Frontend: `lucide-react` içinden yeni eklenecek butonlar için `Wallet`, `Zap` gibi ikonları sayfaya dahil et.
+- `[x]` Frontend: `Dashboard.jsx` içinde Makro ekranın altına "Canlı Kasa" (BingX) panelini inşa et.
+- `[x]` Frontend: `Dashboard.jsx` içinde Makro ekranın altına "Performans Kartı" (7 Günlük WR/TP/SL) tablosunu inşa et.
+- `[x]` Deploy: Ön yüz (Frontend) arayüzünü Vercel'e canlıya yolla.

@@ -1,0 +1,39 @@
+# Google Drive (Google Sheets) Raporlama Entegrasyonu
+
+Telegram'a gönderdiğimiz günlük 03:00 raporlarını artık daha profesyonel ve takip edilebilir bir şekilde Google Drive üzerinde (özellikle **Google E-Tablolar / Google Sheets** biçiminde) tutmak istiyoruz. Düz bir metin belgesi yerine Excel (Sheets) tarzı bir yapı kullanmak, ileride haftalık/aylık kâr/zarar grafiklerini otomatik çizdirmek için çok daha stratejik olacaktır.
+
+## User Review Required
+
+> [!IMPORTANT]
+> İlerlemeye başlamadan önce şu noktalarda onayınıza ihtiyacım var:
+> 
+> 1. **Döküman Formatı:** Telegram'daki gibi uzun düz yazıları bir Google Dokümanına (Google Docs) alt alta ekleyebiliriz. VEYA istatistikleri (Tarih, Kazanan İşlem, Kaybeden İşlem, Win Rate, vb.) bir **Google E-Tabloya (Google Sheets)** ayrı kolonlar halinde kaydedebiliriz. Bence E-Tablo (Sheets) veri analizi için çok daha mantıklı. Hangisini tercih edersiniz?
+> 2. **Yetkilendirme Süreci:** Uygulamanın sizin Drive hesabınıza otomatik veri yazabilmesi için Google Cloud üzerinden bir **Service Account (Servis Hesabı)** oluşturup, bana `.json` formatındaki anahtarı vermeniz (veya backend klasörüne `google-credentials.json` olarak eklemeniz) gerekecek. Bu adımı sizin yapmanız gerekiyor, adımları size tek tek tarif edebilirim. Hazır mısınız?
+> 3. **Telegram Devam Etsin mi?:** Drive/Sheets kaydını yaparken, *aynı zamanda* Telegram bildirimlerini tamamen kaldıralım mı, yoksa Telegram mesajları da eşzamanlı devam etsin mi?
+
+## Proposed Changes
+
+### Backend (GCP Integration)
+
+#### [MODIFY] [scanner.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/scanner.js)
+- `sendNightlyReport` fonksiyonu içerisindeki mantık değiştirilecek (veya genişletilecek).
+- Piyasadan elde edilen 03:00 verileri diziler (array) haline getirilip doğrudan Google Sheets API veya Docs API kullanılarak belgenin sonuna eklenecek.
+
+#### [NEW] [google-api.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/google-api.js) (Eğer onaylarsanız eklenecek)
+- Google API kimlik doğrulamasını (GoogleAuth) yapacak olan yardımcı modül.
+- `googleapis` npm paketi projeye dahil edilecek.
+
+#### [MODIFY] [package.json](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/package.json)
+- `googleapis` kütüphanesi bağımlılık olarak (dependency) eklenecek.
+
+## Open Questions
+
+> [!WARNING]
+> Yukarıdaki kararınıza göre kodu tamamen şekillendireceğim. E-Tablo entegrasyonuna karar verdiyseniz onay verin, size Google konsolunda yapmanız gereken 3 dakikalık kuruluma dair adımları atayım!
+
+## Verification Plan
+
+### Manual Verification
+1. Sizinle birlikte Service Account anahtarını yerel `.env` (veya json) dosyasına ekleriz.
+2. Sizin oluşturduğunuz boş bir Google Sheets veya Docs dosyasının linkindeki ID'yi kodlara gömeriz.
+3. Kodu çalıştırıp anlık bir test kaydı (mock data) tetikleyerek verilerin saniyeler içinde Google Drive dosyanızda belirdiğini doğrularız.

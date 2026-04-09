@@ -1,0 +1,6 @@
+- `[x]` Update `scanner.js` constants to include maxSL, minPremiumSL, premiumRR.
+- `[x]` Modify filter logic in `scanner.js` to reject signals evaluating to >3.5% risk.
+- `[x]` Implement dynamic Minimum RR condition in `scanner.js`.
+- `[x]` Deploy modified `scanner.js` to AWS.
+- `[x]` Restart PM2 worker.
+- `[x]` Verify server logs.

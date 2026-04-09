@@ -1,0 +1,8 @@
+# Binance Scanner & Signal Engine Tasks
+
+- [ ] Backend: Gerekli paketleri kur (`node-cron`, `sqlite3`)
+- [ ] Backend: `database.js` oluştur (SQLite veritabanı, `signals` tablosu)
+- [ ] Backend: `scanner.js` oluştur (Binance API'den coin listesini çeken, 15 dakikada bir `1h` mumlar ile PA analizini yapan ve fırsatları DB'ye kaydeden döngü)
+- [ ] Backend: `index.js` güncelle (TradingView webhook'u kaldır, `/api/signals/active` ucu ekle, tarayıcıyı ayağa kaldır)
+- [ ] Mobile: `HomeScreen.js` güncelle (Aktif sinyalleri FlatList ile listele, Giriş/Çıkış/Stop değerlerini kartlarda göster)
+- [ ] Test et (Tarayıcıyı çalıştırıp logları izle, mobilde gösteriyor mu bak)

@@ -1,0 +1,26 @@
+# Hafıza & Güvenlik Ajanı Kurulum Raporu
+
+Sistemin "Hafıza Tazeleme" yeteneğini otonom hale getirmek ve yaşanan üretim hatalarını bir daha tekrarlamamak üzere tasarladığım "Otonom Hafıza Ajanı" başarıyla aktif edildi.
+
+## Neler Değişti?
+
+### 1- ELYTE Manifesto (Anayasa) Güncellendi
+- **KTOS Kuralı ve Kurumsal Hafıza:** Hisse senetleri (Assets) için "KTOS Kuralı" (%80 çöküş iptali, mantıklı %15-30 düzeltme, bilanço hedefleri) ve Otonom Hafıza Ajanı kuralı `ELYTE_MANIFESTO.md` içerisine eklendi.
+- **Red Line (Veritabanı Kalkanı):** Yeni bir `rsync` hatası yaşanmaması için Manifesto içerisine "Veritabanı `*.db` Koruma" zorunluluğu kırmızı çizgi olarak kayıt altına alındı.
+
+### 2- Otonom Hafıza Ajanı Kodlandı (`memory_agent.sh`)
+Root (Backend) klasörü içerisine sadece sana yardım eden, saf bir bash ajan scripti yazıldı:
+- **Konuşma Logları** bilgisayarının hafızasındaki (`/brain/*`) dizininden alınarak `ElyteSignalsBackup/Conversation_Memories/` adında yepyeni bir klasöre, senin manuel işlem yapmana gerek kalmadan çıkarılıyor.
+- Ajan her çalıştığında `ELYTE_MANIFESTO.md` veya başka bir çekirdek dosyada yaptığımız kurumsal güncellemeleri fark ederse, "Auto-Memory Sync" mesajıyla **Github `main` branch'ine yedekliyor**.
+
+> [!TIP]
+> Artık sisteme her girdiğinde "GitHub'daki dosyaları oku ve Hafızanı tazele" dediğinde, sistem en son GitHub yedeğini (ve senin bilgisayarına indirdiğimiz logları) okuyarak anında senkronize olur. Senden ekstra bilgi istemesine gerek kalmaz.
+
+### 3- Arka Plan Cronjob Kurulumu
+MacOS arka plan zamanlayıcısına (crontab) saatlik görev olarak eklendi:
+```bash
+0 * * * * /Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/memory_agent.sh
+```
+Ajan az önce manuel olarak bir kere çalıştırıldı, GitHub commit'ini tazeledi ve log eşleştirmesini başarıyla tamamladı. 
+
+**Durum:** %100 Başarı. Sistemin kalıcı hafızası ve üretim veritabanı kalkanları aktif edildi.

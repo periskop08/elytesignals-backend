@@ -1,0 +1,12 @@
+# Otonom Keşif Robotu (AI Stock Screener) Tasks
+
+- [x] Create `backend/screener_engine.js` script.
+- [x] Implement `yahoo-finance2` `screener` to fetch diverse stocks.
+- [x] Connect the Screener to the LLM (Gemini 3.1 Pro) analyzer.
+- [x] Setup score evaluation: If `aiScore > 85`, proceed.
+- [x] Implement Database logic: insert into `portfolio_assets` and `ai_sentiments` with 5% weight.
+- [x] Integrate Telegram Bot alert.
+- [x] Import and schedule this module in `backend/index.js` (cron daily).
+- [x] Test screener locally.
+- [x] Push to AWS and restart PM2.
+- [x] Create Walkthrough.

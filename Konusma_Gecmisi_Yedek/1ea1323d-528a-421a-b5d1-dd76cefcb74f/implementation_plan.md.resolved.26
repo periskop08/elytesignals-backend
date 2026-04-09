@@ -1,0 +1,63 @@
+# Elyte Signals - Premium Landing Page Development
+
+Projenin ekosistemini tamamlamak, yeni yatırımcıları çekmek ve uygulamanın vizyonunu sergilemek için harika bir Vitrin (Web Sitesi) inşa edeceğiz.
+
+## Background Context
+"Elyte Signals" artık sadece telefonlarda çalışan basit bir sinyal uygulaması değil; arkasında AI (Yapay Zeka) analisti bulunduran, Telegram VIP entegrasyonu olan ve Periskop Modeli gibi eşsiz bir teknik altyapıya sahip donanımlı bir ürün. Web sitesinin görevi bu kaliteyi anında kullanıcıya yansıtmak.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bu bir pazarlama (marketing) sitesi olacağı için seçeceğimiz görseller ve metinler son derece önemli. Uygulamanın marka rengini ve "FinTech" hissini koruyacağız ancak mimari karar onayınız gerekiyor.
+
+## Proposed Strategy
+
+### 1- Teknoloji Seçimi
+- **Çekirdek:** Vite (Hızlı kurulum ve modül yönetimi), HTML, **Vanilla CSS** ve JavaScript. (Tailwind gibi karmaşık frameworkler yerine, tam kontrol sağlayacağımız nefes kesici neon/dark mode efektleri yaratmak için).
+- **Konum:** Proje klasörümüzün içine yeni bir `web/` dizini oluşturup bağımsız olarak izole edeceğiz.
+
+### 2- Sayfa Mimarisi (Sections)
+Sitenin ziyaretçiyi adım adım uygulamanın içine çeken bir akışı olacak:
+- **Hero (Karşılama):** Göz alıcı kocaman bir başlık ("Kripto Avcısı Yanınızda", vb.), bir "Sıcak İndirme" butonu ve yan tarafında parlayan, havada süzülen bir iPhone Mockup'ı (İçinde uygulamanın ana ekranı görünecek).
+- **Özellikler (Features):**
+  - **🤖 AI Analyst:** Sadece sinyal almak yerine 7/24 kripto paraları sorgulama.
+  - **🔭 Periskop Modeli:** Karmaşık grafikleri basitleştiren matematiksel tahmin mekanizması.
+  - **🚀 Telegram Bildirimleri:** Anlık reaksiyon imkanı.
+- **Kademeli Fiyat/Paket:** Ücretsiz kullanım veya VIP geçişi pazarlamak için bir gölgeli Glassmorphism tablo.
+- **Footer:** İletişim e-postası ve yasal metinler.
+
+## Proposed Changes
+
+---
+
+### Web Frontend
+
+#### [NEW] `web/index.html`
+Sitenin iskeleti. Çok temiz bir DOM ağacı ve hızlı yüklenme garantili SEO `meta` etiketleri.
+
+#### [NEW] `web/style.css`
+- Dark Mode felsefesi (Koyu lacivert `0D1623` ve yeşil `#4ade80` vurguları).
+- Fütüristik Glassmorphism (Buzlu cam) kartlar ve neon parlamalar.
+- Pürüzsüz Scroll (Kaydırma) animasyonları.
+
+#### [NEW] `web/main.js`
+Sayfadaki elementlerin ekran görünürlüğüne göre hareketlenmesini (Intersection Observer) ve site içi etkileşimleri yönetecek minimal script.
+
+## Open Questions
+
+> [!WARNING]
+> Web sitemiz hazır olduğunda nerede yayınlayacağımız (Hosting) konusunda bir tercihiniz var mı?
+> 
+> **Seçenek 1:** Amazon (AWS) sunucumuzun içine NGINX veya PM2 ile yüklemek. (Mevcut sunucuyu kullanırız ama domain vb. ayarı teferruatlı olabilir).
+> **Seçenek 2 (Tavsiyem):** Vercel veya Netlify gibi sitelere tamamen *ücretsiz* olarak tek tıkla entegre etmek. Bu sayede dünyadaki en hızlı CDN'lere bağlanır ve ışık hızında açılır.
+
+## Verification Plan
+
+### 1. Adım: Arayüz Testi
+Yerel terminalde `npm run dev` ile siteyi başlatacağım. Tarayıcıdan görüntüsünü anında sizinle paylaşacağım. Renklere, animasyonlara ve metinlere beraber karar verip onaylaşacağız.
+
+### 2. Adım: Cihaz Uyumluluğu (Responsive)
+Sitenin masaüstü, tablet ve mobil boyutlarında (Safari/Chrome) ekranı tam olarak dolduracak yapısını (Flexbox/Grid) optimize edeceğim.
+
+### 3. Adım: Dağıtım
+Onayınızın ardından `npm run build` ile projeyi şifreleyip küçültecek ve istediğiniz yayınlama servisine yükleyeceğiz.

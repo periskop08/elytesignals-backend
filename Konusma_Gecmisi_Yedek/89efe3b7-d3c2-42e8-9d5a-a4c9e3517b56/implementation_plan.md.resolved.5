@@ -1,0 +1,36 @@
+# Makro Filtre Revizyonu - DXY İptali & Dominans Odaklı Zeka
+
+Bu plan, PeriskopAI tarama motorundaki (`scanner.js`) makro analiz sistemini tamamen değiştirerek gereksiz pürüzleri (DXY) kaldırmayı ve doğrudan kripto para ekosisteminin kendi iç dinamiklerine (BTC, USDT ve ALT Dominansları) odaklanmayı amaçlamaktadır. 
+
+## Önerilen Değişiklikler
+
+---
+
+### [MODIFY] [scanner.js](file:///Users/periskop/.gemini/antigravity/scratch/scanner.js)
+
+**1. Veri Kaynaklarının Güncellenmesi & DXY İptali**
+- `analyzeGlobalMarket()` içindeki `fetchCandles({isAsset: true, fetchId: 'DX-Y.NYB'})` (Yahoo Finance DXY) çağrısı tamamen kaldırılacak.
+- Yerine `CoinGecko Global API` üzerinden anlık Market Cap verileri çekilecek: `BTC.D` (Bitcoin Dominans yüzdesi) ve `USDT.D` (Tether Dominans yüzdesi).
+- Altcoin dominansı (`altDom`), `100 - (BTC.D + ETH.D + USDT.D)` formülüyle hesaplanacak.
+
+**2. Gelişmiş Trend Algoritması (Obje Dönüşü)**
+- `calculateTrendFromKlines()` fonksiyonu artık sadece 'BULL' veya 'BEAR' stringi değil; `RSI`, `EMA20`, `SMA50` ve Kapanış (Close) değerlerini de barındıran zengin bir veri nesnesi (Object) döndürecek. (Extreme Blockers hesaplaması için mecburi).
+
+**3. checkExtremeBlockers() Entegrasyonu**
+Sinyal tarama döngüsüne yeni bir güvenlik ağı eklenecek:
+- `BTC RSI < 25 & Close < EMA20 & Close < SMA50` ise → Tümü için LONG işlemleri **BLOKLA** (Extreme Bear).
+- `ETH RSI > 75 & Close > EMA20 & Close > SMA50` ise → Tümü için SHORT işlemleri **BLOKLA** (Extreme Bull).
+
+**4. calculateDominanceScore() Entegrasyonu**
+Eski sert DXY kesici kuralları yerine (DXY yükseliyor diye sinyali direk çöpe atan bloklar), **Esnek Puanlama** modeline geçilecek. Sinyalin taban Puanı (QualityScore), Makro duruma göre `-25` ile `+43` arasında törpülenecek veya ödüllendirilecek:
+- **BTC Dominans:** `BEAR` trendinde ise Altcoinlere para akıyordur → `+15 Puan`. (Tersiyse `-15`)
+- **USDT Dominans:** %5'ten büyükse piyasada korku vardır → `-10 Puan`. (Küçükse `+8 Puan`)
+- **ALT Dominans:** Trendi `BULL` olan (%20 üzeri) bir altcoin mevsiminde → `+20 Puan`. Kötü durumda `-12 Puan`. *(Not: Altcoin trendi referansı için ETH'nin teknik trendi kullanılacaktır çünkü ikisi %95 koreledir).*
+
+## User Review Required
+
+> [!WARNING]
+> CoinGecko'nun public API'sini kullanarak `usdtDom` ve `altDom` oranlarını çekeceğiz. Altcoin dominans değerleri için TradingView'deki `OTHERS.D` endeksine en yakın formülü olan `100 - (BTC + ETH + USDT + BNB + SOL)` kullanacağım. Kabul ediyor musun?
+
+> [!IMPORTANT]
+> DXY API çağrısının tüm "Puan Bonusları" ve "Ters Korelasyon Kesicileri" (scanner.js Line 573 ve Line 993) kod bloklarını söküp atıyorum. Tüm karar mekanizması total QualityScore üzerinden yürüyecek. Başlayabilir miyiz?

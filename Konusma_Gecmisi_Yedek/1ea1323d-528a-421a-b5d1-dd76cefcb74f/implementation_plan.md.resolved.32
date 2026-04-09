@@ -1,0 +1,28 @@
+# Web App Statistics Integration
+
+The user wants to bring the comprehensive Statistics system from the Mobile App (`StatisticsScreen.js`) to the Web Dashboard (`Dashboard.jsx`), replacing the current "Yakında aktif edilecek" placeholder.
+
+## User Review Required
+
+> [!WARNING]
+> Please review this plan to confirm that replacing the placeholder with the Live Stats dashboard is what you need. Are there any extra web-specific metrics you'd prefer on desktop?
+
+## Proposed Changes
+
+### Web Application
+
+#### [MODIFY] [Dashboard.jsx](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web/src/pages/Dashboard.jsx)
+- **Data Hook**: Add `stats` to the component state and an asynchronous `fetchStats` function calling `axios.get('/api/signals/stats')`.
+- **UI Render**: Delete the placeholder under `activeTab === 'stats'`.
+- **Stats Architecture**: Create a visually identical CSS layout replicating the dark-glassmorphism wallet card, standard Win/Loss boxes, Win-Rate and total signal boxes, and the 2% Profit barrier card. Colors will use the corresponding Tailwind/Hex values (`#4ade80`, `#f87171`) used natively in your architecture.
+
+## Open Questions
+
+None. The backend `/api/signals/stats` endpoint is already live and fully tested during the mobile app implementation.
+
+## Verification Plan
+
+### Manual Verification
+- Review the site locally using `npm run dev`.
+- Ensure values accurately reflect the backend's `signals.db` historical results.
+- Verify simulated static constraints (like $30 bet size calculations) accurately match the iOS platform's computations.

@@ -1,0 +1,33 @@
+# Mobil Arayüz Paritesi: Varlık Yöneticisi (Portfolio Manager)
+
+Web tarafındaki `PortfolioManager.jsx` sayfasının %100 aynısının mobile dahil edilmesi istenmektedir. Önceki güncellemede sadece Yapay Zeka radarı odaklı bir sayfa tasarlanmışken, şimdi asıl "Portföy (Watchlist) Hisseleri" tablosunu ve detay modallarını da içerecek tam bir parite oluşturulacaktır.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - Ekranın adının "AITerminalScreen" yerine `PortfolioManagerScreen.js` olarak güncellenmesi onaylanıyor mu?
+> - Alt menü adının "Varlık Yön." (İkon: Çanta / Briefcase) olması hedeflendi, uygun mudur?
+> - Modal içerisindeki TradingView grafiği için `react-native-webview` kütüphanesi kullanılacaktır (paket zaten yüklü).
+
+## Proposed Changes
+
+### Mobil Arayüz
+
+#### [RENAME/MODIFY] `mobile/src/screens/AITerminalScreen.js` -> `PortfolioManagerScreen.js`
+- API'den `GET /api/portfolio` verisi dahil edilecek.
+- Arayüze "Premium Borsa Varlıkları (Watchlist)" bölümü (Grid/Liste yapısı) web teki kart tasarımı (Glassmorphism) ile taşınacak. Varlıkların içerisindeki ağırlık oranları (%allocatedPercentage), maliyet ve Drawdown gibi detaylar listelenecek.
+- Asset Detail Modalı güncellenerek içine TradingView grafiğini barındıracak bir `WebView` eklenecek, bu sayede tıklandığı an web ile tamamen senkron bir şekilde grafikler izlenebilecek.
+- "Yatırım Tezi" alanı bu modalın altında aynen muhafaza edilecek.
+
+#### [MODIFY] `mobile/src/navigation/AppNavigator.js`
+- Eski `AITerminalScreen` importu iptal edilip, `PortfolioManagerScreen` eklenecek.
+- Taramalar, Favoriler, İstatistikler yanına sekmenin adı "Varlık Yön." olarak tanımlanacak.
+
+## Open Questions
+- TradingView grafik ekranı (WebView) için mobil cihaz boyutlarında varsayılan olarak `1D` (1 günlük) periyot mu baz alınsın, yoksa bir önerin var mıdır?
+
+## Verification Plan
+
+### Test Süreci
+- Expo Go üzerinden alt sekmeye tıklandığında hem Portföy verilerinin hem de Sentiments verilerinin yüklendiğinden emin olunacak.
+- Portföy kartına tıklandığında WebView grafiğinin TradingView üzerinden render edilmesi doğrulanacak.

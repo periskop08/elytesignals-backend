@@ -1,0 +1,44 @@
+# Varlıklar (FX, Emtia, Hisse Senedi) Veri Besleme Stratejisi
+
+Şu anda kripto için kullandığımız **Bybit V5 (Linear)** API ağı yalnızca kripto vadeli işlemleri (USDT/USDC/PERP) sunmaktadır. Bybit'in borsa üzerinde altın, eur/usd gibi pariteleri bulunsa da, bu pariteler genellikle ana "crypto-api" uçlarına (endpoint) kapalıdır, MT4/MT5 altyapısında dönerler.
+
+Bu harika fikri gerçeğe dönüştürmek için sistemimize dış dünyadan (Kripto dışı piyasalardan) mum (K-Line) verisi çekecek ikinci bir **"Veri Sağlayıcı (Data Provider)"** enjekte etmemiz gerekiyor. Formüllerimizin kalbi (Sweep, FVG, Bayrak) tamamen hazır. Sadece onlara yiyecek (veri) bulmalıyız! 
+
+## User Review Required
+
+> [!IMPORTANT]
+> Hangi veri sağlayıcıyı kullanacağımıza karar vermeliyiz. Aşağıda seçenekler mevcut, bu karara göre `scanner.js` içine yeni bir veri borusu inşa edeceğim.
+
+### Veri Sağlayıcı (Data Provider) Seçenekleri:
+
+1. **Finnhub.io / AlphaVantage (Önerilen - Ücretsiz/Kesin)**
+   - ABD Hisseleri (AAPL, TSLA vb.) ve bazı FX / Emtialar için mükemmel bir REST API sağlarlar.
+   - Dezavantajı: Kendi sitelerinden saniyeler içinde Google hesabınızla giriş yapıp ücretsiz bir API Key almanız gerekir (Ücretsiz sınırı dakikada 30-60 istektir ki bizim için fazlasıyla yeterli).
+
+2. **Yahoo Finance (Ücretsiz ama İstikrarsız)**
+   - Herhangi bir API Anahtarına gerek yoktur.
+   - Dezavantajı: Yahoo, "Too Many Requests" duvarı kurar. Az önceki testimde doğrudan veri çekmeyi reddetti, scraper gibi davranmamızı engelliyor.
+
+3. **FMP (Financial Modeling Prep)**
+   - Gerçek zamanlı veri konusunda sektörün en uygun fiyatlısı, bedava versiyonunda hisseleri ve dövizi çok rahat sağlar ama onlardan da bir API key almamız şarttır.
+
+## Proposed Changes
+
+### [Backend Scanner Module]
+`backend/scanner.js` içerisine ikinci bir tarama listesi ve döngüsü eklenecek:
+- `assetsList = ['AAPL', 'XAUUSD', 'EURUSD']` (İzleyeceğimiz spesifik varlıkları kodun içine özel olarak seçeceğiz çünkü kriptolar gibi yüzlerce boş hisse senedini taramak sistemi patlatabilir).
+- Hafta sonu filtresi: Varlık taramaları yalnızca hafta içi (Market Hours) çalışacak. Cumartesi pazar API'ye yüklenmeyecek.
+
+#### [MODIFY] backend/scanner.js
+- `fetchAssetCandles(symbol)` adında yeni bir fonksiyon yazılacak ve varlık verileri Bybit yerine *[Seçtiğiniz API Sağlayıcı]* üzerinden çekilecek. Gelen veriler klasik formülize botumuza yollanacak.
+
+## Open Questions
+
+> [!WARNING]
+> Ücretsiz bir Finnhub.io veya AlphaVantage API anahtarı alıp .env dosyamıza bağlayabilir misin? Yoksa "Ben başka bir kaynak biliyorum (Örn: TradingView webhook)" veya "Farklı bir api bulalım" mı dersin? Bu veriyi nereden deştiğimiz konusunda yeşil ışık yaktığında kodu şaha kaldıracağım!
+
+## Verification Plan
+
+### Test Planı
+- Seçtiğin API entegre edilip `XAUUSD` ve `AAPL` sembollerine deneme atışı yapılacak.
+- Formüller ABD hissesinde sorunsuz çalışırsa (Market Boşluğu / Gap tespiti vb.) siteye (Varlıklar menüsüne) loglanarak ekranda yeşil ışık yakması teyit edilecek.

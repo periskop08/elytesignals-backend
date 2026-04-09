@@ -1,0 +1,7 @@
+# PeriskopAI Hisse Senedi Analiz Entegrasyonu
+
+- `[/]` 1. `index.js` dosyasının `parsePrompt` fonksiyonunda hisse senedi/varlık ayrımının yapılması (`isAsset` özelliğinin eklenmesi).
+- `[ ]` 2. Bybit API yerine Yahoo Finance veya alternatif bir API kullanılarak hisseler için fiyat çekme (`fetchAssetData`) fonksiyonunun yazılması.
+- `[ ]` 3. `getAnalysis` içerisinde Promt'ların "PeriskopAI" adıyla ve Opsiyon (PCR, Max Pain, Gamma Wall vb.) formatıyla yenilenmesi.
+- `[ ]` 4. Değişen `index.js` dosyasının AWS sunucusuna gönderilip (scp) servisin (`pm2 restart`) yeniden başlatılması ve Chat ucu üzerinden test edilmesi.
+- `[ ]` 5. Nihai durumla ilgili `walkthrough.md` dokümanının oluşturulması.

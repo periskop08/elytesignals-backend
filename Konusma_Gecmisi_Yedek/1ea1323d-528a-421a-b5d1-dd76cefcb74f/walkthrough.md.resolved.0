@@ -1,0 +1,35 @@
+# Binance Oto Tarama (Scanner) Motoru Başarıyla Kuruldu!
+
+Kripto sinyal uygulamamızın en büyük ve heyecan verici adımlarından birini başarıyla attık. TradingView'e bağımlı pasif moddan, her 15 dakikada bir tüm piyasayı tarayıp kendi "Price Action" logiğiyle fırsat kollayan **Otonom Tarayıcı Motoruna (Scanner Engine)** geçiş yaptık.
+
+## Neler Yaptık?
+
+### 1. Kütüphaneler ve Veritabanı (Backend)
+*   **node-cron:** Arka planda periyodik olarak kod çalıştıran saat mekanizması (kronometre) kuruldu.
+*   **SQLite3:** Bulunan fırsatları (sinyalleri) uçup gitmesin diye anında kaydedeceğimiz hafif bir veritabanı kuruldu (`signals.db`).
+*   **database.js:** Veritabanına tablosunu atan (`signals` tablosu: id, coinismi, yön, giriş fiyatı, target, stop ve status) kolay bağlantı sistemi oluşturuldu.
+
+### 2. Scanner Engine (`scanner.js`)
+*   Motor ilk çalıştığında (veya her 15 dakikada bir), aktif olan tüm sinyallerin (örn; bekleyen Long işlemlerinin) hedefe veya stob'a ulaşıp ulaşmadığını kontrol eden, hedefe ulaştıysa `WIN` (Başarı), stob'a ulaştıysa `LOSS` olarak veritabanında işaretleyen filtre sistemi yazıldı.
+*   Binance'teki **Tüm USDT Pariteleri (Şu an 447 adet)** otomatik çekildi.
+*   Bulunan tüm paritelerin son `100 saatlik (1h)` mum grafikleri analiz için çağrıldı.
+*   Geçmiş 100 saatin **Range High (En Yüksek), Range Low (En Düşük) ve EQ (Orta Nokta)** seviyeleri belirlendi.
+*   **Dip** bölgesinde veya **Tepe** bölgesinde fakeout/sapma yapan coinler tespit edilerek veritabanına Giriş/Çıkış/Stop değerleriyle otomatik **SİNYAL** olarak kaydedildi.
+
+### 3. Mobil Uygulama Entegrasyonu
+*   Backend içine "Anlık tüm aktif sinyalleri çekip sunan" `/api/signals/active` ucu açıldı.
+*   Klişe olan `mockSignals` (sahte test sinyalleri) yapısı HomeScreen'den tamamen kaldırıldı!
+*   Yerin `Fetch API` ile kendi bilgisayarınızdan/sunucunuzdan gerçek sinyalleri çeken ve her **30 saniyede bir** otomatik ekranı yenileyen dinamik sistem oturtuldu. Listede sinyal yoksa "Şu an aktif bir sinyal bulunmuyor" ibaresi belirir, tarayıcı bir fırsat bulduğu an kartlar patır patır ekrana düşmeye başlar!
+
+___
+
+> [!TIP]
+> **Sistem Çalışıyor, Test Ettik!**
+> Sunucuyu (`node index.js`) arka planda çalıştırdım. Sunucu şu logları atmaya başladı bile: 
+> `[SCANNER] Starting Binance pairs scan...`
+> `[SCANNER] Found 447 USDT pairs to scan.`
+> `[SCANNER] New LONG signal for BTCUSDT!`
+> ... sistemi durdurmadım, arka planda ilk taramasını tamamlıyor.
+
+> [!CAUTION]
+> **Telefondan Test Ederken Dikkat:** Mobile uygulamanızda (`HomeScreen.js` 5. satırda) `const API_URL = 'http://localhost:3000/api/signals/active'` linkini kullanıyoruz. Uygulamayı iPhone/Android kamerasıyla okutup kendi fiziksel telefonunuzda deneyeceğiniz zaman `localhost` yerine, o an backendin çalıştığı bilgisayarınızın yerel IP adresini (Örn: `192.168.1.18`) girmeniz gerekmektedir! Aksi halde telefon bilgisayara bağlanamaz. Emülatör kullanıyorsanız sorunsuz çalışır.

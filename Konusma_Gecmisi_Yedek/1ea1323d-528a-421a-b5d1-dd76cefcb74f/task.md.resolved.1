@@ -1,0 +1,9 @@
+# Sinyal Filtreleme & Grafik Detay Ekranı Tasks
+
+- [ ] Backend: `scanner.js` güncellenerek USDC, FDUSD vs. stabil coinler dışlanacak.
+- [ ] Backend: `scanner.js` içerisinde TP hedefinin Giriş fiyatına oranla en az %2 kârlı olma (`((target - entry) / entry) * 100 > 2`) şartı eklenecek.
+- [ ] Mobile: `react-native-webview` ve `@react-navigation/native-stack` paketleri kurulacak (`npm install ...`).
+- [ ] Mobile: `src/screens/SignalDetailScreen.js` oluşturulacak (Üstte Sinyal verisi, altta WebView içinde TradingView Widgetı).
+- [ ] Mobile: `src/navigation/AppNavigator.js` güncellenerek Home sayfası bir Stack Navigator'a çevrilecek ve detay sayfasına yönlendirme yapılacak.
+- [ ] Mobile: `HomeScreen.js` güncellenerek "İşlem Bekleniyor" butonlarına tıklandığında `navigation.navigate('SignalDetail', { signal: item })` mantığı eklenecek.
+- [ ] Test & doğrulama yapılacak.

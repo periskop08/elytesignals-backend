@@ -1,0 +1,12 @@
+# Global English Translation Tasks
+
+- [x] `mobile/src/navigation/AppNavigator.js` içindeki navigasyon isimlerinin (Ana Sayfa -> Home) İngilizceye çevrilmesi.
+- [x] `mobile/src/screens/HomeScreen.js` dosyasındaki "Aktif İşlem Bulunamadı", "Hedef", "Zarar Kes" vb. metinlerin çevrilmesi.
+- [x] `mobile/src/screens/DashboardScreen.js` dosyasındaki Pano yazılarının çevrilmesi.
+- [ ] `mobile/src/screens/StatisticsScreen.js` dosyasındaki tüm istatistik (Win, Loss, PnL) ifadelerinin çevrilmesi.
+- [ ] `mobile/src/screens/SignalHistoryScreen.js` dosyasındaki geçmiş işlem etiketlerinin çevrilmesi.
+- [ ] `mobile/src/screens/SignalDetailScreen.js` dosyasındaki analiz sinyal detaylarının çevrilmesi.
+- [ ] `mobile/src/screens/AnalysisScreen.js` içindeki Chatbot UI elemanlarının ve hata mesajlarının İngilizceye dönüştürülmesi.
+- [ ] `mobile/src/screens/FavoritesScreen.js` içindeki favori uyarılarının çevrilmesi.
+- [ ] `backend/index.js` içindeki Niyet Okuyucu ve Final Prompt API metinlerinin "Trading English" ile yeniden yazılması.
+- [ ] En son adım: Sunucuyu yeniden başlatmak (`node index.js`).

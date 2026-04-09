@@ -1,0 +1,37 @@
+# Vercel Deployment Yol Haritası (Web Platformunun Canlıya Alınması)
+
+Masaüstü Web Uygulamamızı (React Vite SPA) profesyonel olarak dünyaya açmak için en hızlı ve bedava servis olan Vercel'i kullanacağız. 
+
+## User Review Required
+
+> [!IMPORTANT]
+> Yapay Zeka (Ben), güvenlik kuralları gereği sizin adınıza **Vercel hesabınıza (E-posta veya şifrenize)** erişemez. Bu yüzden füzeyi fırlatma emrini sizin terminalden kendi hesabınıza giriş yaparak vermeniz gerekecek. 
+> Korkmayın, en temiz ve kolay yöntemi sizin için hazırladım!
+
+## Proposed Changes
+
+Aşağıdaki mimari düzenlemeleri Vercel ortamının çökmemesi için projeye (kendi kendime) ekleyeceğim:
+
+### `web/` Proje Konfigürasyonu
+Uygulamayı Vercel'e attığımızda, eğer bir kullanıcı doğrudan `www.site.com/dashboard` adresine girmeye çalışırsa Vercel 404 hatası verir. Çünkü React Router arka planda çalışır. Bunu çözmek için projeye bir **Yönlendirme (Rewrite) Haritası** ekleyeceğim:
+
+#### [NEW] `vercel.json`
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+## Open Questions
+
+Her şey hazır olduktan sonra ben duracağım ve komuta tamamen size geçecek. 
+Sizden sadece terminali (veya Mac'teki Terminal uygulamasını) açıp şu 2 satırı yazmanızı isteyeceğim:
+
+1. `cd /Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web`
+2. `npx vercel@latest`
+
+Bu komut size Vercel giriş linki verecek. Oradan giriş yapıp "Evet, evet, evet (Y)" diyerek geçeceksiniz ve siteniz 30 saniye içinde `{proje-adi}.vercel.app` şeklinde canlıya çıkacak!
+
+## Verification Plan
+
+Siz bu planı **Onayladıktan** hemen sonra Vercel rotasyon dosyalarını oluşturup kod bloklarını mühürleyeceğim. Sonra size adım adım terminal kodlarını vereceğim!

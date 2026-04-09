@@ -1,0 +1,31 @@
+# Sesli Uyarı ve Canlı İstatistik Sistemi Mimari Planı
+
+Kripto sinyal uygulaması sadece bakıldığında değil, arka planda çalışırken bile kullanıcıyla iletişim kurmalıdır. TP (Kâr Al) veya SL (Zarar Kes) durumlarının ses efektleriyle verilmesi ve tüm algoritmanın finansal başarısının (Kasa büyümesi) bir ekranda toplanması uygulamayı eşsiz yapacak detaylar.
+
+Bu iki harika özellik için aşağıdaki adımları planladım:
+
+## 1. Sesli TP / SL Uyarıları (Mobile Frontend)
+*   **Paket Kurulumu:** Expo'nun kendi orijinal ses kütüphanesi olan `expo-av` kütüphanesini kuracağız.
+*   **Hafıza ve Tespit (State & Ref):** Mobildeki `HomeScreen.js` sayfasının beynine, geçmişteki 30 saniyelik veriyi unutmaması için bir hafıza (`useRef`) ekleyeceğim. Yeni api paketi geldiğinde sistem otomatik olarak bir önceki veriyi kıyaslayacak:
+    *   Bir sinyal `ACTIVE` (Bekliyor) durumdan `WIN` durumuna geçtiyse **"Trink/Para"** sesi çalacak.
+    *   Bir sinyal `ACTIVE` durumdan `LOSS` durumuna geçtiyse **"Dııt/Hata"** sesi çalacak.
+*   *Not:* Ses dosyalarını uygulamanın içine gömmek yerine Google'ın ücretsiz (Telif Haksız) veri tabanındaki .ogg formatlı "Coin" ve "Beep/Alarm" ses linklerini internetten anlık olarak kodun içine çekeceğim, böylece uygulamanızın boyutu şişmeyecek.
+
+## 2. İstatistik ve Performans Takip Sistemi (Backend)
+*   Sunucumuza `GET /api/signals/stats` isimli yepyeni bir uç (endpoint) açacağım.
+*   Bu uç tüm veritabanını tarayarak şunları matematiksel olarak hesaplayacak:
+    *   **LONG / SHORT Karlılığı:** Her sinyal için girilen **$30**'lık bir işlem hayal edecek. Hedefe gidilirse kazanılan parayı, stoba gidilirse kaybedilen parayı saniyesi saniyesine (komisyonu yok sayarak) hesaplayıp "Total Profit (Toplam Net Kâr)" hanesine yazacak.
+    *   **Win Rate (Başarı Oranı):** Başarılı ve başarısız işlemleri toplayıp yüzde kaçının hedefe gittiğini hesaplayacak.
+
+## 3. Canlı İstatistikler Sekmesi (Mobile Frontend)
+*   Navigasyonumuzdaki Sinyaller ve Analiz Sor kısmının yanına harika bir 3. Sekme ekleyeceğiz: **"İstatistikler (Dashboard)"**.
+*   **Tasarım:** Burada kocaman bir cüzdan kutusu (30$ ile her sinyale giren adamın anlık net kazancı), Altında Win(Kazanılan), Loss(Durdurulan) istatistikleri ve Başarı Oranı (% Yüzde) yüzdesi grafik/yuvarlak barlar halinde gösterilecek. Anlık yenilenme (auto-refresh) mantığı bu ekranda da devrede olacak.
+
+---
+
+## User Review Required
+> [!IMPORTANT]
+> Bu planın son aşamasına geçmeden önce sizden almam gereken iki onay var:
+
+1. **Sesli Bildirim İzni:** Telefonların uygulamanın arka planındayken ses çalması (Siz başka uygulamadayken veya ekran kapalıyken) işletim sistemi tarafında engelleniyor. Bu yapacağımız ses özelliği uygulamayı ekranda izlerken veya ekran açıkken mükemmel çalışacaktır. Uygulama kapalıyken haber vermesi için Push Notification (Bildirim) kurulması gerekir. Sesin ekran açıkken/aktifken gelmesi ilk aşamada uygun ve yeterli mi?
+2. **Kütüphane Onayı:** Sesleri çalabilmesi için projeye `expo-av` yüklemesi yapacağım, onaylıyor musunuz? (Test için telefonu titreten özelliği de (Vibration) bonus olarak ekleyeyim isterseniz!)

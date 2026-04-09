@@ -1,0 +1,27 @@
+# Manual Liquidation Feature Implemented
+
+Sisteme, zarar eden veya riskli görülen hisseleri tek dokunuşla tasfiye edip QQQ (Güvenli Liman) ETF'ine kaydırma özelliği başarıyla eklendi.
+
+## Yapılan Geliştirmeler
+
+### 1. API Güncellemesi
+Node.js sunucusuna yeni bir `/api/portfolio/liquidate` endpoint'i eklendi.
+Bu endpoint şu matematiksel mantıkta çalışır:
+- İstek yapılan sembolün veritabanındaki ağırlığını (`allocatedPercentage`) değişkene alır.
+- Sembolün ağırlığını `0` yapar.
+- Kaydedilen ağırlığı QQQ hissesinin mevcut ağırlığının üstüne TAMAMEN ekler.
+
+> [!TIP]
+> Ağırlığı 0'a düşürülen hisse ana Radarda (Listede) yer kaplayıp kafanı karıştırmaması için görünmez olur ama arka planda var olmaya (`0` ağırlık ile) devam eder, böylelikle yapay zeka ileride tekrar o hisseyi portföye alma (rebalance kararı) alabilir.
+
+### 2. Arayüz (UI) Eklentisi
+Hem Web hem de Mobil arayüzde, herhangi bir hisse senedinin kartına tıklayıp detay grafiğini açtığında aşağıda **Tamamını Sat ve QQQ'ya Aktar** isimli kırmızı parıltılı şık bir buton çıkacaktır. QQQ hissesinin kendisinde mantıken bu buton bulunmaz.
+
+Butona bastığında seni şöyle bir güvenlik/onay kutusu karşılar:
+> "TSLA hissesinin tüm ağırlığını satıp doğrudan QQQ ETF'ine (Güvenli Liman) aktarmak istediğinize emin misiniz?"
+
+Onay verildiği an arka planda satışı gerçekleştirip panoyu saniyelik olarak yeniler, sen de gözünle hissede bulunan portföy ağırlığının ve hesaplanan % doların QQQ'ya nasıl aktığına şahit olursun.
+
+## Nasl Test Edebilirsiniz?
+- Kodlar GitHub'a gönderildi ve Vercel otomatik inşayı (Deployment) başlattı. 
+- 1 dakika içinde `elytesignals.com` paneline girdiğinizde güncellemeyi test edebilirsiniz. (Mobil uygulamayı da bir kez kapat/aç yaparak güncel arayüzü çekebilirsiniz).

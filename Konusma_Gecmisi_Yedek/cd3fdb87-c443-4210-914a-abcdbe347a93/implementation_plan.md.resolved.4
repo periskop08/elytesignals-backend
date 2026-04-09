@@ -1,0 +1,18 @@
+# Görsel Kusursuzluk ve Canlı Fiyat/Grafik Mimarisi Ek Güncellemesi
+
+Attığın görselde 3 farklı "Kozmetik ve Entegrasyon" krizi var, hepsini birbirine bağlayarak mükemmel bir arayüz deneyimine kavuşturacağım:
+
+## 1. Stop/Hedef Fiyat Hassasiyeti (Decimal Karmaşası)
+Şu an sistem her fiyatta acımasızca 5 küsurat gösteriyor. Bu Kriptoda (Örn: $0.28847) şarttır ancak SP500 ($6,666.53897) gibi Geleneksel Varlıklarda göz yorar.
+- **Çözüm:** `Dashboard.jsx` içerisindeki `fmtPrice` fonksiyonunu yapay zekaya (akıllı) bağlayacağım. Eğer fiyat 1000$'dan büyükse (SP500, Bitcoin) sadece 2 küsurat; 10$'dan küçükse (Altcoinler) detaylı 5 küsurat göreceksin! Ekranda rakam kalabalığı bitecek.
+
+## 2. "Veri Yok" (Canlı Fiyat Kopukluğu)
+SP500'de fiyat varken NASDAQ100'de "Veri Yok" yazmasının sebebi, arka uçtaki `index.js` Fiyat Proxy'sinin hala bizim eski **6 varlıklı katı listeye (ASSET_BINGX_MAP)** takılı kalmasıdır. Sen 48 yeni limitsiz varlık açtın ama ön yüzün bundan haberi yok.
+- **Çözüm:** `backend/index.js` içerisindeki Proxy'i, az önce kodladığım Dinamik RAM Haritasına (`global.BINGX_SYMBOL_MAP`) bağlayacağım. Artık tüm 48 hisse ve emtianın saniyelik canlı fiyatı ve PnL'si şak diye ekrana yansıyacak!
+
+## 3. TradingView Grafik Hatası
+Detaylara tıklayınca TradingView açılmıyor çünkü TradingView "SP500", "NASDAQ100" veya "BRENT" gibi kısaltmaları sevmez; "SP:SPX", "NASDAQ:NDX" veya "TVC:UKOIL" gibi kendi özel Wall Street kodlarını iter.
+- **Çözüm:** Ön yüze (`Dashboard.jsx`) bir **TradingView Varlık Tercümanı** yazacağım. Tıkladığın TradingView penceresi, temiz sembolünü Wall Street tickerlarına çevirerek gerçek zamanlı mumları saniyesinde sana gösterecek!
+
+## User Review Required
+Bu kozmetik ve anlık fiyat/grafik düzeltme planını onaylıyor musun patron? Onaylar onaylamaz kodu ön yüz ve arka yüz için ateşleyip AWS'ye hemen Push'layacağım!

@@ -1,0 +1,37 @@
+# Algoritma Scoring Boost: +48 Puanlık İndikatör Paketi
+
+Bu plan, Elyte işlem motorunun `scanner.js` tarama mantığına 5 yeni indikatör kuralının eklenmesini içerir. Amacımız, likidite ve price action mantığına trend onaylayıcı matematiksel katmanlar ekleyerek Win Rate (Kazanma Oranı) değerini +%10 yukarıya taşımaktır.
+
+## Kullanıcı Onayı Gereken Teknik Durumlar
+
+> [!WARNING]
+> **Order Flow Delta (Hacim Dağılımı):**
+> Geleneksel finans verilerinde (Yahoo Finance) alıcı/satıcı hacim ayrımı yapılamamaktadır. Kripto borsalarının (Bybit) standart mum verilerinde de bu ayrım direkt bulunmuyor. Bu nedenle Hacim Delta'sını **Price Action Approximation** yöntemiyle (Mumun kapanış fiyatının Hight/Low aralığındaki yerine göre hacmi oranlayarak) hesaplayacağım. Bu, kurumsal algoritmaların da API limiti olmadan kullandığı başarılı bir yöntemdir.
+
+> [!IMPORTANT]
+> **KAMA İndikatörü:** 
+> Kullandığımız `technicalindicators` kütüphanesinde Ichimoku ve StochRSI hazır bulunurken KAMA bulunmuyor. KAMA için özel bir matematik fonksiyonunu kod içine yazacağım.
+
+> [!CAUTION]
+> **Günlük MA (Daily SMA 50 / 200) API Maliyeti:**
+> Her paritenin günlük (1D) 50 ve 200 günlük ortalamasını hesaplayabilmek için taradığımız yüzlerce coin için ekstra `1D` mum sorgusu (API Rate Limit yükü) atmamız gerekecek. Bybit ve Yahoo bunu kaldırabilir ancak tarama (Scan) süresi 15 saniyeden 30 saniyeye çıkabilir. (Buna değer).
+
+## Önerilen Değişiklikler
+
+### `backend/scanner.js`
+
+#### [MODIFY] scanner.js
+- **Ichimoku Cloud (+15 Puan):** Kütüphaneden eklenecek. `Tenkan > Kijun` ve Fiyatın bulut üstünde olması Long için, tersi Short için 15 puan verecek. (En ağırlıklı indikatör).
+- **Stochastic RSI (±10 Puan Ceza):** `> 80` ise Long sinyallerine 10 puan ceza, `< 20` ise Short sinyallerine 10 puan ceza kesilecek. Kütüphane kullanılacak.
+- **KAMA (10, 2, 30) Volatilite (+5 Puan):** Fiyat KAMA'nın üstünde ise Long desteklenecek. Fonksiyon manuel olarak entegre edilecek.
+- **Order Flow Delta (+8 Puan):** Mevcut tetikleyici (Trigger) mumunda alım hacmi satış hacminden yüksekse `+8` eklenecek. Aksi halde `+0` veya duruma göre `-8`.
+- **Daily Golden Cross (+10 Puan):** Her varlık taramasında `fetchCandles` ile o coinin son 200 günlük (1D) mumunu çekip SMA50 ve SMA200 kıyası yapacağız. `SMA50 > SMA200` ve Fiyat > SMA200 ise Long `+10`.
+
+## Açık Sorular
+
+1. **Daily MA Maliyeti:** Günlük (1D) 200 mum çekme işlemini tüm coinlere eklemek API'yi yorabilir. Bunu sadece kalifiye olan (örneğin diğer indikatörlerden yüksek puan alan) coinler üzerinde **"Son filtre"** olarak sormaya ne dersin? Yoksa baştan hepsini her 15 dakikada bir çekelim mi?
+2. Bütün bu +48 puan potansiyeli gelince, minimum işleme girme puanımız olan `40`'ı örneğin `60`'a yükseltelim mi? Yoksa 40 olarak bırakıp sadece en kusursuz setup'ları mı avlayalım?
+
+## Doğrulama Planı (Verification)
+- Botu çalıştırıp `BTCUSDT` ve `XAUUSD` üzerinde manuel bir test senaryosu çalıştıracağız. 
+- Hesaplanan KAMA, Ichimoku ve StochRSI değerlerinin TradingView ile uyuşup uyuşmadığını kontrol edeceğim.

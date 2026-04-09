@@ -1,0 +1,18 @@
+# VIP Telegram Hoş Geldin Modalı (Web Entegrasyonu)
+
+## 📌 NELER YAPILDI?
+Tıpkı mobil uygulamanızda (`HomeScreen.js`) olduğu gibi, Web platformunuza ilk kez giriş yapan veya henüz VIP durumuna (Premium'a) geçmemiş kullanıcıları hedefleyen, onları doğrudan resmî Telegram kanalınıza kanalize eden **tam ekran bir karşılama modalı** entegre edildi.
+
+### ⚙ Teknik Altyapı
+- **`user.isVip` Kontrolü:** Sistem, kullanıcı sisteme giriş yaptığı an `user` objesindeki `isVip` durumunu denetler. Eğer değer `0` ise arayüzde otomatik olarak bir şalter tetiklenir (`showVipModal = true`).
+- **Engelsiz, Şık UI/UX:** Normal web tasarımınızı bozmamak için bu uyarı sayfası, ana ekranın üzerine şeffaf siyah ve arka planı blurlayan (glassmorphism) bir div katmanı olarak tasarlandı.
+
+### 🎨 Görsel Detaylar
+Bu karşılama penceresinin tam ortasında şunlar yer alır:
+1. Kullanıcının kendi **Profil Fotoğrafı** (Telegram avatarı vs.) yeşil neon çerçeve içinde.
+2. "Hoş Geldin, [İsim]!" diyerek kullanıcıyı şahsen selamlayan dinamik bir başlık.
+3. Topluluğa neden katılması gerektiğini anlatan kısa ve etkili bir metin.
+4. Tıklandığı an Web'de anında `t.me/+Rw9Ea6LPHFgwZDU0` linkini yeni sekmede açan mavi bir **VIP Gruba Katıl** butonu. (Bu butona tıklandığında popup da akıllıca kapanır.)
+5. "Daha Sonra Belki" diyerek paneli nazikçe atlamak isteyenler için minimal bir iptal düğmesi.
+
+🚀 **Sonuç:** Kullanıcılarınız artık sitenizi açar açmaz soğuk bir kontrol paneliyle değil; bizzat Elyte Signals markasını sahiplenen bu premium davet penceresiyle karşılaşacak. Bu da doğrudan **Grup Katılım (Dönüşüm) Oranlarınızı** tavan yaptıracaktır!

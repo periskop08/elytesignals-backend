@@ -1,0 +1,56 @@
+<current_dom_explanation>
+This is a temporary snapshot of the current page's DOM structure. The DOM will change if you navigate to or interact with another page. Use a tool like browser_get_dom to capture and preserve the DOM in your trajectory if needed for later reference.
+</current_dom_explanation>
+<current_dom>
+[0] (500,500)<div  />
+	ELYTE
+	ANA MENÜ
+	[1] (116,267)<div  />
+		[2] (86,267)<span >Taramalar />
+	[3] (116,346)<div  />
+		[4] (81,346)<span >Favoriler />
+	[5] (116,423)<div  />
+		[6] (89,423)<span >İstatistikler />
+	[7] (116,501)<div  />
+		[8] (105,501)<span >Geçmiş İşlemler />
+	VIP User
+	VIP Üye
+	[9] (116,942)<button >Çıkış Yap />
+	[10] (479,500)<div class='signals-panel' scrollable='true' />
+		Canlı Akış
+		Periskop yapay zeka analiz motorunun anlık tespitleri.
+		[11] (663,122)<button  />
+			[12] (672,122)<span >Yenile />
+		TEST/USDT
+		LONG
+		Giriş Seviyesi:
+		65,000
+		Stop Loss:
+		62,000
+		Hedef (TP):
+		70,000
+		99.9
+		SQ
+		22:32
+		ERAUSDT
+		LONG
+		Giriş Seviyesi:
+		0.12178
+		Stop Loss:
+		0.12027
+		Hedef (TP):
+		0.12415
+		45
+		SQ
+		21:01
+		UNIUSDT
+		SHORT
+		Giriş Seviyesi:
+		3.519
+	Periskop AI Sohbet
+	GPT-4 Turbo ile desteklenir
+	Periskop AI devrede. Piyasa dalgalarını analiz edebiliriz. Hangi Coin hakkında görüş istersiniz?
+	[13] (837,944)<input class='chat-input' placeholder='Örn: BTC yarın ne olur?' />
+	[14] (963,944)<button class='chat-send-btn' />
+
+</current_dom>

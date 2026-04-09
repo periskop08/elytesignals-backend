@@ -1,0 +1,7 @@
+# Bayrak/Flama ve RR Sınırlaması Entegrasyonu Görevleri
+
+- `[/]` **Direk (Pole) Tespiti Algoritması:** Hızlı yükseliş veya düşüş momentumunun (%5+ hacimli) tespiti ve Pole boyutunun hesaplanması.
+- `[ ]` **Flama (Flag) Konsolidasyon Tespiti:** Kırılım öncesi hacim düşüşü eşliğinde gerçekleşen 3-7 mumluk yatay sıkışmanın analizi.
+- `[ ]` **Formasyon Puanlama:** Bayrak bulunduğunda kalite skoruna `+10` eklemek ve breakdown listesine formasyonu bildirmek.
+- `[ ]` **1:3 RR Cap Algoritması:** Hedef büyüklüğü (TP) veya Pole mesafesi hedeflenirken, SL (Stop) mesafesinin 3 katını aşıyorsa Hedefin 1:3 cap ile tıraşlanması.
+- `[ ]` **Backtest Uyumluluğu:** Mantıksal testlerin sunulan canlı veritabanında denenmesi.

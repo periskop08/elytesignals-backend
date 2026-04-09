@@ -1,0 +1,7 @@
+# WebApp (PWA) Çevrim Süreci
+
+- `[x]` 1. `mobile` projesine PWA (Progressive Web App) manifest.json ve favicon özelliklerini eklemek.
+- `[x]` 2. Web ortamı için gerekli `react-native-web` gibi kritik paketleri kurmak.
+- `[x]` 3. Telefon donanımlarına özgü kodların Web'de çökmemesi için uygun köprüleri ayarlamak.
+- `[x]` 4. React Native uygulamasını HTML/JS web sitesine çevirecek "Export" (Derleme) emrini çalıştırmak.
+- `[x]` 5. Tüm paneli yerelde test edebileceğiniz bir önizleme (Walkthrough) sağlamak.

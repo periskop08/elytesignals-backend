@@ -1,0 +1,9 @@
+# Makro Dominans Revizyonu Görevleri
+
+- `[x]` Backend: `scanner.js` dosyasından DXY (Yahoo Finance) ve ilişkili DXY Puan/Kesici bloklarını sil.
+- `[x]` Backend: `fetchCoinGeckoDominance` fonksiyonunu entegre et (BTC.D ve USDT.D anlık verilerini hesapla).
+- `[x]` Backend: `calculateTrendFromKlines()` fonksiyonunu `trend`, `rsi`, `ema`, `sma`, `close` bilgilerini dönen bir obje olarak yeniden inşa et.
+- `[x]` Backend: `analyzeGlobalMarket()` içindeki `globalMarketState` objesini yeni yapıyla güncelle.
+- `[x]` Backend: Sinyal üretim bandına `checkExtremeBlockers()` mantığını entegre et (BTC vs ETH extreme durumları).
+- `[x]` Backend: Sinyal üretim bandına `calculateDominanceScore()` ve Macro Score ( -25 / +43 ) puanlamasını entegre et.
+- `[x]` Test: Lokal sunucu testi ve PM2 ile AWS Cloud sunucu yayını.

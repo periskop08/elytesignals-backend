@@ -1,0 +1,33 @@
+# Mobil Arayüz Paritesi: Ana Sayfa Makro Pusula (Home)
+
+Web tarafındaki `Dashboard.jsx` sayfasının "Ana Sayfa" (Home) sekmesi %100 aynısının mobile dahil edilmesi istenmektedir. Web uygulamasındaki "Periskop Makro Pusula" arayüzünü birebir (Bitcoin Dominansı, USDT Dominansı, BingX Kasa vb.) taşıyıp mobile 5. sekme (Ana Sayfa) olarak ekleyeceğiz.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - Navigasyona 5. sekme eklenecektir. "Ev (Home)" ikonu ile ilk sekme "Ana Sayfa" olacak, eski "Taramalar" sekmesi de web'deki gibi "Sinyaller" ismini alıp "Aktivite" ikonu (Activity) kullanacaktır.
+> - Onaylıyor musunuz?
+
+## Proposed Changes
+
+### Mobil Arayüz Eklemesi
+
+#### [NEW] `mobile/src/screens/MacroCompassScreen.js`
+- API uç noktaları (`/api/macro`, `/api/admin/balance`, `/api/signals/stats`) projeye bağlanılacak.
+- Bitcoin Dominansı, USDT Dominansı ve Altcoin (ETH Proxy) kartları glassmorphism dizaynı ile oluşturulacak. İçi dolan animasyonlu bar (progress bar) gösterimleri native bileşenlere çevrilecek.
+- "BingX Aktif Kasa" ve "Algoritma Performansı (7 Günlük)" raporları yan yana kartlar olarak (flex layout) ana sayfa layoutuna dahil edilecek.
+- "Makro Pusula Nasıl Yorumlanır?" bilgilendirme panosu sayfanın en altına taşınacak.
+
+#### [MODIFY] `mobile/src/navigation/AppNavigator.js`
+- Tab.Navigator içerisine ilk sekme olarak `MacroCompassScreen` (Adı: "Ana Sayfa", İkon: `Home`) dahil edilecek.
+- Eski "Taramalar" (HomeScreen) sekmesinin adı "Sinyaller", ikonu `Activity` olarak (Web ile aynı) değiştirilecek.
+
+#### [MODIFY] `mobile/src/screens/HomeScreen.js`
+- Sayfanın iskeleti Sinyaller odağında kalacak. İstenirse (isteğe göre) dosya adı `MarketsScreen.js` yapılabilir ancak bağlantıyı kırmamak adına kod içinde sadece yönlendirmeler güncellenecek.
+
+## Open Questions
+- Mobil sekme barında (BottomTab) 5 adet ikon çok sıkışık durursa ikon isimleri yerine sadece ikonlar kullanılsın ister misiniz, yoksa ikon + metin formatı devam etsin mi?
+
+## Verification Plan
+### Test Süreci
+- Expo Go üzerinden "Ana Sayfa"ya tıklandığında Macro API'nin `cgDom.btc` vs. verileri web sitesi ile birebir eşleşip render edildiği doğrulanacak.

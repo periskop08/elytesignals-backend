@@ -1,0 +1,20 @@
+# Varlık Optimizasyon Paketi v2 Aktif!
+
+Elyte Tarama Motoru'nun Amazon (AWS) sunucularında koşan altyapısına, ince ayar niteliğindeki tüm "Optimizasyon" özellikleri tek tek kazındı ve sunucu kükreyerek yeniden başlatıldı.
+
+## Motora Yeni Eklenen Fonksiyonlar:
+
+1. **Hisseler için VWAP Formülü (Sıfır Kütüphane, Saf Hız) 📊**
+   - Hisseler (Apple, Tesla, Nasdaq) analiz edilirken işlem yönüne bakılmadan önce, son 20 mumluk seyrin fiyat-hacim dinamiği (VWAP) anlık hesaplanıyor. İşlem yönü, kurumsal paranın merkez ekseni olan VWAP çizgisi ile uyumluysa (Trend destekli ise) sistem anında **+8 Kalite Puanı** vererek bonuslandırıyor. İşlemler çok daha keskin olacak.
+
+2. **Döviz Çiftleri (EURUSD) İçin NFP Zırhı Kalkanı 🛡️**
+   - Kodun ana omurgasına (Konfigürasyon bölümü) özel bir şalter ekledim: `isMacroNewsDay: false`.
+   - Sistemin çekirdek koduna girmeden kolayca "true" yapabileceğimiz bu küçük anahtar sayesine; eğer o gün piyasalarda büyük bir faiz veya enflasyon (TÜFE/NFP) açıklaması varsa sistemi sadece bir tuşla korumaya alacağız. Anahtar aktifken EURUSD'de çok iyi bir pozisyon belirse bile bot buna "Haber Günündeyiz, iptal!" diyerek **-20 Puan** çakacak ve bizi fırtınadan kurtaracak!
+
+3. **Emtialarda DXY & GAP Kesişimi 🧲**
+   - Hisse senetlerindeki gece boşluklarını hedefleyen (GAP) mıknatısımızı söktüm ve Altın ile Petrol (USOIL)'ün analiz motoruna da kopyaladım. 
+   - Sistem Altın'da bir gap bulur, ve bu gap'in kapanacağını Dolar Endeksi (DXY) makro trendi ile teyit ederse (Örn: Altın aşağı düşmeli, Dolar da gerçekten tırmanıyor) Kalite Skoruna derhal **+5 Kesişim Puanı (Confluence)** ekleyerek işlemi öne çıkarıyor.
+
+Sistem, geleneksel kurumsal para akışının kullandığı tüm numaraları öğrendi ve Varlık sınıfındaki işlemler için çok daha seçici ve kârlı bir yola girdi.
+> [!NOTE]
+> Yazılım tamamen güncellendi, yeniden başlatıldı ve hiçbir aksaklık olmadan Amazon AWS'te tarama yapmaya devam ediyor. 🚀

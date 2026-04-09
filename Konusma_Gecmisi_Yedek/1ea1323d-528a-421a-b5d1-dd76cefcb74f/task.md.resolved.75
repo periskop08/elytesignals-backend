@@ -1,0 +1,14 @@
+# Web Dashboard Statistics Integration
+
+- `[x]` Fetch and State Management in `Dashboard.jsx`
+   -  Fetch `/api/signals/stats` endpoint inside `loadSignals` or independent hook
+   -  Store output in `stats` React state variable
+- `[x]` UI Component Implementation
+   -  Replace "Yakında aktif edilecek" component
+   -  Build Simulated Wallet Growth widget based on $30 metric
+   -  Build Win/Loss grid interface with percentage indicators
+   -  Build Total Signals and Win-Rate boxes
+   -  Include the `+2%` active trades tracking threshold feature panel
+- `[x]` Final Verification & Deployment
+   -  Confirm local display
+   -  Push commits to Github for Vercel auto-deployment

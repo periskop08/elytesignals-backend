@@ -1,0 +1,14 @@
+# AI Hafıza Sistemi Başarıyla Aktif!
+
+Asistanımız artık sorduğunuz soruları sadece anlık olarak değil, bir insan gibi **eski mesajların bağlamından yakalayarak** analiz edebiliyor. 
+
+## 🧠 Nasıl Çalışıyor?
+
+1. **History Enjeksiyonu (Mobilde):** React Native tarafında sohbet ekranından mesaj attığınızda, yazdığınız son mesaj değil, uygulamanın state'inde yer alan **geriye dönük son 10 mesajınız da (soru-cevaplarıyla beraber)** arka plana (backend'e) aktarılır.
+2. **Context Extractor (Yapay Zeka Beyni):** Mesaj API'ye ulaştığı an, Binance gibi borsalara istek atmadan saniyeler önce, özel bir sistem komutu devreye girer. Tüm sohbeti süzerek JSON formatında şu hedefleri çıkartır:
+    * *"Bu sohbetin geneli ve son mesaj itibariyle adamın hedef Coini ne?"* (Örn: XRP)
+    * *"Bu adam Futures mu açacak, Spot mu? Yoksa sadece düz muhabbet/soru mu?"*
+3. **Senaryo Kurulumu:** Bu JSON objesinden aldığı kesin emre göre Binance datasını çeker.
+
+Bu sayede:
+* "XRP düşer mi" dedikten sonra size "Spot mu Futures mu" dediğinde. Sadece "Spot" yazsanız dahi o hala **XRP** hakkında konuştuğunuzu bilir, hata vermez ve gidip XRP'nin SPOT analizini yüzünüze mükemmel bir tasarımla sunar!

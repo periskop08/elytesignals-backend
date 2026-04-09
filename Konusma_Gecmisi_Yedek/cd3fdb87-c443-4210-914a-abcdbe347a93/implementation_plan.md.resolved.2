@@ -1,0 +1,22 @@
+# Sınırsız TradFi (Geleneksel Finans) Tarama Planı
+
+Mevcut yapıda `scanner.js` içerisine manuel olarak elle girilmiş (hardcode) sadece 6 adet varlık (TSLA, AAPL, NASDAQ, Altın vb.) bulunmaktaydı ve BingX'te listelenen diğer 100+ hisse senedi ve emtia tarama motorundan kasıtlı olarak (`!symbol.startsWith('NC')` koduyla) atılıyordu.
+
+Bunu statik ve kısıtlayıcı yapıdan çıkarıp, tam otonom bir **"TradFi Crawler"** mimarisine geçireceğim:
+
+## 1. Dinamik BingX Ayrıştırıcısı (AssetParser)
+`scanner.js` içerisindeki `getUsdtPairs()` fonksiyonunu iki fazlı hale getireceğim:
+*   **Faz 1 (Kripto):** Mevcut gibi Kripto USDT pariteleri alınacak.
+*   **Faz 2 (TradFi - Geleneksel Market):** BingX üzerindeki `NC` (Non-Crypto) ön ekli bütün varlıklar bir parser döngüsüne girecek.
+
+## 2. Kategorik Regex Çevirmeni (Yahoo Finance Entegrasyonu)
+BingX'in sentetik (NC) parite isimlerini Yahoo Finance'in okuyabileceği `fetchId` kodlarına otomatik dönüştüren bir dil çevirmeni yazacağım:
+- **`NCSK` (Hisse Senetleri):** `NCSKNVDA2USD-USDT` geldiğinde sistem bunu otomatik olarak `NVDA` olarak kısaltacak ve Yahoo Finance'de NVDA (NVIDIA) bilançolarını araştıracak. (Böylece BingX'teki HOOD, COIN, JPM vb. tüm hisseler kapsama girecek).
+- **`NCFX` (Forex):** `NCFXEUR2CHF-USDT` geldiğinde sistem bunu `EURCHF=X` formatına çevirecek, Forex pariteleri taranacak.
+- **`NCSI` & `NCCO` (Endeksler ve Emtialar):** NASDAQ, SP500, DOWJONES, BRENT OIL gibi özel kodları `^IXIC`, `GC=F`, `CL=F` şeklinde statik bir map (harita) üzerinden AI motoruna paslayan bir kütüphane ekleyeceğim.
+
+> [!WARNING]
+> Hafta sonları borsalar (TradFi) kapalı olduğu için, API'lerin ve Yahoo Finance'in Rate-Limit (Kotaya takılma) yememesi adına bu varlıklar Cumartesi ve Pazar günleri sistem tarafından akıllı bir şekilde 'Uyku Moduna' (Sleep) alınmaya devam edilecek.
+
+## User Review Required
+Bu güncelleme ile sistemin NVIDIA'dan JP Morgan'a, Brent Petrol'den Dow Jones'a kadar BingX'in tüm TradFi opsiyonlarını kapsamasını onaylıyor musun patron? Onaylarsan `scanner.js` üzerindeki statik listeyi komple silip bu akıllı avcı motorunu entegre edeceğim!

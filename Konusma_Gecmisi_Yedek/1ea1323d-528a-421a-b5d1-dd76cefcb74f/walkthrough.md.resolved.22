@@ -1,0 +1,24 @@
+# Bybit V5 Altyapı Entegrasyonu (Sürekli Vadeli İşlemler)
+
+Binance'in sınırlı altcoin skalasından kurtulup platformu tamamen profesyonel **Perpetual Futures (Sürekli Vadeli İşlemler)** alanına taşımak için devasa bir veri sağlayıcı değişimi gerçekleştirdik. Tüm algoritmalarımız başarılı bir şekilde **Bybit V5 Linear Market API**'sine geçiş yaptı.
+
+## Sistemde Neler Değişti? 🚀
+
+### 1. Periskop Modeli (Arka Plan Tarayıcısı)
+*   Artık piyasa analizi için Binance (`api.binance.com`) değil, Bybit'in vadeli işlemler arşivi (`api.bybit.com/v5/market/instruments-info?category=linear`) taranıyor.
+*   Bu sayede sistem 100-200 işlem listesi yerine MEME coinler, Layer-1'ler ve yeni çıkan majör projelerle birlikte **300'ü aşkın** kripto parayı saniyeler içinde analiz edebiliyor.
+*   **Önemli Teknik Düzeltme:** Bybit API'si K-line (Mum grafiği) verilerini *tersten* (en yeniyi en başta) gönderir. Analitik motorumuzun (SMA, ATR, Fibonacci) sapıtmaması için tüm veriler kod tarafında `.reverse()` fonskiyonuyla eski sıraya (kronolojik) oturtularak pürüzsüzleştirildi.
+
+### 2. Akıllı Portföy / PnL Takibi (Node.js & Cron)
+*   Sistemin aktif pozisyonlarınızın "Kâr/Zarar"ını ölçtüğü ve Target Price / Stop Loss tetiklemelerini kontrol ettiği periyodik fonksiyon, doğrudan **Bybit Tickers** uç noktasına kilitlendi. Değişen milisaniyelik veriler artık Bybit derinliğinden akıyor.
+
+### 3. Mobil Uygulama (Canlı Fiyat Beslemesi)
+Değişikliklerin mobile yansıdığı 3 dev ekran var:
+1.  **Home Screen (Ana Sayfa):** Sinyallerin giriş fiyatlarıyla *o anki* Bybit vadeli fiyatı arasındaki yüzdelik değişim sorunsuz hesaplanıyor.
+2.  **Favorites Screen (Favoriler):** Kişisel performansı hesapladığımız "Win Rate, PnL vb." değerler doğrudan Bybit verisi eşliğinde sürekli titreşimle yenileniyor.
+3.  **Signal Details Screen:** Ve en önemlisi; detay sayfasındaki **TradingView Grafiği** de artık Bybit borsasına özel (örn. `BYBIT:XRPUSDT.P`) sürekli vadeli (Perp) veri indeksini kullanacak şekilde uyarlandı.
+
+> [!TIP]  
+> Arka plandaki `node index.js` tarama botunuzu **siz yorulmayın diye otomatik yeniden başlattım**! Terminalde şu an aktif olarak Bybit verileri çekilmeye çoktan başlandı. 
+
+Uygulamadan güncel sinyallerin listesini aşağı doğru çekerek (Pull to refresh) yenileyebilirsiniz!

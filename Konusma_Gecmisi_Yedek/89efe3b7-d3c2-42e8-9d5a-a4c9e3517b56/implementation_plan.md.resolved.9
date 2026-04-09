@@ -1,0 +1,43 @@
+# 🏢 ELYTE HEDGE FUND v2.0 - RENAISSANCE LEVEL
+
+Dünyanın en büyük kantitatif Hedge Fonu BlackRock ve Renaissance standartlarında bir Varlık Yöneticisi tasarlamak üzere v1 altyapımızı V2.0 seviyesine yükseltiyoruz.
+
+Perplexity'den gelen "ETF Rotasyonu" ve "İçeriden Bilgi/Patent" yakalama vizyonunu sisteme tamamen entegre edecek uygulama aşamaları aşağıdadır:
+
+## 🚨 User Review Required
+> [!IMPORTANT]
+> Veritabanında (ai_sentiments tablosu) şema değişikliği yapılacağı için AWS üzerinde veritabanı yamasını (migration) manuel tetikleyeceğim. Bu süreçte eski mock (kopya) portföy verilerini, yeni "insider" ve "patent" skorlu halleriyle güncelleyeceğim. Onaylıyor musun?
+
+## 🛠️ Proposed Changes
+
+### 1. Backend & Veritabanı Genişletmesi
+Tıpkı Perplexity'nin bahsettiği gibi "Patent" ve "Insider Trading" güçlerini veritabanımıza işliyor olacağız.
+
+#### [MODIFY] `database.js` (Backend)
+- `ai_sentiments` tablosuna `insiderScore` (REAL) ve `patentScore` (REAL) kolonları eklenecek.
+- Perplexity'nin kusursuz formülüne göre FINAL SKOR (AI Güven Skoru) hesaplaması güncellenecek:  
+  `FINAL SCORE = (CEO * 0.25) + (TechEdge * 0.25) + (Earnings * 0.25) + (Insider * 0.15) + (Patent * 0.10)`
+- Sisteme test amaçlı 1 adet ETF (Örn: QQQ) eklenecek.
+
+#### [MODIFY] `index.js` (API Servisleri)
+- Tüm AI Prompt metni (ileride kullanılmak üzere) sistem içerisindeki notlara *"Son 90 gün patent başvurusu ve Form 4 insider alımları"* dahil edilecek şekilde dökümante edilecek. (V1 için Frontend verisi de buna göre mocklanacak).
+
+---
+
+### 2. Frontend (God Mode UI)
+Varlıklar (`PortfolioManager.jsx`) arayüzü tam bir Komuta Merkezine dönüşecek.
+
+#### [MODIFY] `PortfolioManager.jsx`
+- **Portföy Kartları (Holdings):** Sadece "AI Güven Skoru" yerine, artık hisse kartlarının üzerinde detaylandırılmış olarak `CEO: 9.2 | Edge: 9.5 | Insider: 8.0` gibi mikro-veriler sergilenecek.
+- **Insider Alert Badge:** Eğer bir şirkette $1M üstü Insider alımı varsa (skor yüksekse) hisse kartının üzerinde şık bir kırmızı `🚨 INSIDER ALERT` radarı yanıp sönecek.
+- **ETF Sektörü:** Hisse senetleri (STOCK) ve Fonlar (ETF) tipine göre arayüzde hem renk olarak hem de etiket olarak çok daha belirgin (Örn; QQQ, SPY) gösterilecek.
+- **Auto Rebalance Trigger:** Kasanın üst tarafına gösterişli bir `[Auto Rebalance]` (Sistemi Yeniden Dengele) işlem butonu yerleştirilecek. Tıklandığında algoritmanın yüzdeleri optimize ettiği hissini veren animasyon eklenecek.
+
+## ❓ Open Questions
+- İçeriden öğrenenlerin ticareti (Insider Alert) tetiklenmesi için limit skorumuz 80 mi olsun?
+- Makro Ana Sayfa'ndaki veriler (Sinyaller vb.) hiç değişmeden, sırf "Varlıklar" sekmesi üzerine odaklanıyorum, doğru mudur?
+
+## 🔎 Verification Plan
+- AWS loglarından yeni kolonların `ai_sentiments` tablosuna eklendiği kontrol edilecek.
+- Ekranda NVDA, QQQ veya TSLA kartlarında yeni `CEO / Edge / Insider` detayları test edilecek.
+- `[Auto Rebalance]` arayüz etkileşimi Vercel live üzerinden test edilecek.

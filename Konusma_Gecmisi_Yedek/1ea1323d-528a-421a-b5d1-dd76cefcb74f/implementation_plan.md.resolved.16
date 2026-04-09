@@ -1,0 +1,33 @@
+# AI Core Migration (Gemini to OpenAI)
+
+Sistemi limit ve kısıtlama (Quota rate limits) sorunlarından kurtarmak amacı ile analiz motorunun, içerisine $5 bakiye yüklenmiş ve limitleri açık olan **OpenAI ChatGPT API** sistemine geçirilmesi.
+
+## User Review Required
+
+> [!WARNING]
+> Bu geçiş backend (`index.js`) dosyamızdaki AI çekirdeğini komple değiştirecek. Sisteme `@google/genai` yerine `openai` paketini kuracağım. `OPENAI_API_KEY` isimli yeni bir çevre değişkeni (env) tanımlayıp, tüm Niyet Okuyucu (Context Extractor) ve Analiz (Prompt) üretimlerini OpenAI modellerine yöneteceğim. Açık olan sunucuyu durdurup paketi kurduğum an sistem OpenAI üzerinden çok daha hızlı, limitsiz ve stabil yanıtlar verecektir.
+> 
+> Bu geçiş için onay veriyor musun?
+
+## Proposed Changes
+
+### [Backend Dependencies]
+
+#### [NEW] .env
+Sisteme OpenAI anahtarını ekleyeceğim (Açık ve güvenli şekilde çalışması için loglardan gizli tutulacak).
+
+#### [MODIFY] package.json (via terminal)
+- Terminalden `npm uninstall @google/genai` komutu ile artık yavaşlayan eski kütüphaneyi sileceğiz.
+- Terminalden `npm install openai` komutu ile yeni ChatGPT kütüphanesini kuracağız.
+
+### [Core AI Engine]
+
+#### [MODIFY] backend/index.js
+1. `import` ayarları değişecek: `GoogleGenAI` çıkartılıp `OpenAI` sınıfı eklenecek.
+2. AI modeli olarak limit sorununu tamamen ortadan kaldırması, hız ve maliyet avantajı sağlaması için GPT'nin en yeni hızlı modeli olan `gpt-4o-mini` kullanılacak (Mevcut Gemini Flash muadili, fiyat olarak aşırı ucuz ve stabil bir modeldir).
+3. **Intent Parsing (Niyet Okuma):** Artık `ai.chat.completions.create` üzerinden `json_object` formatlama dayatması kullanılarak GPT'nin doğrudan JSON olarak Spot/Futures kararını fırlatması sağlanacak (Böylece arkadaki Regex çöp loglama kırılmaları bitecek).
+4. **Final Analysis (Son Analiz):** Yeni `finalPromptTemplate` yine OpenAI üzerinden hızlıca üretilip direkt metin olarak frontend'e fırlatılacak.
+5. Uyarı Mesajları (Gemini "Kota Bitti" uyarıları) temizlenecek.
+
+## Beklenen Davranış Akışı
+Senaryolar tamamen aynı kalıp, sadece arkayı limit sorunlarından tamamen kurtulmuş taze bir motor ile desteklemiş olacağız. Ayrıca ChatGPT'nin NLP (Mesaj dili yorumlama) mantığı çok daha kuvvetli olduğu için niyet okuma hatası ihtimali sıfıra yaklaşacak.

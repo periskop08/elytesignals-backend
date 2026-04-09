@@ -1,0 +1,21 @@
+# Admin vs Kullanıcı Koruması ve Kişisel Kasa: Uygulama Özeti
+
+Bu geliştirmeyle beraber Elyte Signals sistemi tam anlamıyla güvenli ve kişiselleştirilmiş bir portföy/kasa mimarisine kavuştu.
+
+## 🛠️ Neler Yapıldı?
+1. **API Koruması (`backend/index.js` ve `auth.js`):**
+   - Kayıtlı üyenin giriş yaptığında Telegram kimliğini okuyan `isAdmin` adında gizli bir Boolean (doğru/yanlış) yetki bayrağı eklendi.
+   - Sinyalleri favoriye alma (`/toggle`) veya işlemi sonlandırma (`/close`) süreçlerinin en başına "Bu kişi Admin mi?" sorgusu kodlandı. Admin *değilse*, hiçbir şekilde BingX `placeOrder` veya `closePosition` fonksiyonlarına erişim verilmeyecek şekilde devre dışı bırakıldı.
+   - Arayüzde Admin olmayanlara sadece **"Takipten Çıkar"** butonu gösterilirken, admin hesabına **"İŞLEMİ SONLANDIR (BİNGX)"** yetkisi verildi.
+
+2. **$10 Risk ve $500 Kasa Mantığı (Web & Mobil):**
+   - Sistemin tüm pnl/wallet hesaplamaları, 3 dolar sabit risk üzerinden hesaplamadan çıkartılıp, `1R = 10 Dolar` standardına çekildi.
+   - 500$'lık sanal başlangıç cüzdanı algoritmalara kalıcı şekilde oturtuldu.
+
+3. **Admin Komisyon (Fee) Kesintileri:**
+   - **Cross Margin ve 20X Kaldıraç** kuralı esas alındı ($200 Pozisyon Büyüklüğü).
+   - "Admin" hesabı sisteme giriş yaptığında, anlık aktif işlemlerinden işlemi açma bedeli olarak **-0.11$**, sonlandırılmış / kapatılmış tüm eski işlemlerinden ise (Aç/Kapat bedeli toplamı) **-0.22$** tutarında "Trading Fee + Funding Zaiyatı" düştü. Kasa bakiyeleri *tamamen net kârı* temsil edecek kusursuz bir simülasyona dönüştürüldü.
+   - Diğer kullanıcılar bu kesinti detaylarını görmeden saf PnL artışını görürler. 
+
+## ✅ Canlı Sistem
+Tüm komutlar anında Amazon (Backend) sunucularında işletildi, arayüz değişkenleri ve veritabanı kilitleri optimize edilip `Vercel` ile deploy edildi. Mobile App güncellemeleri local React Native üzerinden sorunsuz yayınlanmaya hazırdır.

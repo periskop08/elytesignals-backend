@@ -1,0 +1,31 @@
+# Ana Sayfa ve Alt Menü (Bottom Bar) Düzenlemesi
+
+Fotoğrafta iPhone Ana Ekran Çizgisi'nin (Home Indicator) sekmelerdeki yazıları kapattığı çok net görünüyor, bu kötü UX (Kullanıcı Deneyimi) hatasını çözmek şart!
+Ayrıca söylediğiniz gibi ileride uygulamayı abonelik tabanlı yapacaksak, kullanıcıyı karşılayan ve durumu özetleyen şık bir **"Ana Sayfa" (Dashboard)** şart.
+
+İşte tam da bu talepleriniz üzerine tasarladığım mimari plan:
+
+## 1. Alt Menü (Bottom Nav) Düzenlemesi ve Onarım
+*   iPhone donanım çizgisi ile buton yazılarının çakışmaması için `AppNavigator.js` üzerindeki alt menünün yüksekliği (height) **60px'den 85px'e** çıkarılacak ve ekranın en altından **25px'lik bir güvenli boşluk (paddingBottom)** bırakılacak.
+*   Bu düzenleme hem iOS'ta hem Android'de butonların ele çok rahat oturmasını sağlayacak.
+
+## 2. Navigasyon ve Yeni "Ana Sayfa" Sıralaması
+Alt menümüzdeki sekme sayısını 5'e çıkaracağız ve sırasını şu şekilde ayarlayacağız:
+1. **Ana Sayfa:** (Ev İkonu ile)
+2. **Sinyaller:** (Yükselen Grafik İkonu ile)
+3. **Analiz Sor:** (Mesaj Kutusu İkonu ile)
+4. **İstatistik:** (Pasta Grafik İkonu ile)
+5. **Favoriler:** (Yıldız İkonu ile)
+
+## 3. Yeni "DashboardScreen.js" (Ana Sayfa) Tasarımı
+Bu yepyeni sayfa, uygulama her açıldığında kullanıcıyı karşılayan vitrin olacak:
+*   **Kullanıcı Karşılama:** Ekranın en üstünde kocaman bir "Merhaba, Burhan Seçkin" yazısı ve bir Profil Avatar alanı olacak.
+*   **Durum Özeti Kartı:** Sunucudaki `signals` verisine (Aktif İşlemlere) bağlanarak "Şu an piyasalarda aktif / değerlendirilmeyi bekleyen X adet sinyal bulunuyor" mesajı verecek.
+*   **Haber Akışı (Gelecek):** İkinci bölüme tasarımsal olarak şimdilik "Haber Akışı ve Gelişmeler (Çok Yakında!)" yazan şık bir kart (placeholder) eklenecek, burası planladığınız gibi ileride dinamikleşecek.
+
+---
+
+> [!IMPORTANT]
+> **User Review Required**
+> 
+> Apple altı çizgisini ve Ana Sayfa düzenini sağ taraftaki plana entegre ettim. Hemen `execute` (Koda Dökme) işlemine geçmeme izin veriyor musunuz? Sadece onaylamanız yeterli, ben sistemin arka plan kodlarını ve sunucuları kendim yazıp yönetmeye devam edeceğim!

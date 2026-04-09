@@ -1,0 +1,10 @@
+# Web Dashboard Premium UI Giydirme Süreci (Opsiyon B Düzenlemesi)
+
+Kullanıcımız Masaüstü/Web panelindeki (Binance tarzı) yerleşim düzenini onayladı ancak sinyal kartlarının ve tasarımın *Mobil Uygulamadaki* o profesyonel parlaklığa ve detaylara birebir kavuşmasını talep etti.
+
+- `[ ]` 1. Sinyal Kartlarına "Zengin Arayüz" (Neon border, Target Progress barları, Kalite Yıldızları) kodlamak.
+- `[ ]` 2. AI Sohbet paneline (Sağ alan) cam görünümlü (Glassmorphism), asimetrik Periskop mesaj kutuları eklemek.
+- `[ ]` 3. Omuz Omuza (Grid) yapı kurarak büyük ekranlarda 2'li veya 3'lü akıllı (responsive) kart dizilimi yaratmak.
+- `[ ]` 4. Sol menüyü animasyonlu ve "Aktif sekme parlak" mantığıyla dizayn etmek.
+- `[ ]` 5. Subagent (Browser Bot) ile Local'de sızıntı testi yapıp CSS revizyonlarını kusursuzlaştırmak.
+- `[ ]` 6. Vercel'e (Canlıya) fırlatmak!

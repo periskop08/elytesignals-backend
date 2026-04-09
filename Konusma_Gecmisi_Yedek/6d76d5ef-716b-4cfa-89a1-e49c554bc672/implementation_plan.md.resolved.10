@@ -1,0 +1,20 @@
+# Makro Zırh Verisi (BTC/ETH Trend) Entegrasyon Planı
+
+Botumuzun "Açıklama" hücresine Zırhtaki kararı ne sebeple verdiğini (BTC BULL mu, NEUTRAL mi) yazması şeffaflık açısından muazzam bir eklenti olacak. Zaten sistem saniyede bu hesabı yapıp çöpe atıyordu, artık onu da kaydedeceğiz!
+
+## Proposed Changes
+
+### [MODIFY] `backend/scanner.js`
+- `analyzeCoin` fonksiyonu mevcut durumda `globalMarketState` adlı nesnede (BTC Trendi, ETH Trendi ve Dominans) verilerini tutuyor ancak işlem bittiğinde bu veriyi siliyordu.
+- Bu veriyi silmek yerine `return` aşamasında dışarı aktarıp, Google Sheets'e veri yazan satıra (`appendToSheet`) ulaştıracağım.
+- Açıklama hücresine giden veri şu şekilde formatlanacak:
+  `[BTC: BULL, ETH: NEUTRAL] - Counter-trend 4H, High R:R Bonus (+10)`
+
+### Eski 2 İşlemi (BSU ve GMT) Manuel Güncellemek
+Zırh raporlaması geçmişe dönük veritabanında saklanmadığı için (çünkü o veriyi siliyordu), o 2 işlemin yapıldığı saatteki (Dün Gece) BTC/ETH grafiği durumunu manuel olarak hesaplayıp küçük bir kodla Google Sheets tablosundaki o "Açıklama" alanlarını üzerine yazarak güncelleyeceğim.
+
+## User Review Required
+
+> [!TIP]
+> Yeni eklenecek Açıklama (Uyarılar) formatı şu şekilde görünecek: `[BTC: BULL, ETH: NEUTRAL] - Geri Kalan Diğer Nedenler`.
+> Bu yapı onaylıysa hem kodları güncelleyip hem de tablodaki geçmiş 2 işlemi otomatik düzeltecek tek seferlik tetiklemeyi başlatıyorum! Onaylıyor musun?

@@ -1,0 +1,25 @@
+# Canlı İstatistikler ve Ses Efektleri Eklendi!
+
+Artık arkanıza yaslanıp o harika kâr ve para (trink) sesini bekleme zamanı! Talep ettiğiniz özellikleri tasarlayıp uygulamaya başarılı bir şekilde entegre ettim:
+
+### 1-) Sanal Çanta ve Analitik (İstatistik Sayfası)
+Uygulamanın en alt menüsüne **İstatistik** adlı üçüncü bir sekme eklendi (PieChart ikonuyla). 
+Sistem arka planda (Backend) oluşturduğum özel bir uç sayesinde, geçmiş ve aktif olan tüm sinyalleri tek tek alıp, **"Eğer bu kullanıcı her sinyale 30$'lık bir bakiye ile girseydi cebindeki parası ne kadar eksilir veya çoğalırdı?"** (Paper Trading Modeli) sorusunun cevabını hesaplıyor. 
+*   **Sanal Kasa Büyümesi (PnL):** Kasa durumundaki kâr/zarar artışını Canlı Grafik panelinde yeşil (kârlı) veya kırmızı(zararı) formatla anlık güncelliyor.
+*   Tablonun altında Kaç defa TP ve kaç defa Stop olduğuna, toplam kaç sinyalin işleme girdiğine (Oran % olarak) anlık ulaşabiliyorsunuz. İşlem sonuçlandığında (TP/SL) sayfalar otomatik yenilenir.
+
+### 2-) Başarıya Ses Ver! (Odaklanma)
+*   React Native'in ana ses yöneticisi `expo-av` kütüphanesi kodlarımıza entegre edildi.
+*   **Sinyaller (Ana sayfa)** açıkken bir işlemin veya arkaplandaki statüsünün durumunda **"Bekliyor (Active)"** etiketli yazısı, sisteme sonradan **"Kâr! (Win)"** olarak düşerse anında **"Mükemmel bir Coin (Para / Trink)"** sesi çalacak.
+*   Tam tersi şansımıza "Zarar! (Loss)" durumuna düşüp Stop olursa da uyarı niteliğinde bir **"Hata (Dııt)"** sesi patlatacak!
+*(Sesler Google'ın açık kaynaklı ve lisanssız arşivinden çekilmekte, uygulamanızı kesinlikle yavaşlatmaz ve şişirmez).*
+
+---
+
+> [!WARNING]
+> Test için şu adımları yapmanız şiddetle tavsiye edilir:
+>
+> 1. Sesler (`expo-av`) native/yerel telefon bağlantısı kullandığı için, bilgisayarınızda açık olan **Expo Bundler'ı** (`npx expo start`) durdurup (Ctrl+C karesi) baştan çalıştırmanız ve **Expo GO**'yu telefondan arka plandan silip yeniden okutmanız gerekli.
+> 2. Aynı şekilde yeni İstatistik verisinin okuması için Backend Terminalindeki `node index.js` işleminizi kapatıp (Ctrl+C) **lütfen bir kez daha taze baştan başlatın.**
+
+Kurulum sonrası **İstatistik** sayfasına göz atabilir misiniz? Beklentilerinizi karşılıyor mu tartışalım.

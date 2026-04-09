@@ -1,0 +1,28 @@
+# Geriye Dönük Performans Doğrulaması (Retro-Test) Planı
+
+Harika bir fikir! Gerçek piyasada yaşanmış ve stop olmuş eski sinyalleri "Eğer yeni algoritmamız o gün aktif olsaydı, o işlemleri girmekten vazgeçer miydi?" şeklinde test etmek, Perplexity'nin sorduğu "Edge Kanıtı" nı elde etmenin en somut ve zekice yoludur.
+
+Sistem veri kaydederken tarih ve anlık durumları tuttuğu için bu testi yapabiliriz.
+
+## Proposed Changes
+
+### [NEW] `backend/retro_test.js` (Sanal Zaman Makinesi Modülü)
+AWS sunucusuna yepyeni bir "Geçmiş Analiz" scripti yazıp yükleyeceğim. Bu script tamamen veritabanı odaklı bağımsız bir araç olacak:
+
+- **1. Adım:** Sunucudaki `signals.db` veritabanına bağlanacak ve durumu `WIN` veya `LOSS` olarak kapanmış (Savaşını vermiş ve sonuçlanmış) son 100 veya 200 sinyali hafızasına alacak.
+- **2. Adım:** Her bir sinyalin `createdAt` (Oluşturulma Tarihi) damgasını milisaniyeye çevirecek.
+- **3. Adım:** Bybit ve Binance API'lerine özel bir parametre (`end=ZamanDamgası`) göndererek, **sadece o geçmiş tarihe kadar olan** BTC, ETH ve Dominans mumlarını isteyecek. (Yani botu geçmişe ışınlayacak).
+- **4. Adım:** Yeni eklediğimiz Algoritma motorunu (`STRONG_BULL / BEAR` + RSI/ATR) çalıştırıp, o tarihteki veriler üzerinden bir karar çıkaracak.
+- **5. Adım:** "Eğer o an yeni akıl aktif olsaydı bu sinyali BLOKE eder miydi?" sorusunun cevabını listeleyecek.
+
+### Analiz Sonucu Ortaya Çıkacak Rapor Çıktısı:
+Testin sonunda sana net olarak şu metrikleri sunacağım:
+- Toplam Geçmiş İşlem Sayısı (Win/Loss dahil)
+- **Yeni sistem bu uyduruk Stopların (LOSS) yüzde kaçını başarılı şekilde İPTAL EDERDİ?** (Örn: "70 stop işleminin 45'ine BTC/ETH Reddi yediği için engel olurduk").
+- Yeni Puanlama sistemine göre kazanmış ve kaybetmiş işlemlerin hangi BTCDOM puanlarını aldığının yüzdesi.
+
+## User Review Required
+
+> [!TIP]
+> Bu tarz geçmiş simülasyonları API kotalarını zorlamak açısından çok yoğundur, bu yüzden bunu günde 1 kere çalışan özel bir test aracı olarak sunucuna yükleyecek ve kodlayacağım. 
+> Bu "Geçmişe Yönelik Analiz (Retro-Test)" motorunu ve çıkartacağı rapor istatistiklerinin kapsamını yeterli buluyor musun? Eğer onay verirsen hemen bu mekanizmayı kodlayıp testleri ateşleyeceğim!

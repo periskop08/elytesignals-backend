@@ -1,0 +1,18 @@
+# SMC Filter Implementation Tasks
+
+- `[/]` 1. **Order Block (OB) Detection**
+  - Extract strong body bullish/bearish candles near range extremes in the last 100 periods.
+  - Verify that the sweep interacts or happens near these OB areas.
+- `[x]` 2. **Fair Value Gap (FVG) / Imbalance**
+  - Implement a logic to scan the last 3 candles (reclaim leg) for FVG gaps validating the reversal momentum.
+- `[x]` 3. **BOS/CHOCH & MTF (4H)**
+  - Re-enable the 4H 50-SMA trend condition context.
+  - Check for a local structure break (closing above recent 6h highs for long, vice-versa for short).
+- `[x]` 4. **Volume (RVOL) & Strict Profit Margin (R:R)**
+  - Adjust RVOL threshold from 1.5x down to 1.2x.
+  - Adjust minimum profit to be calculated against dynamic ATR stop loss: `RR > 1.5`.
+- `[x]` 5. **Mathematical Sweep & Reclaim Validators**
+  - Ensure sweep depth is `> ATR * 0.8` (signifying a real liquidity hunt).
+  - Ensure reclaim candle body recovers at least 50% of the swept wick length, confirming absorption.
+- `[x]` 6. **Deployment & Backend Reboot**
+  - Restart the `scanner.js` backend to reflect strict PA parameters.

@@ -1,0 +1,12 @@
+# Görsel Kusursuzluk ve Canlı Fiyat Mimarisi Task
+
+- `[x]` 1. `Dashboard.jsx` Akıllı Küsurat (Decimal) Çözümü
+    - `[x]` `fmtPrice` fonksiyonunu modifiye ederek gelen fiyatın büyüklüğüne göre dinamik ondalık atamasını ayarla (Örn: `1000'den büyükse 2, 10'dan büyükse 3, altındaysa 5 hane`).
+- `[x]` 2. TradingView Widget Varlık Tercümanı
+    - `[x]` Sinyal kartı içerisindeki grafik (iframe) URL'sini temiz sembolden TradingView Ticker'larına (Örn: `NASDAQ:NDX`, `SP:SPX`, `OANDA:XAUUSD` vb.) dönüştürecek yeni bir `getTradingViewSymbol()` fonksiyonu yaz.
+- `[x]` 3. `backend/index.js` Canlı Fiyat Proxy (Veri Yok Hatası)
+    - `[x]` `/api/prices/assets` bloğunda bulunan statik 6'lı `ASSET_BINGX_MAP`'i sil.
+    - `[x]` Taranan tüm güncel listeyi (48 asset) kapsayabilmesi için `global.BINGX_SYMBOL_MAP` ile ters eşleştirme yaparak Canlı fiyatları API'ye döndür.
+- `[x]` 4. AWS & Vercel Dağıtım
+    - `[x]` Backend'i `deploy.sh` ile AWS sunucusunda ayağa kaldır.
+    - `[x]` Frontend `Dashboard.jsx`'i Github'a commit atarak (Vercel Build) canlı web sitesine aktar.

@@ -1,0 +1,18 @@
+# Versiyon 2.1: Gelişmiş Hacim Modelleri Geldi 🚀
+
+Sinyal motorumuza sadece mum grafiklerini okuyan temel Price Action (PA) yaklaşımının ötesine geçerek, doğrudan "kilit hacim noktalarını" tespit eden iki yeni profesyonel metrik eklenmiştir: **AVWAP (Anchored VWAP)** ve **FRVP (Fixed Range Volume Profile) POC**.
+
+## 🧠 Nasıl Çalışıyor?
+
+### 1. Hedefler Artık Çok Daha Karlı ve Doğru (Sinyal Motoru)
+Sinyal arayıcı arka plan görevimiz (`scanner.js`), eskiden bir işleme girerken hedefini standart bir şekilde "Range'in (Kanalın) Orta Noktası (EQ)" olarak belirliyordu.
+
+Artık fiyat aralığını 20 farklı hacim düğümüne bölen yeni FRVP algoritmamız devrede. Eğer sistem bir *Long* (Yükseliş) işlemi bulduysa ve hacmin en yoğun döndüğü nokta (POC) bizim eski EQ hedefimizin dahi **üzerindeyse**, sistem "Fiyat oraya kadar tırmanacak hacim mıknatısına sahip" diyerek hedefinizi daha yüksek olan o POC noktasına güncelliyor.
+
+### 2. İnanılmaz Keskinlikte AI Yorumları (ChatBot Motoru)
+Yapay Zeka asistanınız artık fiyatların altında/üstünde olan pusu noktalarını da görüyor. Kendisine artık periyot boyunca elde edilen *Kümülatif Ağırlıklı Ortalama Maliyeti* (AVWAP) ve *En Çok Maliyetlenilen Seviyeyi* (POC) anlık beslemekteyiz.
+
+Siz ona *"XRP spot alım planlıyorum nereden girmeliyim?"* dediğinizde, eski sistem "Dipler şunlar" diyordu. Yeni sistem ise "Dostum şu an AVWAP seviyesi olan 1.34$'ın altındayız, yukarıda 1.39$ seviyesinde devasa bir POC (Hacim Düğümü) direnci bizi sıkıştırıyor" şeklinde çok daha derin ve ikna edici analizler sunabilecektir.
+
+> [!TIP]
+> Botun zekâ seviyesi bu parametrelerle WallStreet analistlerine çok yaklaşmış oldu. Hemen uygulamaya girip şu ana kadar sorduğunuz sorulardan birini tekrar sorun, **POC** veya **Ortalama Maliyet (AVWAP)** verilerini nasıl kullandığını test edin!

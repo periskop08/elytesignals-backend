@@ -1,0 +1,20 @@
+# Majör Coin Çelişkisi Giderildi: Güvenli Liman İstisnaları
+
+Altcoinler için mükemmel koruma sağlayan ancak bizzat Bitcoin (BTCUSDT) veya Ethereum (ETHUSDT) ticareti söz konusu olduğunda yanlış cezalar (False-positive) kesen o ince mantık açığını kalıcı olarak kapattık.
+
+## Neler Değişti?
+
+### 1- ETH Proxy Zırhı, Bitcoin İçin Kaldırıldı
+Eskiden, piyasanın sağlığını tartmak için kullandığımız **"ETH Trend Filtresi"**, eğer ayıda çıkarsa tüm LONG işlemlerini engelliyordu (Bitcoin işlemleri dahi dahil). Ancak Bitcoin, kendisinden başka hiçbir otorite veya altcoin piyasasıyla ilgilenmez.
+- **Düzeltme:** Puanlama motorunda, işlemi yapılan coin `BTCUSDT` ise, **sisteme ETH trendini tamamen görmezden gelmesi** öğretildi. Artık BTC kendi yoluna, ETH piyasası (altcoinler) kendi yoluna!
+
+### 2- Bitcoin'e Özel %100 Ters Dominans Kuralları
+Eskiden, Dominans (`BULL`) yükseldiğinde Paralar altcoinlerden emilip Bitcoin'e aktığı için Bot gidiyor, tüm coinlere (haklı olarak) `-15 ceza` puanı yansıtıyordu. Ama sistem, trade ettiği coinin bizzat Bitcoin'in kendisi olduğunu anlamayıp ona da aynı cezayı veriyordu. 
+- **Düzeltme:** Mantık TAMAMEN TERSİNE ÇEVRİLDİ.
+Eğer analiz edilen parite `BTCUSDT` ise ve:
+  - Dominans `BULL` ise (Yani paralar Bitcoin'e akıyorsa): Normal altcoinler `-15 Ceza` yerken, **Bitcoin `+15 Ödül`** puanı alarak anında barajı aşacaktır. Bu, o an paranın aktığı yerin tam olarak "İçinde" olduğumuz için bizi en harika Setup'ın merkezine oturtacaktır!
+  - Dominans `BEAR` ise (Yani para Bitcoin'i bırakıp Altsezona geçiyorsa): Sadece Bitcoin işlemlerine özel **`-15 Ceza`** puanı kesilecektir çünkü liderliğinden (ve yükseliş ivmesinden) kan kaybediyordur.
+
+> [!TIP]
+> **Ayrıcalıkların Etkisi:**
+Bu güncellemeyle beraber sistemimiz artık sadece yön değil, **"Varlık Sınıfı" (Asset Class)** zekasına da kavuşmuş oldu. Gördüğü sembolün krallık kime ait (Kendisi mi Yoksa Hizmetkârı olan altcoin mi) olduğunu idrak edebiliyor. Tüm sistem bu vizyon ışığında Canlı (PM2) ortama aktarılmıştır.

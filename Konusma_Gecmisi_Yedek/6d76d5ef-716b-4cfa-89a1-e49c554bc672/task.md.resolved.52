@@ -1,0 +1,9 @@
+# Mobil UI Glassmorphism Güncellemesi
+
+- [ ] `AppNavigator.js` içerisine Global Blur Arkaplan eklenecek.
+- [ ] `AppNavigator.js` içerisindeki Bottom Tab navigator arka planı saydamlaştırılıp üstüne Blur efekti verilecek.
+- [ ] `SignalCard.js` içerisi LinearGradient ve `rgba(255,255,255,0.05)` border mantığıyla yenilenecek.
+- [ ] `TopHeader.js` arkaplanı kaldırılıp Blur/Gradient temelli bir yapı ile güncellenecek.
+- [ ] `HomeScreen.js`, `FavoritesScreen.js`, ve `StatisticsScreen.js` sayfalarından temel arkaplan renkleri silinib Global arkaplan şeffaf gösterilecek.
+- [ ] `SignalHistoryScreen.js` arkaplanları şeffaf ve glass temalı hale getirilecek.
+- [ ] Metinlerde ve Accent (renkli) alanlarda estetik dokunuşlar yapılacak.

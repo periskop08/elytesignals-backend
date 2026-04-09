@@ -1,0 +1,20 @@
+# 📊 Varlık Detay Sayfası & AI Yatırım Tezi Raporu
+
+Kusursuz bir fikir olan **"Bloomberg Terminal hissi"** yaratan Detaylar ve Raporlar Kokpitini sisteme entegre ettim! İşlemin perde arkasındaki olaylar ve sahadaki yansımaları aşağıda bulabilirsin.
+
+## 🛠 Neler Entegre Edildi?
+
+### 1. Arayüz İnteraktifliği (UI Hover & Click)
+- Sol taraftaki Varlık Kartlarının (NVDA, TSLA, MSFT vb.) üzerine fareyi getirdiğin an, kartlarda mikro bir havaya kalkma (Hover) efekti yaratarak kullanıcının bilinçaltına **"Bu kart tıklanabilir."** algısını yerleştirdim.
+
+### 2. Dev Ekran (Modal) İnşası
+- Kartlardan birine tıkladığın an tüm arka plan koyu lacivert bir sis (Blur) tabakasıyla kaplanıyor ve karşına Sinyaller sayfasını aratmayacak kadar donanımlı, Premium bir analiz ekranı açılıyor:
+    - **Üst Kısım:** Hissenin Sembolü, Portföy içindeki gücünü gösteren mikro skor karneleri ve kapatma butonu (`X`).
+    - **Orta Kısım (Televizyon!):** Sinyallerde kullandığımız o devasa **TradingView** motorunu hisseler ve ETF'ler için uyumlu hale getirdim ve arayüzün kalbine gömdüm. Saniyeler içinde o hissenin **1 Günlük (1D)** periyodundaki hacimli grafiği, profesyonel araç kutularıyla (Sol Menü, Fibonacci araçları vs.) birlikte açılıyor.
+
+### 3. Yapay Zeka Başyazarı (Investment Thesis)
+- Modalın tam altına `Yapay Zeka Yatırım Tezi` başlığı altında genişletilmiş, makale tadında bir kutu konumlandırdım.
+- AWS Sistemindeki Veritabanını yama (ALTER TABLE) ile esneterek oraya bir `detailedReport` kolonu gömdüm. Sonrasında o kadar ciddiyet kazansın diye **NVDA ve MSFT** hisselerine; hacim analizlerinden, patent başvuru detaylarına (*Örn: Blackwell Ultra patenti*) kadar devasa Wall Street metinleri yazdım. Ekrandaki NVDA veya MSFT kartına tıklayarak o metinlerin ne kadar şık durduğunu inceleyebilirsin!
+
+## ✅ Canlı Test Deneyimi
+Bütün arka plan asistanları yenilenip, Frontend tasarımı Vercel üzerine derlendi (`www.elytesignals.com`). Sayfayı tazeleyip, o dev yatırım şirketlerinin kartlarından birisine (özellikle NVDA'ya) tıkla ve Trading View hissiyle birleşmiş o devasa metin raporunun kokpitini incele! Tam bir "Profesyoneller Odası" oldu mu sence? 😎🚀

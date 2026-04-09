@@ -1,0 +1,19 @@
+# Cross-Platform Favorites Synchronization
+
+- [/] Phase 1: Backend Database Changes
+  - [ ] Create `favorites` table in SQLite DB
+  - [ ] Add `GET /api/favorites/:telegramId` endpoint
+  - [ ] Add `POST /api/favorites/toggle` endpoint
+  - [ ] Restart PM2 to apply backend changes
+- [ ] Phase 2: Web App Integration
+  - [ ] Update `Dashboard.jsx` to fetch favorites via API (`GET /api/favorites/:telegramId`)
+  - [ ] Update `toggleFavorite` logic to use API (`POST /api/favorites/toggle`)
+  - [ ] Delete `localStorage` logic
+- [ ] Phase 3: Mobile App Integration
+  - [ ] Update `FavoritesContext.js` to fetch favorites via API
+  - [ ] Update `toggleFavorite` logic to use API
+  - [ ] Delete `AsyncStorage` logic for `favorites`
+- [ ] Phase 4: Final Testing & Deployment
+  - [ ] Verify behavior locally / via Vercel
+  - [ ] Push Web changes to GitHub (Vercel automatic deployment)
+  - [ ] Test Mobile App connection to backend

@@ -1,0 +1,24 @@
+# Varlık Optimizasyon Paketi v2
+
+Perplexity işi tamamen milimetrik puan avcılığına döküyor, mükemmel! Kurumsal piyasalarda küçük puan bonusları (Confluence) kâr marjını doğrudan artırır.
+
+Bu önerileri şu şekilde projelendireyim:
+
+## Planlanan Değişiklikler
+
+### 1. Hisseler İçin VWAP (Hacim Ağırlıklı Ortalama Fiyat) Puanı
+Kurumsal para her zaman VWAP çizgisini destek veya direnç olarak kullanır.
+- **Değişiklik:** Son 20 mumluk Hacim Ağırlıklı Ortalama (VWMA/VWAP) dinamik olarak manuel hesaplanacak. Eğer hisse (AAPL/TSLA/NASDAQ) işleminin yönü VWAP ile uyumluysa (Örn: Fiyat VWAP'ın üstündeyken LONG aranıyorsa) Kalite Skoruna **+8 Puan** eklenecek.
+
+### 2. Emtialar İçin DXY & GAP Kesişimi (Confluence) Bonusu
+- **Değişiklik:** Şu an GAP tespitini sadece hisselerde yapıyoruz. Altın ve Petrol (XAUUSD, USOIL) için de GAP taraması açılacak. Eğer Altın'da bir GAP varsa ve Dolar Endeksi'nin (DXY) trendi bu GAP'in doldurulmasını destekliyorsa (Yani Altın yukarı gap atmış ama Dolar Düşüş trendinde) **+5 Puan** ekstra bonus eklenecek.
+
+### 3. FX İçin Haber Filtresi (NFP / FOMC)
+- **Problem:** Makroekonomik haberler (Tarım Dışı İstihdam - NFP veya FED Faiz Kararları) çıktığı saniye tüm formasyonları ve grafikleri darmadağın eder.
+- **Çözüm (Opsiyonel Toggle):** Sistemin ana ayar dosyasına veya döngünün başına `isMacroNewsDay` adında bir ayar/anahtar koyacağım. Varsayılan olarak kapalı olacak. Eğer o gün çok büyük bir haber varsa (Aylık NFP gibi), robot otomatik olarak EURUSD'de çıkacak her sinyalin puanını **-20 Puan** kıracak ve işleme girilmesini engelleyecek. (Şimdilik kodu yerleştireceğiz, ileride bu eylemi sana Telegram menüsünden "Haber Modunu Aç" butonu ile bağlayabiliriz).
+
+## User Review Required
+
+> [!IMPORTANT]
+> VWAP hesaplamasını kütüphaneye muhtaç olmadan saf matematikle (Fiyat x Hacim) koda gömeceğim için sistem hiç yorulmayacaktır.
+> Bu üç optimizasyon "Son Rötüş" olarak harika görünüyor. Onayladığın an VWAP ve DXY-Gap Confluence matematiklerini Amazon sunucularımızdaki kodlara entegre ediyorum!

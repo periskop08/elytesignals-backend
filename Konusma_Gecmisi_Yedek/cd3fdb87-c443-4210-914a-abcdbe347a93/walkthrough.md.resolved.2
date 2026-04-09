@@ -1,0 +1,26 @@
+# Limitsiz Geleneksel Market (TradFi) Motoru Sonuç Raporu
+
+Sistemin içine elle girdiğimiz katı 6 varlıklı (Altın, TSLA vb.) sınır kırıldı. Yeni "Dinamik TradFi Avcısı" modülü sayesinde, BingX borsasında listeli olan **500 Bin Dolar üzeri hacme sahip tüm Geleneksel Finans (Hisse, Emtia, Forex, Endeks) varlıkları**, saf Price Action testinden geçecek şekilde zeka motorumuza entegre edildi.
+
+## Neler Değişti?
+
+### 1- Dinamik Regex Çevirmeni (AssetCrawler)
+BingX borsasında "Sentetik (NC)" varlık olarak geçen isimleri, Hedge Fund (Yapay Zeka) motorunun anlayabileceği "Yahoo Finance Ticker'larına" otomatik dönüştüren bir parser yazıldı:
+- **Hisseler (NCSK Ticker):** `NCSKNVDA2USD-USDT` kodu anında `NVDA` olarak kırpılır. Apple, Tesla, Nvidia, Coinbase, Robinhood, JP Morgan gibi platformda bulunan onlarca hisse senedi sisteme sorunsuz dahil oldu.
+- **Forex (NCFX Ticker):** `NCFXEUR2CHF-USDT` kodu saniyeler içinde `EURCHF=X` yapılarak Yahoo tabanına çevrilir. (Euro/Dolar, Sterlin, İsviçre Frangı vb. hepsi kapsama girdi).
+- **Endeksler & Emtialar:** NASDAQ, S&P500, Dow Jones ve WTI / Brent Petrol ile Platin (XPT) fiyatlamaları özel bir `ASSET_MAPPING` haritasından geçerek akıllı tarayıcıya aşılandı.
+
+### 2- Yeni Güvenlik Kalkanları ve Barajlar
+Borsa dışındaki (TradFi) pariteler kriptodan farklı dinamiklere sahip olduğu için bazı kalkanlar devrededir:
+- **Weekend Sleep (Hafta Sonu Uykusu):** Borsalar kapalıyken sahte grafik ve boşluk (gap) taramayı önlemek adına tüm TradFi varlıkları (48 adet) Cumartesi ve Pazar günleri motor tarafından yoksayılır.
+- **Hacim Toleransı:** Kriptoları minimum 3 Milyon Dolarla tararken, TradFi işlemleri daha kapalı bir havuza sahip olduğu için asgari hacim "500,000 Dolar" üzerinde olanlar radara takılır. (Hacimsiz çöp hisseler pas geçilir).
+
+### Sonuç ve Canlı Test Çıktısı
+`scanner.js` içerisine bu motor yerleştirildi ve AWS üzerinde sunucu `deploy.sh` ile yeniden ayağa kaldırıldı. Terminaldeki ilk tarama logu:
+```swift
+[GLOBAL SENSOR] BTC: STRONG_BULL | ETH: STRONG_BULL
+[SCANNER] Starting BingX pairs scan for new signals...
+[SCANNER] Found 229 USDT pairs and 48 assets to scan.
+```
+Artık 6 değil, tam **48 Adet TradFi Varlığı (Küresel Hisse Senetleri ve Emtialar)** kurumsal Wall Street vizyonundan geçerek radara yakalanacak potansiyele geldi!
+Sistem %100 Otonom!

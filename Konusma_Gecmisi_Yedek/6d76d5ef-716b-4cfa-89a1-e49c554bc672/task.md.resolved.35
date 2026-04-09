@@ -1,0 +1,16 @@
+# Sinyali Manuel Sonlandırma Planı (İşlemi Kapat Butonu)
+
+## 1. Veritabanı ve Backend Güncellemeleri
+- `[ ]` `favorites` tablosuna `customStatus`, `customPnl`, `closedAt` kolonlarını ekleyen SQLite migrasyon betiğini çalıştır.
+- `[ ]` `backend/index.js` içindeki `GET /api/favorites/:telegramId` Endpoint'ini yeni kolonlarla (`COALESCE(customStatus, status)`) modifiye et.
+- `[ ]` `backend/index.js` içerisine manuel kapatma isteğini yakalayacak `POST /api/favorites/close` Endpoint'i ekle.
+- `[ ]` Backend'i AWS üzerinde PM2 reset ile canlıya al.
+
+## 2. Mobil Uygulama Güncellemeleri (Context & Components)
+- `[ ]` `mobile/src/context/FavoritesContext.js` içerisine işlemin anlık PnL ile kapatılmasını arka yüze iletecek `closeFavoriteTrade` fonksiyonunu ve API çağrısını ekle.
+- `[ ]` `mobile/src/components/SignalCard.js` bileşenini; `isFavoriteScreen` true ve `status === 'ACTIVE'` olursa **'İşlemi Kapat'** butonu gösterecek şekilde düzenle. Butonun rengi anlık kâr/zarar yönüne göre (PnL >= 0 ise Yeşil, değilse Kırmızı) dinamik olabilir.
+- `[ ]` `mobile/src/screens/FavoritesScreen.js` üzerinden `SignalCard` bileşenine `isFavoriteScreen={true}` gönder ve kapatma teyit mekanizmasını ayarla.
+
+## 3. Test ve Bitiş
+- `[ ]` Tüm entegrasyon sonrası PnL hesaplamalarının Favoriler sayfasındaki `Kişisel İstatistiklere` anında yansımasını doğrula.
+- `[ ]` Walkthrough (Canlı Kullanım) dokümanını bitir.

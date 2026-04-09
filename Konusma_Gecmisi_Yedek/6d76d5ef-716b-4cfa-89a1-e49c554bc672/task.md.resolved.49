@@ -1,0 +1,4 @@
+- `[/]` Create `bingx-trade.js` with API authentication and execution functionalities (placeOrder, getPosition, closePosition, updateStopLoss).
+- `[ ]` Update `scanner.js` API data endpoints (Kline & Tickers) to fetch from BingX Open API.
+- `[ ]` Implement `BTCUSDT` to `BTC-USDT` string conversion in `scanner.js` fetch loops and `bingx-trade.js` exclusively, retaining core application string formatting intact.
+- `[ ]` Replace `bybit-trade` imports with `bingx-trade` inside `scanner.js`.

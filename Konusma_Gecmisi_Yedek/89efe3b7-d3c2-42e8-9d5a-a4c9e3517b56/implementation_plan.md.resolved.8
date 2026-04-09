@@ -1,0 +1,54 @@
+# 🏢 ELYTE HEDGE FUND: Varlık Yönetimi & Huni (Funnel) Mimarisi
+
+Aşağıdaki sistem mimarisi, Perplexity (veya diğer veri analiz LLM'leri) ile istişare edebilmen için teknik aşamalara ayrılarak hazırlanmıştır. Bu yapıyı kopyalayıp vizyonunu desteklemesi için Perplexity'ye sunabilirsin.
+
+## 🎯 GİRİŞ & AMAÇ
+Mevcut aktif kripto Sinyal motorumuza (Kısa Vade Nakit Akışı) ek olarak, uzun vadeli (Servet İnşası) bir **"Varlıklar ve Portföy Yöneticisi"** entegre edilecektir. Amaç: Tüm ABD borsasını sunucuyu çökertmeden taramak ve sadece "Kurumsal Çapta Fırsat" yaratan hisseleri / ETF'leri AI gücüyle portföye almaktır.
+
+---
+
+## 🛠️ SİSTEM KATMANLARI VE AKIŞI (3 AŞAMALI FUNNEL MİMARİSİ)
+
+### AŞAMA 1: Kaba Matematiksel Tarayıcı (Screener)
+- **Zamanlama:** Her gün piyasa kapanışında (Günde 1 kez).
+- **Amaç:** 5000+ ABD hisse senedi ve emtia havuzunu saniyeler içinde sadece hacim/momentum formülleriyle filtrelemek.
+- **Veri Kaynağı:** Yahoo Finance API (veya Finnhub).
+- **Kurallar:**
+  1. Hacim (Volume), son 10 günlük ortalamasının %300 üzerine çıkmış olmalı (Kurumsal balina girişi tespiti).
+  2. Fiyat, 52 Haftanın En Yüksek (52w High) seviyesine %5'ten daha yakın olmalı.
+  3. RSI seviyesi Boğa momentumunda olmalı.
+- **Çıktı:** Yapay zekaya okutulmak üzere elenmiş, **potansiyel 5-15 hisselik "Sıcak Radar Listesi"**. Bu aşama API maliyetsizdir.
+
+### AŞAMA 2: LLM (Yapay Zeka) Mülakatı & Sentiment Analizi
+- **Tetikleyici:** 1. Aşamadan başarıyla geçen yeni hisseler sisteme düştüğünde.
+- **Teknoloji:** OpenAI / Google Gemini API (Backend entegrasyonu).
+- **İşlem:** Sistem, Radar Listesindeki o 10 yeni hisse için son SEC Dosyalarını, CEO Haberlerini ve Çeyreklik Kazanç Raporlarını (Earnings) otomatik çeker.
+- **Prompt (AI'dan İstenen):** 
+  > *"Bu şirketin son gelişmelerini analiz et. Bana 10 üzerinden CEO Skoru, Teknoloji Gücü Edge Skoru ve Pazar Hakimiyeti (Market Share) Skoru ver. Sentiment değerini (%) üret."*
+- **Ağırlıklı Skor Formülü:** `(CEO Puanı * 0.3) + (Teknoloji Gücü * 0.3) + (Earnings Büyümesi * 0.4)`
+- **Çıktı:** 80 Puanın (High Conviction) üzerinde olan ve fırsat sunan hisseler sisteme **"Premium Watchlist"** olarak otomatik eklenir.
+
+### AŞAMA 3: Akıllı Yeniden Dengeleme (Smart Rebalance) & UI
+- **Tetikleyici:** Saatlik fiyat çekimleri ve kullanıcının portföye hisseyi dahil etmesi.
+- **Kurgu:** Eğer kullanıcı, AI mülakatından geçmiş o yeni "85 Puanlık" hisseyi portföye alırsa, robot bu andan itibaren o hisseyi koruma moduna alır:
+  - `%15 Drawdown (Düşüş)` gerçekleşirse ağırlığını %50 azaltır (Reduce Weight).
+  - `%25 Drawdown` kırılırsa tüm pozisyonu nakite (USDT) döner.
+  - Eğer listedeki yeni rakip hissenin puanı, mevcut hisseden yüksekse portföyde `%10 Shift (Kaydırma)` önerir.
+
+---
+
+## 💻 VERİ TABANI KİMLİĞİ (BACKEND İHTİYAÇLARI)
+Mevcut SQLite veya veritabanı sistemine 2 yeni tablo eklenecektir:
+1. `portfolio_assets`: Portföye eklenen varlıkların anlık miktarını, ortalama giriş maliyetlerini ve DD durumlarını tutar.
+2. `ai_sentiments`: Yapay Zeka botunun şirketler için ürettiği "CEO Skoru, Edge Skoru, Haber Metni Özeti ve Öneri Puanını" günlük kaydeder. Cihazları anlık yormaması için cache'lenir.
+
+---
+
+## 📋 ÖNERİLEN ARAYÜZ (FRONTEND) KURGUSU: `/varliklar`
+Sinyaller sayfası dokunulmadan kalırken, "VARLIKLAR" sekmesi tıklandığında:
+*   En tepede toplam Servet (Portföy PnL) ve Likidite/Nakit dağılım oranı grafiği (Pie Chart).
+*   Sol tarafta, AI Onayından geçmiş hisselerin güncel durumları, şirket isimleri ve "Büyüme Yönü (Boğa Oku)" kartları.
+*   Sağ tarafta **"AI'ın Gözünden"** isimli canlı bir haber/sentiment feed akışı. (Örn: *NVDA CEO Skoru 92! Rakiplerinden önde.*)
+
+---
+*Perplexity Prompt Notu:* "Sen (Perplexity) bir Hedge Fund mimarısın. Sana sunacağım bu huni (funnel) mimarisini teknik verimlilik, LLM maliyeti ve kazanç/fırsat oranı (Alpha capture) açısından yorumla. Nasıl geliştirebiliriz?"

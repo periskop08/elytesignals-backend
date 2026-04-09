@@ -1,0 +1,12 @@
+# Hafıza ve Güvenlik Ajanı Kurulum Adımları
+
+- `[x]` 1. ELYTE_MANIFESTO.md Dosyasını Güncelle
+    - `[x]` Yaşanan rsync kazası ve `.db`/log koruma kurallarını (Red Line) ekle.
+    - `[x]` Hedef Fiyat / Prompt (KTOS kuralı, Microcap, Bilanço Tablosu vb.) güncellemelerini yaz.
+- `[x]` 2. memory_agent.sh Scriptini Yaz
+    - `[x]` Konuşma geçmişlerini (`/brain` klasöründen) `ElyteSignalsBackup/Conversation_Memories/` içine çeken Bash kodunu yaz.
+    - `[x]` ELYTE_MANIFESTO.md üzerinde değişiklik varsa otomatik `git add`, `git commit` ve `git push` atan kod bloğunu ekle.
+- `[x]` 3. crontab Entegrasyonu
+    - `[x]` `memory_agent.sh` dosyasını çalıştırılabilir (`chmod +x`) yap.
+    - `[x]` `crontab -l` ile mevcut cronları oku ve `0 * * * *` tetikleyicisiyle scripti MacOS zamanlayıcısına ekle.
+- `[x]` 4. Walkthrough (Sonuç Raporu) Oluştur

@@ -1,0 +1,49 @@
+# Admin Kasası İçin Gerçekçi Komisyon (Fee) Entegrasyonu
+
+Bu planın amacı, Admin hesabına ait "Güncel Kasa Hesabı" istatistiklerinin salt kâr/zarar oranlarıyla değil, borsanın (BingX) keseceği gerçekçi komisyon (Fee) ve Fonlama (Funding) oranlarıyla net bir şekilde hesaplanmasıdır.
+
+## ⚠️ User Review Required
+> [!IMPORTANT]
+> **API mi, Matematiksel Model mi?**
+> BingX üzerinden her bir emrin *tam kuruşu kuruşuna* komisyonunu çekmek için sürekli API'ye istek atmak sistemi yorabilir ve limitlere takılabilir (Rate Limit). Bunun yerine senin verdiğin **20x Kaldıraç, $10 Margin** kuralına dayanarak her işlem için arkada **Sabit Bir Komisyon Düşüşü** modeli uygulayacağım. Lütfen aşağıdaki hesaplamayı onaylarmısın? 
+
+## Önerilen Hesaplama Modeli (Matematik)
+
+Senin verilerin:
+- **Kullanılan Margin (Risk):** $10
+- **Kaldıraç:** 20x (Cross Mod)
+- **Açılan Toplam Pozisyon Büyüklüğü (Hacim):** $10 * 20 = **$200**
+
+BingX Standart Komisyon Oranları:
+- **Piyasa Fiyatından Açılış (Taker):** %0.050  👉 *( $200 * %0.050 = **$0.10** kesinti )*
+- **Piyasa/Limit Kapanış (Ortalama):** %0.050 👉 *( $200 * %0.050 = **$0.10** kesinti )*
+- **Fonlama (Funding):** Günlük kısa işlemlerde çok ufak bir etkidir (~$0.01 - $0.02).
+
+**📌 SAPMA PAYLI SABİT KESİNTİ MODELİ:**
+Her kapatılan (veya hedefini/stopunu bulan) işlem için ana kârdan Admin'in istatistiğinde otomatik olarak **eksi -$0.22** komisyon (Fee + Funding Payı) düşülecektir.
+Örnek:
+- Gerçek kâr $3.00 ise, ekranda $2.78 net kâr olarak kasaya yansıyacak.
+- İşlem stoptan -%10 ($1) zarar ettiyse, kasa toplam -$1.22 düşecek.
+
+*Bu model sadece Admin login olduğunda aktif olacak. Diğer kullanıcılar brüt verileri görecek.*
+
+## Proposed Changes
+
+### 1. `web/src/pages/Dashboard.jsx` (Web Paneli)
+[MODIFY] `Dashboard.jsx`
+- Admin hesabına özel kâr hesaplama döngüsü içine `feeDeduction = user.isAdmin ? 0.22 : 0` kuralı eklenecek.
+- Kapalı her bir işlem döngüsünde toplam PnL'den bu ücret düşülecek ve Toplam Kasa (500$) öyle şekillenecek.
+
+### 2. `mobile/src/screens/FavoritesScreen.js` (Mobil Uygulama)
+[MODIFY] `FavoritesScreen.js`
+- Context üzerinden çekilen `user.isAdmin` kontrol edilerek, kişisel kasa istatistikleri döngüsünde kapalı/açık her işleme -$0.22 komisyon gideri yansıtılacak.
+- Arayüzde kasanın "Komisyonlar düşülmüş NET hesap" olduğu ufak bir rozet/text ile belirtilecek.
+
+## Open Questions
+1. Matematiksel mantık olarak her işlemden **$0.22** sabit komisyon düşmem uygun mudur? Yoksa $0.20 olarak düz mü hesaplayalım?
+2. Kasada anlık "açık" olan işlemlerde henüz kapanış fee'si alınmadığı için sadece -$0.10 düşeceğim. Uygun mudur?
+
+## Verification Plan
+1. Sabit kâr elde edilen (örneğin %10 kardaki) bir işlemin üzerine tıklanarak "Admin" tarafından sonlandırılacak.
+2. Web UI üzerinde kasanın normalde $1 beklerken, tam olarak $0.78 eklendiği doğrulanacak ($500.78).
+3. Mobil uygulama yenilenecek ve paranın $500.78 olduğu teyit edilecek.

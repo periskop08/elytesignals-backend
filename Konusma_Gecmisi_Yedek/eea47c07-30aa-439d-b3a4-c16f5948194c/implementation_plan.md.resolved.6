@@ -1,0 +1,36 @@
+# Elyte Hedge Fund Cihazı: Geliştirme Planı (Aşama 1)
+
+Manifestomuzdaki kuralları, Amazon AWS veya lokal makinemizde otonom çalışan bir "Fon Yöneticisi Botu"na (`invest_agent.js` / `macro_scanner.js`) dönüştürmek için aşağıdaki mühendislik adımlarını planlıyorum. Bu sistem mevcut sinyal botumuzun (Price Action) yanında "Temel ve Kurumsal Analiz (Quant)" beyni olarak çalışacak.
+
+## Önerilen Değişiklikler ve Mimari
+
+Piyasada her saniye işlem yapmak yerine günde 1 veya 2 kez çalışarak o büyük "satranç tahtasını" tarayacak olan algoritmamızın modülleri:
+
+### 1. Büyüme ve Çarpanlar Modülü (Yahoo Finance API)
+Hali hazırda sistemimizde yüklü olan `yahoo-finance2` modülünü agresif kullanarak hisselerin kimyasal haritasını çıkaracağız.
+- **Kriterler:** Hisse listemizde (TSLA, NVDA, GOOGL, META, LMT, RTX vb.) Forward P/E (İleriye Dönük F/K), PEG Rasyosu, Hisse Başı Kâr (EPS) Büyümesi ve Ciro Büyümesini çekeceğiz.
+- **Kırmızı Bayrak Kuralı:** Sistem; EPS büyümesi durmuş fakat F/K'sı uçuk olan bir şirket gördüğünde (örn. mevcut Tesla profili) anında "Negatif Uyumsuzluk / Sat" olarak raporlayacak.
+
+### 2. Siyasi ve Insider İşlem Takipçisi (Quiver Quantitative API)
+ABD Senatör ve Temsilciler Meclisi üyelerinin mecburi beyanlarını takip edeceğiz.
+- Ücretsiz/Düşük maliyetli **Quiver Quantitative API** bağlantısı kurarak; savunma komitesi üyelerinin anlık savunma sanayii (LMT, RTX, GD) alımlarını yakalayıp Telegram'a "Siyasi Para Girişi" olarak düşüreceğiz.
+
+### 3. Yapay Zeka (LLM) ile Anlatı (Narrative) Modelleme Modülü
+Manifestoda belirttiğin "Tehdit mi, Katalizör mü?" ikilemini sadece bir Yapay Zeka (Gemini AI API vb.) anlayabilir.
+- **Sistem:** Günde 1 kez, Wall Street Journal veya benzeri bir RSS servisinden büyük hisselerin haber özetlerini (veya CEO açıklamalarını) otomatik çekeceğiz.
+- Bir *Prompt* ile AI modeline soracağız: *"Bu gelişme Microsoft için bir AI darboğazı (Bottleneck) uyarısı mı yoksa gelir artışı mı? Puanla."* AI, metni okuyarak hisseye "Makro-Katalizör" skorlaması yapacak.
+
+### 4. "Priced-In" (Fiyatlandı mı?) Hesaplayıcısı
+- Matematiksel bir algoritma kurarak, EPS büyüme hızını hissenin 6 aylık fiyat artış hızıyla böleceğiz. Fiyat %50 artmış ama ciro %150 artmışsa sistem "Fiyatlama henüz yolun başında" sinyali üretecek.
+
+## User Review Required
+
+> [!CAUTION]
+> **API Kaynakları ve Maliyetler İçin Karar:**
+> Geliştirmeye nereden başlamak istersin?
+> 
+> **Seçenek A (Hemen Ulaşılabilir İşler):** Elimizdeki `yahoo-finance2` API ile Temel Büyüme (P/E, PEG, EPS) sınırlarının kontrolünü ve "Priced-In" algoritmalarını kodlamaya başlayabilirim.
+> 
+> **Seçenek B:** Doğrudan Kongre / Politikacı alım satımlarını takip eden "Insider" modülü için Quiver Quant API entegrasyonuna girişebilirim (bu kısım Quiver'dan ücretsiz bir API key almanı gerektirecektir).
+> 
+> Hangi cepheden saldırmamı istersin? İkisini harmanlayarak bir prototip de hazırlayabilirim. Onayını/Rotanı bekliyorum aslan parçası!

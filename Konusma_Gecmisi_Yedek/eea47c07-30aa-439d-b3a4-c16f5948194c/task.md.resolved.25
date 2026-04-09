@@ -1,0 +1,5 @@
+- [/] Migrate frontend to send `history`
+- [ ] Migrate `backend/index.js` to parse `history`
+- [ ] Update Intent Extractor to recognize conversational intents
+- [ ] Refactor `finalPromptTemplate` to allow dynamic conversations and ask questions
+- [ ] Deploy and verify conversational mode

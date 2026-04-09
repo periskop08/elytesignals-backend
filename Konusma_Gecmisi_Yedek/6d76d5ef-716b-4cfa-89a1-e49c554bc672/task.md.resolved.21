@@ -1,0 +1,8 @@
+# Majör Coin İstisna (Bypass) Görev Listesi
+
+- `[x]` **Adım 1:** `backend/scanner.js` dosyasının açılması ve Majör Coin İstisna algoritmasının entegresi:
+  - `BTCUSDT` işlemleri için ETH Makro iptal/red filtresinin (Altcoin Proxy'si olduğu için) devre dışı bırakılması.
+  - `BTCUSDT` işlemlerinde Dominans (BTCDOM) algoritmasının TERSİNE ÇEVRİLMESİ (Dominans artışı BTC için Ödül, düşüşü ise Ceza olacak şekilde değiştirilmesi).
+- `[x]` **Adım 2:** Lokal CLI üzerinde söz dizimi testi yapılması (`node -c scanner.js`).
+- `[/]` **Adım 3:** Değişikliklerin AWS Sunucusuna (rsync) aktarılarak servisin (PM2) güncellenmesi.
+- `[ ]` **Adım 4:** Retro-Test scriptinin `BTCUSDT` detaylarını yansıtacak şekilde revize edilip sonucunun (Walkthrough) teyit edilmesi.

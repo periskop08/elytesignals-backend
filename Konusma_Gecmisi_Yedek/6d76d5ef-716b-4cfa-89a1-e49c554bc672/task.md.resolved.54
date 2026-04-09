@@ -1,0 +1,7 @@
+# Mobil UI Glassmorphism & Parity Güncellemesi
+
+- [x] Global Işık Okyanusu (Bright Gradient Orbs) tasarımı.
+- [x] Sekme Çubukları & Üst Menü Blur Dönüşümü.
+- [x] Sinyal Kartlarına Saydam Şeffaf (Translucent) Geçiş.
+- [x] **[YENİ]** İstatistik Kartları (Aktif, Long, Short vb.) Web sitesindeki gibi Beyaz Çerçeveli ve Arkası Gölgeli Glass Badge yapısına geçirildi.
+- [x] **[YENİ]** Dashboard filtreleme sekmesi eklendi: "Hepsi", "Kripto", "Varlıklar". Aktif sinyaller bu metriklere göre bölünüyor ve istatistik çubuklarına anında etki ediyor (Pürüzsüz Web kopyası).

@@ -1,0 +1,32 @@
+# Sinyali Manuel Sonlandırma Planı (İşlemi Kapat Butonu)
+
+Kullanıcının global sinyali beklemeden, "Favoriler" sekmesindeki kendi işleminden anlık kâr/zarar (%PnL) marjıyla ayrılabilmesi ve bunu kişisel istatistiklerine yansıtabilmesi için harika bir mimari kuruyoruz.
+
+## Proposed Changes
+
+### [MODIFY] `backend/database.js` & SQLite Veritabanı
+Manuel kapanan işlemlerin durumlarını kaydedebilmek için `favorites` tablosuna 3 yeni kolon ekleyeceğiz:
+- `customStatus TEXT` (Örn: 'WIN' veya 'LOSS')
+- `customPnl REAL` (Anlık kapatılan PnL değeri)
+- `closedAt DATETIME` (Kapanış saati)
+
+### [MODIFY] `backend/index.js` (Web API)
+- **`GET /api/favorites/:telegramId`**: Favoriler çekilirken eğer kullanıcının bu işlemde `customStatus` değeri doluysa, global `status` yerine bu custom değeri (Ve customPnl'i) Mobile iletecek.
+- **`POST /api/favorites/close`**: [NEW] Kullanıcının işlemi sonlandırma butonuna bastığında tetiklenecek yepyeni bir uç nokta (endpoint). İşlemi anlık PnL verisiyle sonlandırıp veritabanına yazacak.
+
+### [MODIFY] `mobile/src/context/FavoritesContext.js`
+- Yeni `closeFavoriteTrade(signalId, currentPnl)` fonksiyonu eklenecek. Uygulama bu fonksiyonu çağırarak arkaplanla haberleşecek ve işlemi kapatıp lokal durumu güncelleyecek.
+
+### [MODIFY] `mobile/src/components/SignalCard.js`
+- Kart bileşenine yeni bir `isFavoriteScreen` prop'u tanımlanacak. Eğer kartımız "Favoriler" ekranında gösteriliyorsa ve durum hala "ACTIVE" ise kartın üzerinde belirgin bir **"İşlemi Kapat"** butonu belirecek.
+
+### [MODIFY] `mobile/src/screens/FavoritesScreen.js`
+- Sinyal Kartlarına `isFavoriteScreen={true}` gönderilecek ve kart üzerinden gelen butona tıklandığında anlık PnL hesaplanıp, onay alınarak `closeFavoriteTrade` API'si tetiklenecek.
+
+## User Review Required
+
+> [!WARNING]
+> Bu yapı sayesinde uygulamanın Taramalar sekmesindeki ana sinyaller hedefine gidene kadar (TP/SL) yeşil yanmaya ve beklemeye devam edecek. Sen sadece kendi kopyanı satarak havuzdan çıkmış olacaksın.
+> İşlemi kapattığında "İstatistikler" ekranındaki **Win-Rate**, **Net Kâr** gibi kişisel detayların doğrudan senin kapattığın anki değere göre kalibre edilecek.
+>
+> Yapı tam olarak zihnindeki vizyona oturmuş mu onaylıyor musun? Onaylarsan kodu baştan uca inşa edeyim.

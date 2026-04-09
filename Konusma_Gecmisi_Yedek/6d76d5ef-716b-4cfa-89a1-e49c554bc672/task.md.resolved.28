@@ -1,0 +1,7 @@
+# RSI Gizli Uyumsuzluk (Hidden Divergence) Görev Listesi
+
+- `[x]` **Adım 1:** `backend/scanner.js` üzerinde RSI'ın geçmiş dalgalarını taraması için değişken kapsamlarının ayarlanması.
+- `[x]` **Adım 2:** LONG yönü için *Gizli Boğa (Higher Low Fiyat, Lower Low RSI)* analiz motorunun Skoralama bölümüne (Quality Score) eklenmesi.
+- `[x]` **Adım 3:** SHORT yönü için *Gizli Ayı (Lower High Fiyat, Higher High RSI)* analiz motorunun Skoralama bölümüne eklenmesi.
+- `[x]` **Adım 4:** Lokal söz dizimi testi (`node -c scanner.js`) yapılması.
+- `[x]` **Adım 5:** RSI Algoritmasının AWS canlı sunucuya aktarılarak botun (PM2) yeniden başlatılması.

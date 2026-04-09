@@ -1,0 +1,24 @@
+# Tamamlanan Geliştirmeler: Gelişmiş Dinamik İstatistikler ve %2 Kar Takibi
+
+Ana sayfanızı ve istatistik panelinizi sıradan bir arayüzden çıkarıp, **gerçek zamanlı fiyat analizi yapabilen profesyonel bir ekrana** dönüştürdük.
+
+## 1. Ana Sayfa (Dashboard): Canlı PnL ve Yön Dağılımı
+
+Eskiden ana sayfa sadece aktif "X" adet sinyal olduğunu belirtiyordu. Artık arka planda tüm aktif işlemlerin verisini saniyeler içinde Binance canlı fiyatlarıyla (API limitlerini zorlamadan, tek bir toplu paket halinde) harmanlayıp **şu anki durumlarını** ekrana dinamik bir Dashboard kutusu olarak basıyor.
+
+Yeni Dashboard Kartı artık şunları anlık gösterecek (15 saniyede bir otomatik canlanır):
+- `📈 Long İşlem Sayısı`
+- `📉 Short İşlem Sayısı`
+- `✅ Kârda Olan İşlemler`
+- `❌ Zararda Olan İşlemler`
+
+## 2. %2 Kâr Barajı Takip Yeteneği (Scanner Zekası)
+
+Kullanıcıların en büyük şikayetlerinden biri *"İşlem aslında %3'leri falan gördü ama sonra geri dönüp stop patlattı, istatistiklerde tamamen başarısız duruyor"* hissidir. Bunun önüne geçtik.
+
+1.  **Arka Plan Tarayıcısı (Scanner):** Artık pozisyonları dakikada bir kontrol ederken sadece TP/SL oldu mu diye bakmıyor. Binance'ten güncel fiyatı çekip kâr limitini hesaplıyor ve **işlem en az +%2 kârı gördüğü an veritabanına o pozisyon için altın bir yıldız (reachedTwoPercent = 1) atıyor.**
+2.  **İstatistik Ekranı Entegrasyonu:** `İstatistikler` menüsüne girdiğinizde, Toplam Sinyallerin tam altına devasa ve altın sarısı renkte **"✨ %2 Kâr Barajını Aşanlar"** isimli yeni bir vurgulu kart eklendi.
+3.  **Performans Ölçeği:** İşlem gelecekte terste kalıp STOP (Başarısız) olsa bile, sizin analiz motorunuzun o coini analiz ederken "en az %2" kâra sokmayı başardığı gerçeği orada gururla listelenecek. 
+
+## 3. Sistem Sağlığı Optimizasyonları
+Binance API kısıtlamalarına yakalanmamak adına muazzam bir `Toplu (Batch)` istek altyapısı kuruldu. Arka planda 50 farklı aktif coin varsa, eskiden Scanner bunlara 50 ayrı koldan sorgu atıyordu. Şimdi ise **tek bir "Bana tüm fiyatları ver"** sorgusuyla (ticker/price) saniyenin binde biri hızında her bilançoyu eşleştirip hesaplamalarını yapıyor.

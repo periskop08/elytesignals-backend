@@ -1,0 +1,23 @@
+# Google E-Tablo (Sheets) Rapor Entegrasyonu (Tamamlandı)
+
+Günlük gece 03:00'da (Türkiye Saati) çalışan Periskop Modeli raporu'nun, Telegram'a VURDUKTAN HEMEN SONRA istatistiksel, analize tam uyumlu bir E-Tabloya alt alta satır olarak düşecek şekilde entegrasyon işlemi kodlanmıştır.
+
+## 🛠️ Neler Değişti?
+1. `googleapis` npm modülü API sunucusuna kuruldu.
+2. `backend/google-api.js` adında bağımsız bir Google Auth yetki kontrolcüsü (Service Account modülü) oluşturuldu.
+3. `backend/scanner.js` içerisindeki `sendNightlyReport()` yapısı modifiye edildi. Yeni durumda 6 farklı sütuna (`[Tarih, Kazanan(WIN), Stop(LOSS), Açık İşlem, Başarı Oranı(%), DetaylıKırılım(JSON)]`) tek bir satır halinde "Append" yapacak bir özellik projelendirildi. Tıpkı talep ettiğin gibi Telegram da çalışmaya devam edecek (Hibrit sistem).
+
+---
+
+> [!CAUTION]
+> Çok Önemli (Sistemi Canlandırmak İçin Senin Yapman Gerekenler):
+
+Sistemin (Benim) senin kişisel Drive klasörüne dışarıdan bir veri yazabilmem için bana yetki anahtarını (Service Account) vermen gerekiyor. Şu 4 adımı tamamlarsan sistem ilk geceden itibaren çatır çatır çalışmaya başlayacak:
+
+1. **Yetki Anahtarı İndir:** Google Cloud Platform (GCP) Konsoluna girip bir proje oluştur. "Google Sheets API" servisini aktifleştir. Sol kısımdan `Credentials` > `Service Account` oluştur ve bir key'i JSON formatında bilgisayara indir.
+2. **Kimliği Yerleştir:** İndirdiğin o uzun isimli `.json` dosyasının adını tam olarak **`google-credentials.json`** yaparak projedeki `backend/` klasörünün içine yapıştır/yerleştir.
+3. **Tabloyu Paylaş:** Kendi Drive'ından tertemiz, yeni, boş bir Google E-Tablo (Google Sheets) aç. Tablonun sağ üstündeki **"Paylaş"** butonuna tıkla. Az önce indirdiğin JSON dosyasını bir text editörü ile aç, orada yazan `client_email` karşısındaki uzun sahte e-posta adresini kopyala ve tablonu bu e-postaya **"Düzenleyici (Editor)"** olarak paylaşıma aç. (Sistemin dokümana yazma izni kopardığı yer burası).
+4. **ID Sisteme Kaydet:** Açtığın tablonun linkindeki karmaşık ID'yi al (`https://docs.google.com/spreadsheets/d/XXXXXXXXX/edit` linkindeki sadece o şifreli `XXXXXXXXX` kısmı) ve `backend/.env` dosyanı açıp en altına aynen şu formatta ekle:
+   `GOOGLE_SHEETS_ID='BUNU_SİLMEYİP_KENDİ_IDNİ_YAPIŞTIR'`
+   
+Bu 4 adımı hallettiğinde veya takıldığında bana yazman yeterli! 🫡

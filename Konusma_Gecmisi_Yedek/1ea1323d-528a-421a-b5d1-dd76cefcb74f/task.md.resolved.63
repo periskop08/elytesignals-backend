@@ -1,0 +1,6 @@
+# Vercel Dağıtım Süreci
+
+Masaüstü Web Uygulamasını dünyaya açmak için son rötuşlar:
+
+- `[x]` 1. React Router SPAs için Vercel "Rewrite" (Yönlendirme) mühür dosyasını projeye yüklemek. (`vercel.json`)
+- `[x]` 2. Kullanıcıya lokal terminalinde (`macOS Terminal`) çalıştırması gereken ateşleme komutunu (login & deploy) sağlamak.

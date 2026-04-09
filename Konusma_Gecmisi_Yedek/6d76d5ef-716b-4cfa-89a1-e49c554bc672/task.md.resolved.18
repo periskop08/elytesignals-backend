@@ -1,0 +1,9 @@
+# Geriye Dönük Backtest (Retro-Test) Görev Listesi
+
+- `[x]` **Adım 1:** `backend/retro_test.js` scriptinin yerel olarak inşa edilmesi:
+  - SQLite veritabanından kapanmış (WIN/LOSS) işlemlerin geçmişe dönük (Timestamp tabanlı) çekilmesi.
+- `[x]` **Adım 2:** Bybit (`end`) ve Binance (`endTime`) API'lerinin limit parametrelerinin konfigüre edilerek geçmiş makro verilerin çekilmesi.
+- `[x]` **Adım 3:** Seçilen işlemler için geçmiş makro ortamının yeniden oluşturularak Yeni Algoritma ile test edilmesi.
+- `[x]` **Adım 4:** Sistem kodlarının `rsync` ile AWS canlı sunucusuna yüklenmesi.
+- `[x]` **Adım 5:** AWS sunucusunda test scriptinin çalıştırılarak sonuçların toplanması.
+- `[x]` **Adım 6:** Rapor analizi ve Walkthrough dosyasının derlenip kullanıcıya sunulması.

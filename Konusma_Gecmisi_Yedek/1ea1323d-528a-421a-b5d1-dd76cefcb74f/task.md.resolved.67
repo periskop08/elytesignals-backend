@@ -1,0 +1,6 @@
+# Canlı PNL Animasyonları ve Sinyal Detay Grafiği Projesi
+
+- `[x]` 1. Sinyal Detay Sayfası Tasarımı (TradingView Iframe ve Geri Dönme Mekanizması)
+- `[x]` 2. ByBit Canlı Fiyatlandırma (`livePrices`) Motorunun API ile bağlanması
+- `[x]` 3. Mobildeki `BlinkingPnl` çakar animasyonlarının CSS `@keyframes` altyapısının kurulması
+- `[x]` 4. Tüm sistemin `Dashboard.jsx` içerisine hatasız entegresi ve test edilmesi.

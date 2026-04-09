@@ -1,0 +1,38 @@
+# Global Piyasa (Market Context) Sensör Filtresi Planı
+
+Altcoinlerde üretilen sinyallerin (hem LONG hem de SHORT) mevcut piyasa döngüsüne (Bitcoin ve MarketCap trendine) uyum sağlaması için algoritma düzeyinde "Global Akıntı Testi" aşaması eklenmesi hedeflenmektedir. Bu sayede bot akıntıya karşı kürek çekmekten (boğa piyasasında zorla short aramak gibi) kurtulacaktır.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bybit veya Binance'in standart API'lerinde **BTC.D (Bitcoin Dominansı)** ve **TOTAL (Toplam Market Değeri)** doğrudan işlem gören ve kolayca çekilebilen pariteler değildir (Binance'de BTCDOMUSDT endeksi bulunur ancak TOTAL için TradingView/Coinmarketcap gerekir). 
+> **Açık Soru:** TOTAL ve Dominans verilerini çekmek için CoinMarketCap API veya benzeri bir kaynağınız var mı? Yoksa bu iki veriyi Binance Index (BTCDOMUSDT) ve ETH+BTC Market katsayısı gibi alternatif yollarla simüle mi edelim? Lütfen fikrinizi belirtin.
+
+## Proposed Changes
+
+### 1- Global Sensör Modülünün Oluşturulması
+Her bir altcoin için binlerce kez BTC datası çekerek API limitlerine (Rate Limit) takılmamak adına, arka planda ayrı çalışan bir `Genel Piyasa Sensörü` mekanizması kuracağız.
+
+#### [MODIFY] `backend/scanner.js`
+- **Yeni Değişken:** `let globalMarketState = { btc: {}, total: {}, btcDom: {} }` objesi oluşturulacak.
+- **Yeni Fonsiyon:** `analyzeGlobalMarket()` eklenecek. Bu fonksiyon her 15 dakikada bir çalışarak:
+  - BTCUSDT verilerini Bybit üzerinden 1 Saatlik, 4 Saatlik ve Günlük (1d) bazda indirecek.
+  - Her üç zaman dilimi için EMA 20, SMA 50, RSI ve MACD analizlerini kullanarak BTC'nin yönüne `STRONG_BULL`, `BULL`, `NEUTRAL`, `BEAR`, `STRONG_BEAR` etiketlerinden birini iliştirecek.
+- **Entegrasyon:** `analyzeCoin(symbol)` fonksiyonunun içerisine Global Sensör Entegrasyonu yapılacak.
+  - Eğer sinyal SHORT ise ve `globalMarketState.btc` 4H/1D bazında `STRONG_BULL` gösteriyorsa; bu sinyal direkt REDDEDİLECEK (üretilmeyecek) veya kalite puanı (score) zorla `-25` olarak cezalandırılacak.
+  - Eğer sinyal LONG ise ve BTC `STRONG_BEAR` ise aynı şekilde bloke edilecek.
+
+### 2- Kontrol Mekanizması Kapsamı
+Filtrelemenin sadece SHORT işlemlere değil LONG işlemlere de eksiksiz uygulanması.
+
+#### [MODIFY] `backend/index.js` (Eğer API'ye eklenecekse)
+- Sunucu tarafında `GET /api/market-status` şeklinde bir endpoint açılarak kullanıcıların Web Dashboard üzerinden "Sistem şu an ana trendi ne görüyor?" (Örn: BTC: Yükseliş, TOTAL: Nötr) bilgisini görmeleri sağlanabilir. (İsteğe bağlı - İleride eklenebilir).
+
+## Open Questions
+
+> [!WARNING]
+> Yukarıda da belirttiğim gibi, TOTAL (Kripto Toplam Market Değeri) verisi TradingView dışında kripto borsası API'lerinde pek bulunmaz. Bunu nasıl çözelim? 
+> **Seçenek A:** CoinMarketCap ücretsiz API Key alabilirsiniz (Günde belli sayıyı geçmedikçe bedava).
+> **Seçenek B:** Binance Futures'ta bulunan `BTCDOMUSDT` verisini kullanarak direkt dominansı çekeriz, TOTAL yerine de basitçe Bitcoin fiyatı + top 5 coin değerine bakar piyasanın genel yönünü çıkartırım.
+
+Hangi seçeneği (A mı B mi) tercih ettiğini söylersen veya farklı bir API'n varsa yazarsan; hemen plana onay verip yazılım kısmına geçeceğiz!

@@ -1,0 +1,11 @@
+# Analist Chat: Üretken Zeka (LLM) Kurulumu
+
+- [x] 1. Backend Yapılandırması (`backend/`)
+  - [x] `@google/genai` SDK kurulumunu tamamla.
+  - [x] `backend/.env` dosyası içerisine şablon `GEMINI_API_KEY` değişkenini ekle.
+- [x] 2. Analiz Motoru Revizyonu (`backend/index.js`)
+  - [x] Mevcut kalıp metinleri üreten `getAnalysis` fonksiyonunu, Binance verilerini ham bir "Sistem Promptu"na çevirecek şekilde uyarla.
+  - [x] Kullanıcıdan gelen serbest soruyu ve Binance Sistem Promptunu (Fiyat, EQ, Range, Hacim) Google Gemini API'sine (gemini-2.5-flash) gönder.
+  - [x] Api ayarlanmamışsa çökmeyi engelleyecek Güvenli İniş (Fallback) metodunu kodla.
+- [x] 3. Optimizasyon & Test
+  - [x] Cevapların markdown destekli ve profesyonel trader tonunda olması için Prompları şekillendir.

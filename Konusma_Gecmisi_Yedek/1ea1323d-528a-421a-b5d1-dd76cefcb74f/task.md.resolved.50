@@ -1,0 +1,7 @@
+# Kullanıcı Oturumu (Auth) & VIP Davet Sistemi
+
+- `[x]` 1. `mobile/src/context/AuthContext.js` dosyasını oluşturmak (AsyncStorage ve User mantığını içerecek).
+- `[x]` 2. `mobile/App.js` dosyasını düzenleyip `AuthProvider`'ı en üste sarmak (wrap error handling). Wait, App.js might need this context!
+- `[ ]` 3. `mobile/src/screens/LoginScreen.js` dosyasında `AuthContext`'i kullanarak login butonlarına tıkladığında (isim + rastgele profil fotoğrafı) oturum açtırmak.
+- `[ ]` 4. `mobile/src/screens/FavoritesScreen.js` dosyasını güncelleyerek `AuthContext` üzerinden gerçek çekilen ad/fotoğraf bilgisini kullanmak.
+- `[ ]` 5. `mobile/src/screens/HomeScreen.js` ana sayfada ilk giriş yapan kullanıcılar için "VIP Gruba Katıl" penceresi (Modal/Alert) göstermek.

@@ -1,0 +1,20 @@
+# Wall Street Güncellemesi: Kurumsal Mantık Devrede!
+
+Perplexity ile yaptığınız beyin fırtınasından çıkan "Geleneksel Piyasa Sırları" az önce Elyte Sinyal Motoru'nun çekirdeğine başarıyla enjekte edildi ve Amazon AWS sunucularına aktarıldı! Artık sistem kriptonun o vahşi doğasını bir kenara bırakıp tam bir "Banker" gibi hareket etmeye programlandı.
+
+## Motor Neleri Öğrendi?
+
+1. **Dolar Endeksi (DXY) Bağlantısı Koptu Koptu!** 💸
+   - Motor artık `DX-Y.NYB` (Dolar Endeksi) verilerini her taramada saniye saniye takip ediyor. Eğer Dolar yükselişteyse (BULL), koda koyduğum beton blok sayesinde asla Altın'a veya Petrol'e *LONG (Alış)* yönlü bir işlem onaylanamıyor! Korelasyon filtresi aktif.
+
+2. **Döviz Çiftleri İçin 200 Günlük Zırh (1D SMA200)** 🛡️
+   - Döviz çiftleri (Örn: EURUSD) merkez bankalarının trendinden sapamaz. Eğer bir saatlik grafikte harika bir alım (LONG) sinyali yakalansa bile, algoritma arkasını dönüp "Acaba günlük grafikte 200 Günlük Hareketli Ortalamanın (SMA200) altında mıyız?" diye kontrol ediyor. Eğer altındaysa o sinyali acımasızca çöpe atıyor.
+
+3. **Emtialarda Kurşun Geçirmez StopLoss (ATR x 2.5)** 🎯
+   - Bildiğin gibi Altın ve Petrolün "Stop Patlatma" fitilleri meşhurdur. Algoritmayı test ederken fark ettik ki kriptodaki sıkı StopLoss (Normal ATRx1.5) altın için çok dar. Artık analiz edilen sembol `XAUUSD` veya `USOIL` ise zararkes mesafemiz anında kendini 2.5 kat büyüterek güvenli alana (Safe Zone) çekiliyor.
+
+4. **Hisseler Artık "GAP" Mıknatısına Sahip** 🧲
+   - Apple veya Tesla gibi hisselerin bıraktığı gece boşlukları artık bot tarafından otomatik saptanıyor. Sistem eğer geride kapatılmamış bir "Gap Fill" hedefi ( %0.5'ten büyük boşluklar) bulursa, fiyatları direkt o boşluğa kitleyip hedef fiyatını (Take Profit - TP) orası olarak güncelliyor!
+
+**Amazon PM2 Loglarından Onay:**
+Logları az önce kontrol ettim, döngü şu an `[GLOBAL SENSOR] BTC: STRONG_BULL | DXY: STRONG_BEAR` formatında dünyayı eş zamanlı okuyarak işlemler aramaya devam ediyor. Motor harika hırıldıyor! 🔥

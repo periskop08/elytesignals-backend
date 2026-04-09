@@ -1,0 +1,34 @@
+# Hedef
+BingX borsasında işlem açma/kapatma (otomatik veya manuel) yetkilerini salt olarak Sistem Yöneticisine (Admin'e) tahsis etmek. Arayüze giren diğer sıradan ziyaretçilerin veya üyelerin 'İşlemi Sonlandır' veya 'Favoriye Ekle' butonlarına basmalarının BingX API'si üzerinde tetiklemeler (Kapatma/Açma) yapmasını engellemek; onlara sadece sanal bir takip veya portföy izleme (İstatistik) deneyimi sunmak.
+
+## 🔴 User Review Required
+Bu değişiklik çok kritik bir güvenlik mimarisi güncellemesidir. Aşağıdaki stratejiyi inşa ettiğimde arka plandaki BingX API anahtarının kasası ve tetik mekanizması sadece sana özel olacak, diğer herkes kendi lokal simülasyonundaymış gibi uygulamayı kullanacaktır. Planı inceleyip onaylaman gerekiyor.
+
+## Proposed Changes
+***
+### Backend Mimarisi (Rol ve Güvenlik Ayrımı)
+#### [MODIFY] `backend/.env`
+- `ADMIN_TELEGRAM_ID=Senin_ID_Gelecek` şeklinde yeni bir çevresel değişken (environment variable) eklenecek.
+
+#### [MODIFY] `backend/index.js`
+- **Favoriye Ekleme (`POST /api/favorites/toggle`):** Kullanıcının ID'si `ADMIN_TELEGRAM_ID` ile eşleşmiyorsa `placeOrder()` (Borsada işlem aç) fonksiyonu tamamen pas geçilecek. İşlem sadece veritabanında sanal olarak `favorites` tablosuna (takip listesine) yazılacak.
+- **İşlemi Kapatma (`POST /api/favorites/close`):** Kullanıcın ID'si Admin değilse, `closePosition()` (Borsaya emri durdur isteği) atılmayacak. Sistem sadece veritabanında kullanıcının kendi favori listesinde işlemi 'WIN/LOSS' olarak kapattığına dair lokal kayıt düşecek.
+- **Login ve Yetki (`GET /api/user-trades/:id` vb):** Giren kullanıcının Admin olup olmadığını frontend'e ileten `isAdmin` boolean verisi API dönüşlerine eklenecek.
+
+***
+### Frontend ve Mobile (Kullanıcı Deneyimi Uyarlaması)
+#### [MODIFY] `web/src/pages/Dashboard.jsx`
+- Eğer bağlanan kişi `isAdmin` değilse, "İşlemi Sonlandır" butonu gizlenecek veya metni "Takipten Çıkar / Favoriden Kaldır" olarak değişecek. 
+- Standart bir üye, sinyaller sekmesinden yıldız tuşuna bastığında karşısına "Borsada İşlem Açıldı" gibi uyarılar yerine "Takip Listesine Eklendi" gibi uyarı çıkartılacak.
+
+#### [MODIFY] `mobile/src/screens/FavoritesScreen.js`
+- Favoriler ekranındaki kaydırılınca çıkan "Sonlandır" tuşunun metin kurgusu admin ise "Borsada Pozisyonu Kapat", normal üye ise "Sadece Uygulamadan Çıkar (Kâr Al)" algısına hizalanacak.
+
+## ⚠️ Open Questions (Bekleyen Sorular)
+> [!IMPORTANT]
+> Admin hesabını tam olarak şifreleyebilmem için senin **Telegram ID** numarana ihtiyacım var. Telegram'dan bot a girdiğinde aldığın user/telegram ID numaranı buraya yanıt olarak yazabilir misin? Veya ID'yi nereden görebileceğini hatırlamıyorsan "@userinfobot" gibi botlar aracılığıyla öğrenebilirsin.
+
+## Verification Plan
+1. `ADMIN_TELEGRAM_ID` dosyaya eklenecek.
+2. Web üzerinden farklı bir hesapmış gibi simüle edilerek BingX tarafında `placeOrder`'a komut gitmediği test edilecek.
+3. Kendi lokalindeki güncelleme sonrası AWS canlı sunucusuna kod aktarılacak (Deploy süreci).

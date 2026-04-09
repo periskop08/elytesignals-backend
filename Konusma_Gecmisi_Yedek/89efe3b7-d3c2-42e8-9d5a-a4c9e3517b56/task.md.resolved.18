@@ -1,0 +1,8 @@
+# 🏢 Elyte Varlık Yöneticisi (Portfolio) Projesi İstasyonları
+
+- `[x]` **Backend (Veritabanı) Güncellemesi:** `index.js` içerisinde bulunan DB kurulum koduna `portfolio_assets` ve `ai_sentiments` isimli iki yeni tablo şeması ekle.
+- `[x]` **Backend (Veritabanı) Mock Data:** Veritabanına test amaçlı birkaç hisse verisi (NVDA, TSLA) eklenmesi için başlatma fonksiyonuna seed data ekle.
+- `[x]` **Backend (API) Endpointler:** Frontende veri gönderecek olan `/api/portfolio` ve `/api/sentiments` servislerini `index.js` içine yaz.
+- `[x]` **Frontend Menü & Sekme (Tab):** `Dashboard.jsx` içerisine `activeTab === 'portfolio'` mantığını ve menü çubuğuna `💼 Varlıklar` ikonlu gezinme butonu ekle.
+- `[x]` **Frontend Layout İnşası:** 'Varlıklar' sekmesinin tasarımını Glassmorphism, pasta grafik göstergeli ve "AI Haber/Duygu" şeritli şekilde oluştur. (`PortfolioManager.jsx`)
+- `[x]` **Sistemi Senkron Et (Deploy):** Bütün kodları AWS'e (Backend) ve Vercel'e (Frontend) canlıya aktar.

@@ -1,0 +1,8 @@
+# Görev Listesi (Bybit V5 Data Migration)
+
+- `[/]` 1. `backend/scanner.js` dosyasının Bybit V5 Instruments ve Klines endpoint'lerine göre güncellenmesi (mum dizilimlerini `.reverse()` metoduyla düzeltme).
+- `[ ]` 2. `backend/index.js` içerisindeki Cron Job (canlı PnL verileri ve açık pozisyon kontrolü) kodunun Bybit `tickers?category=linear` formatına taşınması.
+- `[ ]` 3. `mobile/src/screens/HomeScreen.js` içerisinde anlık fiyat beslemesinin Bybit Tickers API'si ile değiştirilmesi.
+- `[ ]` 4. `mobile/src/screens/FavoritesScreen.js` içerisinde anlık fiyat beslemesinin Bybit Tickers API'si ile değiştirilmesi.
+- `[ ]` 5. `mobile/src/screens/SignalDetailScreen.js` içerisinde anlık fiyattan hedefe uzaklık ölçümlerinin Bybit Tickers API'si ile değiştirilmesi.
+- `[ ]` 6. Tüm sistemin yeniden başlatılıp Bybit sinyallerinin sisteme sağlıklı aktığının Terminal ve Expo üzerinden test edilmesi.

@@ -1,0 +1,22 @@
+# Gelişmiş Sensör & Hacim (Dominans) Entegrasyonu Özeti
+
+Sistemin kalbine daha önce dahil ettiğimiz **ETH (Total Proxy)** ve **BTC.D (Bitcoin Dominans)** verileri sadece okuma/loglama fazından çıkartılarak, doğrudan **Sinyal Kalitesi Karar Algoritmasına** (Quality Score & Decision) bağlanmıştır. 
+
+## Yapılan Optimizasyonlar
+
+### 1- Altcoin Piyasası (Ethereum) Filtresi
+Bir altcoin'de oluşan her sinyal, artık doğrudan "Altcoinlerin Babası" olan Ethereum'un 4 saatlik trend onayından geçmek zorundadır:
+- Sinyal **SHORT** ise, ancak Ethereum ralli yapıyorsa (`STRONG_BULL` veya `BULL`), bu işlem iptal edilir. "Altcoinler patlarken düşüş beklemek risktir." kuralı uygulandı.
+- Sinyal **LONG** ise, ancak Ethereum kan ağlıyorsa (`STRONG_BEAR` veya `BEAR`), bu işlem iptal edilir. "Para altcoin pazarından tamamen çıkarken alım yapmak risktir." kuralı eklendi.
+
+### 2- Dominans (Sermaye Yönü) Ceza ve Ödül Sistemi
+Para akışını tespit edebilmek için Bitcoin Dominans verisi artık kalite (Kalite Skoru) algoritmasında **çarpan etkisi** yapmaktadır:
+
+- **Dominans Şahlanıyorsa (`STRONG_BULL` / `BULL`):** 
+Bu durum likiditenin (paranın) altcoinlerden Bitcoin'e aktığını gösterir. Bot böyle riskli bir ortamda bir `LONG` işlemi bulursa kalitesinden peşin olarak **-15 ceza puanı düşer**, loglara `High BTC.D Penalty (-15)` olarak uyarı atar.
+- **Dominans Çöküyorsa (`STRONG_BEAR` / `BEAR`):** 
+İşte bu Altcoin Partisi/Rallisi demektir! Likidite altcoinlere akıyorken botun bulduğu her potansiyel `LONG` işlemine **+15 ekstra ödül puanı** verilir. Böylece güçlü barajları bile rahatlıkla yıkarak en çok paranın kazanılabileceği o şanslı işlemleri Telegram'a uçurur!
+
+> [!TIP]
+> **Canlı Yayınlandı!**
+Yeni kurallar kodlandı, Syntax (yazım) testleri gerçekleştirildi ve hemen ardından AWS Ubuntu (13.60.44.209) sunucusuna `rsync` ile yüklenerek aktif edildi. Bot, bu saniyeden itibaren paranı hem BTC eğilimi, hem Total Market eğilimi hem de Para Yönü (Dominans) ile 4 katmanlı olarak koruyor ve avlıyor! 🎉

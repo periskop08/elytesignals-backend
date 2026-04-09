@@ -1,0 +1,34 @@
+# BingX API Gerçek Zamanlı Gelir (Income) ve Entegrasyonu
+
+**Açıklama:** Botumuz günde kısıtlı sayıda sinyal verdiği için, bu sinyalleri sadece matematiksel bir "Komisyon" teorisine oturtmak yerine doğrudan BingX'in "Hesap Hareketleri (Ledger/Income)" noktasına bağlayacağız. İşlem anında ne kadar fonlama parası aldıysan, veya ne kadar spillage/fee kestiyse, API'den kuruşu kuruşuna çekip direkt uygulamalarımıza yazdıracağız. Hem senin şahsi $500 kasan, hem de Genel Üyelerin göreceği Bot İstatistikleri tam anlamıyla %100 "Net Kâr" sergileyecek!
+
+## ⚠️ User Review Required
+> [!IMPORTANT]
+> - Veritabanlarına (`signals` ve `user_trades`) **`netPnlUsd`** adında yeni bir "tam dolar" sütunu eklemem gerekiyor. 
+> - Sistem TP/SL (hedef) yediğinde veya sen "İşlemi Sonlandır" dediğinde arka planda 2 saniye bekleyip BingX API'sinden ilgili coinin işlem ücretlerini (Fee), fonlamasını (Funding) ve ana kârını (Realized PnL) USD cinsi toplayıp veritabanına mühürleyeceğim.
+> - Onaylıyorsan sisteme bu mimariyi işliyorum.
+
+## Proposed Changes
+
+### `backend/bingx-trade.js` (BingX Köprüsü)
+[MODIFY] Sadece emir gönderici değil, artık "Muhasebeci" olacak.
+- **getNetIncome(symbol, startTime, endTime):** Bir emir kapandığında BingX `/openApi/swap/v2/user/income` adresine gidip bizim pozisyonun açık kaldığı vakit aralığındaki tüm (Fee + Funding + PnL) tutarlarını küsuratı küsuratına USD olarak geri dönecek.
+
+### `backend/index.js` ve Veritabanı
+[MODIFY] Veritabanı Güncellemesi
+- `signals` (Genel Sinyaller) ve `user_trades` (Favorites) tablolarına `netPnlUsd REAL` eklenecek.
+- Eğer kullanıcı admin ise, **Manuel Sonlandır** (`/api/favorites/close`) tıklandığında BingX API üzerinden o işlemin NET dolar faturası çekilecek ve kaydedilecek.
+
+### `backend/scanner.js`
+[MODIFY] Bot TP veya SL (Otomatik hedef) kapattığında, arka planda hemen BingX Income'a soracak. Sonrasında `signals.status = WIN/LOSS` yaparken `netPnlUsd` değerini saf "kesintileri yapılmış kazanç/kayıp (Dolar)" olarak kaydecek.
+
+### Frontend (Web ve Mobil)
+- Önceden kurduğumuz matematiksel `% PnL * 10 - Fee` formülü sadece **Mevcutta Açık ve devam eden (Aktif)** işlemler için kullanılacak.
+- İşlem kapandıysa sistem artık kendi matematiğini *çöpe atıp*, tamamen BingX'ten gelen bu orijinal dolar verisini (netPnlUsd) kullanacak. Böylece ekranda ve herkesin genel cüzdan istatistiğinde 1'e 1 gerçek veriyi okuyacağız!
+
+## Open Questions
+- TP veya SL (Hedef) kapandıktan hemen sonra BingX verileri işlemesi saliselik veya 1-2 saniyelik bir gecikme yaratabilir. Uygulama veritabanına bu bilgiyi çekmek için kapanıştan sonra `2 saniye` bekletme atayacağım (Garantili okumak için). Senin için uygundur diye tahmin ediyorum?
+
+## Verification Plan
+1. Sistem uygulandıktan sonra `netPnlUsd` sütunları eklenecek.
+2. Basit bir 2 dolarlık kâr kapatılıp hem borsa panelindeki PnL ile uygulamamızın kasasına eklenen rakam test edilecek. Kuruşlarda bile fark olmayacak!

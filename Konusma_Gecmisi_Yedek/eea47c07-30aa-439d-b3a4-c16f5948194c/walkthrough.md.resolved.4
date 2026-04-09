@@ -1,0 +1,23 @@
+# Elyte Kalite Skoru Pine Script Entegrasyonu
+
+Arka planda (Node.js) çalışan gizli ve kompleks tüm filtrelerimizi, manuel takip edebilmen adına tam teşekküllü bir Pine Script İndikatörü olarak TradingView'e başarılı bir şekilde aktardık.
+
+## 🛠 Neler Başardık?
+- **Sweep Kavramı (Yön Belirleme):** `scanner.js` kodlarındaki dip ve tepe Deviation (ihlal) stratejisi başarıyla bar döngülerine yedirildi.
+- **Skorlama Motoru (1'e 1 Çeviri):** Order Block (+25), FVG (+15), RVOL (+15), ADX (+/-10), KAMA (+5), StochRSI (-10), Ichimoku (+15) ve Hacim Deltası (Buy/Sell Ratio +/- 15) mekanizmaları Pine Script diline kusursuz uyarlandı.
+- **Görsellik:** Şartları sağlayıp 40 Puanı geçen ilk kırılımlarda grafik üzerine görsel logolar (Score etiketleri ve Background Rengi) işlendi.
+
+## ⚙️ Nasıl Kuracaksın?
+
+1. Ürettiğim [elyte_scanner.pine](file:///Users/periskop/.gemini/antigravity/brain/eea47c07-30aa-439d-b3a4-c16f5948194c/elyte_scanner.pine) kodunun içeriğini tamamen kopyala.
+2. Bilgisayarında tarayıcıdan **TradingView**'ı aç ve herhangi bir grafiğe (Örneğin BTCUSDT) gir.
+3. Ekranın en altında bulunan **"Pine Editor"** sekmesine tıkla.
+4. Açılan penceredeki mevcut kodları silip kopyaladığın Elyte kodunu yapıştır.
+5. Editörün sağ üstündeki **"Grafiğe Ekle (Add to Chart)"** butonuna veya **"Kaydet (Save)"** butonuna tıkla.
+
+> [!TIP]
+> Grafikte ayarladığın zaman dilimi (1H, 4H, 1D), indikatörün o dilime özel sinyal aramasını sağlar. Sistemimiz genelde 1H ve 4H için optimize edilmiştir.
+>  
+> Sol üstte indikatör isminin yanındaki ⚙️ Ayarlar ikonuna tıklayarak *Min Quality Score Barajını* (Örn: 40 yerine 55) dilediğin gibi canlı olarak değiştirebilir, daha sert hedefleri kovalayabilirsin.
+
+Artık grafik üstünde gezinirken bir botun süzgecinden geçen profesyonel ve kurumsal gözüktüğünü kendi gözlerinle canlı okuyabilir, analizlerine manuel güçlendirme katabilirsin! 🚀

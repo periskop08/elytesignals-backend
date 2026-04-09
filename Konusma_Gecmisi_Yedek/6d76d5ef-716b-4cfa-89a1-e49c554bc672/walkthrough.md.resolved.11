@@ -1,0 +1,28 @@
+# Varlıklar Entegrasyonu Başarıyla Tamamlandı!
+
+Elyte Tarama Motorunuz artık Kripto dışında Geleneksel Piyasalarda (FX, Emtia, Hisse Senedi) işlem kovalayacak altyapıya sahip!
+
+## Neler Değişti?
+
+1. **Arayüz (UI) Filtreleri** 
+   - Dashboard ana sayfasında kullanıcıların tüm sinyalleri filtreleyebileceği "Kripto / Varlıklar" sekmeli akıllı Dropdown eklendi.
+
+2. **Dış Veri Sağlayıcısı: Yahoo Finance API** 
+   - Bybit'in kripto sınırlarını aşmak için sunucuya endüstri standardı olan **Yahoo Finance v3** kütüphanesi entegre edildi. Herhangi bir ekstra API anahtarı satın alınmasına veya .env'de saklanmasına gerek yoktur, tamamen ücretsiz ve sınırsız çalışır.
+
+3. **Akıllı Hafta Sonu Algoritması**
+   - Hafta sonları ABD Borsaları kapalı olduğu için, robot bunu algılar ve Cumartesi-Pazar günleri yalandan sinyal atmamak için Varlıklara (ASSET) veri isteği göndermez. Sadece 7/24 açık kriptolara odaklanır.
+
+4. **Telegram Logları**
+   - Sistem bir sinyal yakaladığında Telegram'a giden mesaja dinamik kategori algılama eklendi. (Örn: `[VARLIKLAR (FX/Emtia)]` tespiti).
+
+## Taranacak Hazır Varlıklar Listesi
+
+Sistem artık varsayılan olarak şu piyasaları saniye saniye okumaktadır:
+- Altın (**XAUUSD**)
+- Euro/Dolar (**EURUSD**)
+- Apple (**AAPL**)
+- Tesla (**TSLA**)
+- NASDAQ Endeksi (**NASDAQ**)
+
+*İstediğiniz hisse senedini veya emtiayı (Örn: BIST hisseleri bile dahil) `scanner.js` içerisindeki `ASSET_SYMBOLS` listesine istediğimiz an ekleyebiliriz!*

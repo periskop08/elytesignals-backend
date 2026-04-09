@@ -1,0 +1,18 @@
+# 💼 Varlıklar (Portfolio) Simülasyon Ekranı Entegrasyon Raporu
+
+Perplexity ile üzerinde durduğumuz devasa mimarinin somutlaştırma işleminin **V1 (Frontend Demo ve Temel Veritabanı)** aşaması tamamlanmıştı. Şimdiyse bu harika vizyonu tam bir Wall Street Hedge Fonu seviyesi olan **V2.0 (God Mode)** sürümüne güncelledik.
+
+## 🚀 V2.0 Yenilikleri ve Eklemeler
+
+### 1. Veritabanı Genişletmesi (Mikro Skorlar ve ETF)
+- **`ai_sentiments` & `portfolio_assets` Tabloları:** `insiderScore` (Form 4 Insider Alım Skoru) ve `patentScore` (Teknolojik Patent Edinim Skoru) veritabanına aşılandı. Eski kayıtlar güncellendi.
+- Sisteme Perplexity'nin rotasyon önerisini doğrulamak ve test etmek amacıyla örnek bir **ETF (QQQ)** portföy mock datasından eklendi.
+
+### 2. Dashboard Geliştirmeleri (Komuta Merkezi Düzeni)
+- Yeni arayüzde artık sadece nihai "AI Puanı" değil, hisse kartının göbeğinde 4 ana kriterin **Mikro Karnesi (CEO, Tech Edge, Patent, Insider)** sergileniyor.
+- **ETF Radarı:** ETF ve STOCK sınıflarımızdaki varlıkların etiketleri parlatıldı, ETF (QQQ) gibi borsa fonlarına özel mavi bir aura/bordür atandı.
+- **🚨 INSIDER ALERT!** Eğer Yapay Zeka botumuz o hisseden devasa bir içeriden alım tespit eder ve `insiderScore`'unu 80'in üzerine çıkarırsa kartın üstünde yanıp sönen kırmızı bir Radar/Alarm simgesi çıkıyor (NVDA hissesinde görebilirsin).
+- Portföy başlığının soluna mükemmel derecede şık, fütüristik bir **`[Auto Rebalance]`** butonu eklendi. Gelecekte Python/Yapay Zeka kodlarımız varlık yüzdelerini hesaplarken bu butona bağlanacak.
+
+## ✅ Test & Doğrulama
+V2.0 güncellemesi AWS (Backend Database Yaması dâhil) ve Vercel `www.elytesignals.com` üzerine başarıyla gönderilmiştir. Arayüz kusursuz bir şekilde Komuta Merkezini renderlamaktadır. Mevcut "Makro Pusula ve Sinyaller" ekosisteminden sıyrılmış, tamamen yatırım bankalarına yakışan bir arayüz oldu.

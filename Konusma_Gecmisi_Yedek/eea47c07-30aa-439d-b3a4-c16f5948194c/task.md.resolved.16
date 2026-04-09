@@ -1,0 +1,13 @@
+# Hedge Fund Detaylı Analiz Görevleri
+
+## Aşama 1: Backend Veri Zenginleştirmesi
+- `[/]` `macroEngine.js` içine Debt, EarningsHistory verilerini çekme kodunu ekle.
+- `[ ]` `macroEngine.js` içine OpenAI API çağrısı entegre et (CEO beklentileri ve Backlog için).
+- `[ ]` Bu çağrıları saatte bir güncellenecek şekilde önbelleğe al.
+- `[ ]` AWS sunucusuna `rsync` ile yükle ve `pm2`'yi yeniden başlat.
+
+## Aşama 2: Frontend (Dashboard) Güncellemesi
+- `[ ]` `Dashboard.jsx` içerisindeki Stock Modal'ına Çeyreklik Büyüme (Son 4 Çeyrek) grafiğini/listesini ekle.
+- `[ ]` Borç Durumu panelini ekle.
+- `[ ]` AI Analiz (CEO ve Backlog Özeti) kutusunu entegre et.
+- `[ ]` Sistemi test et ve Vercel'e (Build) push et.

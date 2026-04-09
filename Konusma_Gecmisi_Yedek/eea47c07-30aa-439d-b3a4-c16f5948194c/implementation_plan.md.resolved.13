@@ -1,0 +1,38 @@
+# Conversational AI Trading Assistant Upgrade
+
+The current Gemini AI implementation acts as a static "Signal Generator". It forces every user prompt into a rigid Futures or Spot template, dismissing the conversational nuances (e.g., asking for advice on an existing losing trade, finding dip zones for DCA).
+
+To fulfill the goal of creating a "true analyst AI" that understands the user's intent, reads their entry positions, and responds dynamically like a real person, we will implement the following changes:
+
+## User Review Required
+
+> [!IMPORTANT]
+> The AI will transition from returning strictly formatted signal cards to printing dynamic conversational text. It will still provide trade setups when requested, but it will also speak in paragraphs to answer direct questions like "My entry is X, should I add margin?". Let me know if you want the "New Trade Setups" to retain their exact current visual template even in conversational mode.
+
+## Proposed Changes
+
+### Backend (`index.js`)
+
+#### [MODIFY] `backend/index.js`
+- Update the `POST /api/analysis` endpoint to accept an array of `history` messages from the frontend alongside the new `userMsg`/`prompt`.
+- Refactor the **Intent Extractor** to recognize new conversational intents (e.g., `TRADE_REVIEW`, `DCA_ZONES`, `GENERAL_CHAT`).
+- Modify the `finalPromptTemplate` to inject the `history` so the AI remembers past contexts (e.g., the user saying "I am short at 68K").
+- Relax the strict "DO NOT WRITE PARAGRAPHS" constraints. Give the AI permission to act as an analyst, ask clarifying questions (e.g., "Maliyetin kaç bro?"), and provide conversational feedback pointing out structural errors (like "Burada FVG onayı yokmuş, o yüzden terste kalmışsın").
+
+### Frontend (`web/src/pages/Dashboard.jsx`)
+
+#### [MODIFY] `web/src/pages/Dashboard.jsx`
+- Update the `handleChat` function to map and send the existing `chatLog` state to `/api/analysis` as `history` so the backend AI has full conversational memory.
+
+## Open Questions
+
+1. Do you want the AI to automatically analyze the "Global Market State" (BTC Trend, USDT Dominance) before answering personal trade reviews?
+2. If the user asks a non-crypto question, should the AI politely decline or try to answer?
+
+## Verification Plan
+
+### Manual Verification
+- Go to the Dashboard Chat and type: "STBL coinde zarardayım, sence ne yapmalıyım?"
+- Verify the AI asks: "Maliyetin (giriş fiyatın) neresi dostum?"
+- Reply with a price and verify the AI performs a structural analysis based on that entry.
+- Type: "Bana yeni bir BTC short işlemi ver" and verify it still outputs a valid setup template.

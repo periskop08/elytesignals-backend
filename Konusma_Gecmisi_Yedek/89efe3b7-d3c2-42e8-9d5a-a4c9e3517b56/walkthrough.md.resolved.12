@@ -1,0 +1,22 @@
+# 📈 Momentum & Ichimoku Kumo Katmanı Canlıda!
+
+Gelen onay üzerine, Hedge Fund algoritmamızın sadece "Kripto/Kripto Pariteleri" üzerinde çalışan basit mantığını devasa bir **Wall Street İndikatör Motoruna** çevirmiş bulunuyoruz. Kodlar AWS sunucumuza an itibarıyla Push'landı (gönderildi). 
+
+Aşağıda sisteme yeni entegre edilen "Teknik Zeka" (Technical Edge) algoritmasının perde arkasını özetledim:
+
+## 1. Stokastik RSI (Momentum Katmanı) 🚀
+- **Eski Sorun:** NVDA gibi yapay zeka hisseleri haftalardır ralli yapıyor. Eski kodumuz *"Fiyat çok şişti, bu tehlikeli"* diyerek bu hisseye `-10 kalite puanı (Ceza)` veriyordu.
+- **Yeni Strateji:** Aşırı alım cezasını kaldırdık! Artık Stokastik motoru, geçmiş mum (prevStoch) ile mevcut mumu (lastStoch) kıyaslıyor. Eğer gösterge dipten dönüp "Altın Kesişim (Golden Cross)" verirse, direkt olarak **+10 Puan** ekleyip sinyali portföye çekiyor.
+  
+  *AWS Loglarında Şöyle Çıkacak:*
+  > 🟢 `StochRSI Altın Kesişim (+10 Puan)`
+
+## 2. Ichimoku Bulutu (Kumo) Filtresi ☁️
+- **Eski Durum:** Fiyat bulutun biraz üstüne çıktığında rastgele +15 alıyordu fakat fiyat, Span A ile Span B'nin içine girdiğinde (Eski yatırımcıların nefret ettiği testere bölgesi), algoritmamız bunun ciddi tehlike arz ettiğini bilmiyordu.
+- **Yeni Strateji:** Motor artık "Senko Span A" ve "Senko Span B" arasındaki *Kumo (Bulut)* sınırlarını haritalıyor. Fiyat tam ortadayken (İki çizginin arasına düştüğünde) yatırımcı uyarılıyor ve bonus puanlar iptal ediliyor.
+  
+  *AWS Loglarında Şöyle Çıkacak:*
+  > ⚠️ `Kumo Bulutu İçi (Testere Piyasası)`
+
+## ✅ Sonuç
+Portföy yönetimi stratejin sadece matematiksel `Drawdown` (Zarar kes) oranından çıkarılarak; tam anlamıyla kurumsal fonlara ait sofistike alım/satım kuralları **(Fibonacci Limiti + Stokastik Altın Kesişim + Kumo Filtresi)** ile birleşti. Canlı AWS sunucumuz an itibarıyle `pm2` üzerinde yeniden başlatıldı ve sistem taranmaya hazır! 😎🔥

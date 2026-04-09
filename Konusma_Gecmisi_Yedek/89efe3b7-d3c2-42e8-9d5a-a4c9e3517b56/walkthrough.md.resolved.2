@@ -1,0 +1,36 @@
+# PeriskopAI "Yönetici Özeti" ve Türkçe Optimizasyonu
+
+Kullanıcı talebi doğrultusunda sistemin verdiği çıktıları büyük ölçüde kısaltıp hedefe yönelik, *"Yönetici Özeti (Executive Summary)"* modeline getirdik. Artık PeriskopAI gereksiz terim sözlüğü sunmadan sadece durumu ve alınması gereken aksiyonu raporluyor.
+
+## Yapılan Optimizasyonlar
+1. **İngilizce Hataların Türkçeleştirilmesi:**
+   - OpenAI'ın limit aşımı (429) durumunda dönen uyarı Türkçeleştirildi: *"Dostum, şu an API'de yoğun bir trafik var..."*
+   - Kullanıcının ne istediğinin anlaşılamama senaryosundaki `Unclear` uyarısı Türkçeleştirildi: *"Dostum, stratejini tam anlayamadım..."*
+   - Genel hata ve sunucu çökme anısındaki uyarılar: *"Kral, şu an sistem aşırı yüklendi..."* ve *"Dostum, varlık verisine ulaşılırken hata oluştu..."* şeklinde optimize edildi.
+
+2. **FUTURES (Kaldıraçlı İşlemler) Prompt Revizesi:**
+   Sözlük kısımları tamamen atıldı. Yeni format sadece 2 madde istiyor:
+   - **Mevcut Durum:** (Fiyat ve POC analizi)
+   - **Kritik Karar:** (Hangi seviyenin Stop veya Entry olarak belirleyici olacağı)
+   Ardından doğrudan İşlem Tablosuna geçmesi kodlandı.
+
+3. **SPOT (Uzun Vade Yatırım) Prompt Revizesi:**
+   Uzun açıklamalar atıldı. Yeni format:
+   - **Makro Görünüm:** (Genel haftalık ve günlük çerçevedeki ana yön)
+   - **Aksiyon Planı:** (Yatırımcı nereden mal toplamalı?)
+   Ardından doğrudan Alım Tablosuna geçmesi kodlandı.
+
+## Doğrulama / Canlı TSLA Testi
+Yeni konseptin başarısını doğrulamak için **"TSLA long girmek istiyorum"** komutunu AWS üzerindeki PeriskopAI sunucusuna yolladık.
+Testin sonucu kusursuzdu:
+
+> **Mevcut Durum:** Mevcut fiyat 360.53$, POC 360.53$ ve ADX 23.7 ile zayıf bir trend gösteriyor.
+> **Kritik Karar:** Burası, 0.618-0.786 Fibonacci geri çekilmesi için potansiyel bir sahte kırılma bölgesi olabilir; bu nedenle dikkatli olunmalı ve doğru yapı kontrol edilmelidir.
+> 
+> **SUMMARY FUTURES SETUP (TSLA)**
+> İşlem Yönü: Long
+> Giriş Bölgesi: 360.53$
+> Stop-Loss: 351.41$ (-2.98%)
+> Take-Profit: 396.11$ (+9.85%)
+
+Sistem, yapısını bozmadan istenilen seviyeye sadık kaldı. AWS sunucusu şu an tamamen "Kısa ve Net Yönlendirici" modülde canlı!

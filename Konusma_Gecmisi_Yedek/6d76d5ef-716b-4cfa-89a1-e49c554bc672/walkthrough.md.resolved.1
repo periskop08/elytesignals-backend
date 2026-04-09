@@ -1,0 +1,18 @@
+# Risk Yönetimi: 10 Limitli Portföy ve Akıllı Yedekleme (Backfill) Sistemi
+
+Mükemmel bir fon yönetimi stiline geçiş yaptık! Piyasaya aynı anda onlarca emir gönderip cüzdanı riske atmak yerine, tam profesyonel bir kurgu oluşturduk. İçerideki işlem sayısı artık hiçbir zaman **10'u geçmeyecek**. Peki içerisi boşaldığında? O zaman da devasa bir **Otonom Yedekleme** (Backfill) zekası devreye girecek!
+
+## Sınırlandırma (Limit 10) Nasıl Çalışıyor?
+`scanner.js` içine `MAX_ACTIVE_TRADES` parametresini ekledik. Yeni bir Periskop sinyali (Örn: ARB/USDT) piyasaya düştüğünde sistem önce "İçeride kaç Bybit emri açık?" diye soracak.
+Eğer halihazırda 10 açık slotun doluysa, bu sinyali iptal etmeyecek; doğrudan veritabanındaki **"Global Aktif Sinyaller Havuzuna (Sıraya)"** atacak.
+
+## Akıllı Yedekleme (Backfill) Sistemi
+Yeni oluşturduğumuz `backfillTrades()` isimli fonksiyon tam zamanlı nöbet tutuyor:
+1. **Ne Zaman Çalışır?:** Sen gidip Dashboard'dan "İşlemi Kapat" tuşuna bastığında anında tetiklenir veya sistemin içindeki diğer 10 pozisyondan biri kendi kendine Kâr/Zarar ile kapanırsa bir sonraki dakika sonu devreye girer.
+2. **Kuyruk Seçimi:** Boşalan yer için gidip havuzdaki (henüz trade edilmeyen) aktif sinyalleri çeker. Seçim yaparken önceliği **Kalite Skoru en yüksek** olana (`order by qualityScore DESC, createdAt DESC`) verir! En kârlı ihtimali önce alır.
+3. **Fiyat Toleransı (%0.3):** Sinyali seçtiği saniye Bybit fiyatına bakar. Sen o coin'i zamanında kaçırmıştın, acaba fiyat girişten çok uzaklaşmış mı merak etme! Eğer anlık fiyat, ilk sinyalin `entryPrice` seviyesinden maksimum **±%0.3** uzaklaşmış ise bu bileti onaylar ve anında Bybit'e emri yollar. Uzaklaştıysa o coini atlayıp sıradan diğerine geçer.
+
+> Sistemdeki `MAX_ACTIVE_TRADES` veya `PRICE_TOLERANCE_PCT` (tolerans) oranlarını dilediğin zaman `backend/scanner.js` içerisinden `CONFIG` satırlarından değiştirebilirsin.
+
+### Kapanış Hızı Saniyelere İndi
+Manuel kapamayı `/api/user-trades/close` içerisinde işler işlemez arkasından `backfillTrades()`'i zank diye çağırdık. Yani Favoriler sekmesinden bir coini kapattığında, taze kanın sisteme girmesi saniyeler bile sürmeyecek, anında boşluğu yüksek skorlu yepyeni bir coin dolduracak. Sınırsız otomasyon! 🚀

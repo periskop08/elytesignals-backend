@@ -1,0 +1,6 @@
+# Makro Zırh Verisi (BTC/ETH Trend) Görevleri
+
+- `[ ]` **Adım 1:** `backend/scanner.js` içerisindeki `analyzeCoin` fonksiyonunun sonuna `macroState: globalMarketState` eklenecek.
+- `[ ]` **Adım 2:** `backend/scanner.js` içerisinde Google Sheets'e kayıt yapan bloğa `[BTC: X, ETH: Y]` formatı entegre edilecek.
+- `[ ]` **Adım 3:** Tabloda yer alan (BSU ve GMT) geçmiş verilerinin açıklama alanlarını bu formata uyarlayacak tek seferlik bir script çalıştırılacak.
+- `[ ]` **Adım 4:** Güncellenen `scanner.js` kodu AWS canlı sunucuya paslanarak PM2 yeniden başlatılacak.

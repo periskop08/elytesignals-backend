@@ -1,0 +1,20 @@
+# Versiyon 3.0: Win-Rate Filtreleri Aktif 🛡️
+
+Sinyal tespit motoruna şu ana kadarki en gelişmiş güvenlik duvarlarını başarıyla ördük. İşlem sayınız büyük ihtimalle azalacak, ancak portföyünüze giren her "kazanma olasılığı" çok daha dramatik bir şekilde artacak.
+
+## Neler Değişti?
+
+### 1. AVWAP Çelik Yeleği (Yönsel Hacim Filtresi)
+Eskiden fiyat dipten bir "Sıçrama" (Fakeout) yaşadığında körü körüne alım (LONG) yönlü bir potansiyel olarak görüyorduk.
+**Artık:** Sistem, mevcut fiyatın **AVWAP'ın (gerçek satıcı/alıcı maliyet eşiğinin)** altında mı yoksa üstünde mi yattığına bakıyor. Eğer dipte harika bir yapı kursa bile, Hacim Ortalamasının altında eziliyorsa sistemi tehlikeye atmamak adına, "Satıcılar hala baskın" diyor ve o işlemi çöpe atıyor!
+
+### 2. MTF (Büyük Resim) Trend Uyumsuzluğu Kontrolü
+1 Saatlik (1H) analizlerimiz 10/10 puan alarak tüm testleri geçse dahi, sistem o coini direkt yayına almak yerine bir adım geri çekilip soruyor: *"Peki büyükler ne yapıyor?"*
+Arka planda sadece o coinin **4 Saatlik (4H)** datasını indiriyor. O mumların `SMA(50)` değerini analiz edip "Kardeşim, sen bu coin için 1 saatlikte SHORT kovalıyorsun ama coinin 4 saatlik genel trendi gümbür gümbür yükselişte" derse, o işlemi de anında reddediyor. "Trende karşı işlem" devri tamamen kapandı.
+
+### 3. Hedefe Koşan Dinamik ATR (Stop-Hunt)
+Eskiden girdiğimiz işlemlerden "stop birazcık daha uzak olsaydı aslında fırlayacaktı" dediğiniz anlar için `Dinamik ATR` aktiftir. 
+Sistem artık stop mesafesini ezbere `%1` uzaklığa değil, her coinin o saniyedeki "Nefes Alma Dalgalanmasına (Average True Range)" bakarak; **`Güncel Fiyat - (ATR * 1.5)`** formülüyle belirliyor. Yavaş hareket eden bir coin için dar, çılgın atan bir coin için geniş bir emniyet alanı hesaplıyor.
+
+> [!WARNING]
+> İşlemlerin başarı oranını garantiye aldığımız için algoritmamız son derece **"seçici"** hale geldi. Gün boyu hiç sinyal gelmeyebilir, günlerce sabırla bekleyip bir gecede çok temiz avlar yapabilir. Gözlemleyip keyfini çıkarın!

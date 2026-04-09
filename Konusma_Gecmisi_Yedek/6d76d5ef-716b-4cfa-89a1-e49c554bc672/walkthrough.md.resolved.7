@@ -1,0 +1,17 @@
+# Google Sheets Canlı Yedekleme Altyapısı 
+
+Sen tabloyu kurarken ben de boş durmadım ve Sistem (Backend) kodlarında Google Sheets bağlantısını hazırladım!
+
+### Arka Planda Neler Oldu?
+*   `backend/scanner.js` dosyasına `google-api.js` modülü import edildi.
+*   Botumuzun her yeni işlem yakaladığında, değerlendirmeyi bitirip geçer not alan sinyali veritabanına mühürlediği o *tam saniyede* eşzamanlı olarak Google tablosuna da "Satır Ekle" emri (Append) yollaması kodlandı.
+
+**Formatlanan Veri Yapısı (Senin Tablondaki Sütun Sıralaması):**
+```javascript
+[Tarih, Sembol, Yön, Giriş Fiyatı, Hedef, Stop, Kalite Skoru, Filtre Uyarıları]
+```
+
+### Sonraki Adım
+Artık kod dünyasında her şey hazır. Tek eksiğim sunucuya (**AWS**) "Peki bu sinyalleri hangi tabloya yazacağım?" sorusunun cevabını vermek.
+
+Bunun için oluşturduğun tablonun yukarıda yer alan web adresindeki upuzun **ID kısmını** bana yollaman yeterli. Sonrasında sunucuya bağlanıp çevre değişkenini (`GOOGLE_SHEETS_ID`) güncelleyecek ve motoru yeniden başlatacağım. Şuan beklemedeyim!

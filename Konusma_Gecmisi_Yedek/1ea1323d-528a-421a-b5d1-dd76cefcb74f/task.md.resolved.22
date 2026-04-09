@@ -1,0 +1,13 @@
+# Top-Down Yüksek Zaman Dilimi (MTF) Analiz Motoru
+
+- [ ] 1. Backend AI Motorunu (`index.js`) Yeniden Yapılandır.
+  - [ ] `getAnalysis` fonksiyonunu, tekil zaman dilimi yerine `['1M', '1w', '1d', '4h', '1h']` dizisi üzerinde dönecek (Promise.all) şekilde devasa bir asenkron fonksiyona çevir.
+  - [ ] Her bir periyodun 100 mumu (kline) ayrı ayrı indirilerek MA50, RSI, RVOL, AVWAP, POC hesaplamaları yapılacak.
+- [ ] 2. Fibonacci Seviyeleri Ekle.
+  - [ ] Her periyodun `rangeHigh` ve `rangeLow` değerlerini alarak `0.382`, `0.5`, `0.618` Altın Oran destek direnç seviyelerini hesapla.
+- [ ] 3. Elliot Wave Teorisine Çoklu Veri Ver.
+  - [ ] `elliott.js` kullanılarak her zaman diliminin ana/mikro dalga pozisyonu saptanacak.
+- [ ] 4. Yapay Zekayı (Gemini) Eğit.
+  - [ ] `systemPrompt` metnini tamamen baştan yazarak, 5 ayrı zaman diliminin loglarını tek metinde alt alta sırala. 
+  - [ ] Bota, "Bir periyotta gördüğün destek/direnç noktası (Örn. Fib 0.618) ile diğer periyottaki (Örn. 4H POC veya Elliot dalgası) aynı seviyeye denk geliyorsa buna **Confluence (Kesişim)** de ve alım fırsatı olarak sun" şeklinde Prompt emri ver.
+- [ ] 5. Test et ve Çıktıları Doğrula.

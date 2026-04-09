@@ -1,0 +1,22 @@
+# Analist Chat: Gerçek Yapay Zeka (LLM) Entegrasyonu 🧠
+
+Kullanıcıların *"İşleme girdim ne olur?"*, *"Zarardayım, destek nerede bozulur?"*, *"Long açtım stopumu nereye koyayım?"* gibi ucu açık, sonsuz kombinasyondaki sorularını mevcut **Kelime Avcısı (Regex/NLP)** motoruyla %100 çözemeyiz. Çünkü kelime avcısı sadece kodladığımız 3-4 farklı senaryoya (Dip, Yön vb.) göre taslak metinler fırlatır.
+
+Sizin hayalinizdeki "Her soruyu anlayan ve o insana özel yorum yapan" sisteme geçmek için **"Gerçek bir Üretken Yapay Zeka (Generative AI - LLM)"** bağlamamız şarttır.
+
+## Nasıl Yapabiliriz? (2 Seçenek)
+
+### Seçenek 1: Ücretsiz (Gemini API Destekli) Tam Zeka 🚀 (ÖNERİLEN)
+Dünyanın en iyi dil modellerinden biri olan Google Gemini'nin (veya OpenAI/ChatGPT) API yapısını backend sunucunuza entegre ederim.
+**Sistem Nasıl Çalışacak?**
+1. Siz uygulamaya *"Solana'da 140'tan Long girdim, sence zarar eder miyim, stop nerede patlar?"* yazacaksınız.
+2. Backend kodumuz anında Binance API'sine gidip Solana'nın o anki fiyatını, Eflot aralığı (EQ, Tepe, Dip) verilerini, MA50 ve RSI skorlarını çekecek.
+3. Çektiğimiz bu ham veriyi ve Sizin sorunuzu alıp **Gemini Yapay Zekasına** yollayacağız (Şu komutla: *"Sen profesyonel bir Price Action analistisin. Gelen Binance verisi bu, kullanıcının sorusu şu: {Soru}. Buna göre sadece veriye dayanarak kullanıcıya samimi bir dille cevap ver"*).
+4. Yapay Zeka sizin işleminizi anlayıp kelimesi kelimesine **sadece o anki duruma özel, eşsiz** bir analiz cümlesi üretecek.
+*   **Gereksinim:** Bunun için Google AI Studio üzerinden tamamen ücretsiz olarak alabileceğiniz bir `GEMINI_API_KEY` koduna ihtiyacımız var (Nasıl alacağınızı 1 dakikada tarif edebilirim).
+
+### Seçenek 2: Manuel Gelişmiş Filtreler (Regex V2)
+Eğer dışarıdan hiçbir API veya Key bağlamak istemezseniz; sadece "İçerdeyim / İşleme Girdim / Long / Short" kelimelerini tarayan yeni algılayıcılar (Regex) yazarım. Ancak kullanıcı biraz farklı veya devrik bir soru sorarsa bot yine anlayamayacaktır (Robotik kalır).
+
+## User Review Required
+Sizce bu asistanı tam anlamıyla canlı bir analiste çevirelim mi? Eğer **Seçenek 1 (Tam Zeka)** derseniz sizden bir adet API Key üretmenizi rica edeceğim ve saniyeler içinde zekayı koda bağlayacağım! Onayınız hangi yönde?

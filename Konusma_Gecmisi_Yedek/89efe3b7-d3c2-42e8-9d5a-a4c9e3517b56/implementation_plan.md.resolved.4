@@ -1,0 +1,44 @@
+# Hedef: Makro Pusula (Macro Compass) Entegrasyonu
+
+Web arayüzünü (Dashboard) kullanan traderların, işlemlerini yönetirken piyasanın ana yönünü ve Dolar endeksinin gücünü canlı görebilmeleri için "Makro Yön Göstergesi" eklenmesi planlanmaktadır.
+
+## Kullanıcı Onayı Gereken Kararlar
+
+> [!IMPORTANT]
+> Bu geliştirme hem sunucu (`backend/index.js`) hem de tarayıcı arayüzü (`web/Dashboard.jsx`) dosyalarında kod eklemeleri gerektirecektir. Arayüz kısmında yapılacak güncellemelerden sonra projeyi web ortamında yeniden "build" etmen/yayına alman gerekecektir. Planı onaylıyor musun?
+
+## Önerilen Değişiklikler
+
+---
+
+### Backend (API Sunucusu)
+AWS üzerinde çalışan (`index.js`) servisimize yeni bir özellik kazandırılacak.
+
+#### [MODIFY] [index.js](file:///Users/periskop/.gemini/antigravity/scratch/index.js)
+1. **Global Makro Hafıza Nesnesi:** `let latestMacroStatus = { btc: null, dxy: null }` tanımlanacak.
+2. **Periyodik Tarayıcı (Cron):** `updateMacroStatus()` isimli yeni bir fonksiyon eklenecek. Bu fonksiyon her 20 dakikada bir:
+   - `fetchIntervalData('BTC-USDT', '1d')` çağrısı atarak Bitcoin'in günlük (1d) durumunu ölçecek.
+   - `fetchAssetIntervalData('DX-Y.NYB', '1d')` çağrısını kullanarak Dolar Endeksini çekecek.
+3. **Trend Hesaplaması:** Çekilen Market (SMC/ADX) verilerine bakılarak "BULL (Yükseliş Güçlü)" veya "BEAR (Düşüş Zayıf)" yön kararı oluşturulacak.
+4. **Yeni API Ucu:** Arayüzün verileri çekebilmesi için `GET /api/macro` uç noktası (endpoint) oluşturulacak.
+
+---
+
+### Frontend (Web Arayüzü)
+Kullanıcının gördüğü kontrol paneli (Dashboard) ekranına modern bir şerit entegre edilecek.
+
+#### [MODIFY] [Dashboard.jsx](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web/src/pages/Dashboard.jsx)
+1. **State Yönetimi:** `const [macroData, setMacroData] = useState(null)` ile makro verisi arayüz mantığına eklenecek.
+2. **Sürekli Dinleme (Polling):** Arayüz her 60 saniyede bir diğer sinyalleri tararken otomatik olarak `/api/macro` uç noktasından da son durumu çekecek.
+3. **Glassmorphism Şerit (Component):** "Canlı Akış" tablosunun hemen tepesine özel bir şerit eklenecek.
+   - 👑 **BTC Makro:** 🟢 BOĞA (Yön: Yukarı)
+   - 💵 **DXY Endeksi:** 🔴 AYI (Yön: Aşağı)
+
+## Doğrulama (Verification) Planı
+
+### Otomatik/Sistem Testleri
+- Sunucu tarafında `curl http://localhost:3000/api/macro` atılarak verinin doğru çekildiği teyit edilecek.
+- Konsol açıkken `DX-Y.NYB` Yahoo hatası verip vermediği gözlenecek.
+
+### Manuel Doğrulama (Arayüz)
+- Lokal ortamda (npm run dev) arayüz açılarak Glassmorphism şerit tasarımı gözle kontrol edilecek. Kullanıcıya güncellenen lokal projeyi canlıya (Vercel vb.) "Deploy" etmesi bildirilecek.

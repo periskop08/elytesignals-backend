@@ -1,0 +1,25 @@
+# Hedge Fund Detaylı Raporlama Entegrasyonu
+
+Geliştirdiğimiz Makro Pusula paneli olağanüstü bir ilgi gördü. Ancak Kantitatif (rakamsal) veriler her zaman yetmez; "Nitel" (Qualitative) analizlere de, yani CEO'nun son toplantıdaki vizyonuna, şirketin arka planda birikmiş siparişlerine (Backlog) ve borç yüküne ihtiyacımız var.
+
+Bu özellikleri sisteme dahil edebilmemiz için detaylı bir mimari planlama oluşturdum:
+
+## 1. Yeni Veri Kaynakları (Yahoo + AI)
+Aşağıdaki metrikleri `/api/macro-risk` ucumuz aracılığıyla sunucu tarafından çektireceğiz:
+*   **Tamamlananlar / Mevcut:** FK (Trailing PE), İleri FK (Forward PE), PEG Rasyosu zaten sistemimizde var. Bunları doğrudan Dashboard Modal'ına yansıtıyoruz.
+*   **Borç Durumu (Debt):** `yahoo-finance2` üzerinden şirketin Toplam Borcu (`totalDebt`) ve Özkaynak/Borç Oranı (`debtToEquity`) verilerini çekeceğiz.
+*   **Çeyreklik Büyüme (EPS ve Ciro):** Yahoo Finance en fazla son 4 çeyreğin (1 yıllık) EPS geçmişini doğrudan veriyor. Bu 4 çeyreği sisteme entegre edip listeleyeceğiz.
+
+## 2. Yapay Zekâ (AI) Destekli Nitel Analiz
+**"Backlog"** (bekleyen işler) ve **"CEO Bilanço Konuşması Özeti ile Beklentiler"** gibi veriler API sağlayıcılarında Excel satırı gibi durmaz. Bunlar bilanço PDF'lerinde, haberlerde gizlidir.
+Bu verileri çekebilmek için:
+*   Backend sunucumuz `macroEngine.js` içerisinde bulunan **OpenAI (GPT-4)** entegrasyonumuzu kullanacağız.
+*   Önbellek (Cache) 30 dakika veya 1 saat ile sınırlandırılacak. Belirli aralıklarla OpenAI'a "NVDA şirketinin son çeyrek beklentisi nedir? Kısaca Backlog durumu ve CEO açıklamalarını özetle" diyerek 1 paragraflık net bir rapor talep edeceğiz.
+*   Bu yapay zekâ raporu, Dashboard'daki hisseden içeri girdiğinde **"AI Fundamental Analiz"** adıyla gösterilecek.
+
+## User Review Required
+
+> [!IMPORTANT]
+> CEO beklentileri ve Backlog durumu için `macroEngine.js` içerisinde bir OpenAI API çağrısı yapmam gerekecek. Her hisse için 2-3 cümleyi geçmeyen özet bir "Zekâ Raporu" ürettirmemi onaylıyor musun? (Sorgular 1 saatte bir güncelleneceği için API maliyeti çok düşük olacaktır.)
+>
+> Onayının ardından Backend motorunu güncelleyeceğim ve arayüze bu yeni verileri ekleyeceğim.

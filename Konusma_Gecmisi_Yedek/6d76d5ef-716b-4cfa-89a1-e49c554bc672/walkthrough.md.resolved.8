@@ -1,0 +1,15 @@
+# Gizli Uyumsuzluk Dedektörü (RSI Hidden Divergence)
+
+Sinyallerimize "+5 Puanlık altın dokunuşu" yapacak olan o büyük hamleyi de analiz motorumuza başarıyla entegre ettim!
+
+Artık sistem Sinyali (Kırılımı) yakaladığı anda son 30 mumluk grafik dalgalarını hem fiyatta hem de Momentumda geri sarmaya başlıyor ve o inanılmaz "Yay Gerilmesi" olayını arıyor.
+
+### Nasıl Çalışıyor? (Matematiksel Kanıt)
+1.  **Boğa Gizli Uyumsuzluğu (LONG için):**
+    Robot, bir sinyal yakaladığında fiyatın güncel dibinin, bir önceki dalga dibinden DAHA YÜKSEKTE olup olmadığına bakar (Fiyat yükselmeye niyetli). Ama eğer o esnada "RSI" indikatörü gücünü sıfırlayıp bir önceki dalgadan daha DÜŞÜK seviyelere inmişse... İşte o "Yay Gerilmesi"dir. Momentum sıfırlanmışken fiyat hala düşmüyor demektir! Bot anında buna **+5 Puan ve `Hidden Divergence (+5)`** uyarısı çakar.
+
+2.  **Ayı Gizli Uyumsuzluğu (SHORT için):**
+    Fiyat yeni bir TEPESİNİ öncekine göre DAHA AŞAĞIDA (Lower High) yapıyor ama RSI deli gibi şişip öncekini aşıyorsa (Higher High)... Bot fiyatın gücünün tükendiğini anlar ve SHORT işlemi tam barajdayken **+5 Puanla** uçurur.
+
+### Sonuç
+Bu güncelleme zayıf işlemleri azaltmaz; aksine makro rüzgar arkasındayken, ceza yediği (örneğin Volatilite Fakeout cezası yemiş ama gizli uyumsuzluk barındıran) için dışarıda kalacak harika işlemleri bularak **puan barajını aşmalarını (+5 Puan)** sağlar! PM2 yenilendi, kodlar AWS sunucusunda çalışıyor.

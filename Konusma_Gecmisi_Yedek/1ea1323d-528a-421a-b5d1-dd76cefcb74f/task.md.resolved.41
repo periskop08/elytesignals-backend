@@ -1,0 +1,6 @@
+# Görev Listesi (Kişisel Performans Paneli)
+
+- `[/]` 1. `FavoritesScreen.js` içerisinde TP (WIN), SL (LOSS), Başarı Oranı (Win Rate) ve +%2'yi Geçen Aktif İşlemlerin matematiksel olarak `favorites` dizisi üzerinden hesaplanması.
+- `[ ]` 2. Lüks, şeffaf (`rgba`) arkaplanlı, grid (ızgara) stili 4 kutucuklu Dashboard UI'sının kodlanması.
+- `[ ]` 3. Hazırlanan Dashboard'ın `FlatList` bileşeninin `ListHeaderComponent` özelliğine entegre edilmesi.
+- `[ ]` 4. Arayüzün Expo üzerinde test edilmesi ve canlı PnL değişimlerinin yansıdığının test edilmesi.

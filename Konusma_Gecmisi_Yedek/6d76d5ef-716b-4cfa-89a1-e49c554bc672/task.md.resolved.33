@@ -1,0 +1,6 @@
+# İkili Google Sheets Mimarisi Görevleri
+
+- `[x]` **Adım 1:** `backend/.env` dosyasına her iki tablonun ID'si ayrı ayrı (`GOOGLE_SHEETS_REPORT_ID` ve `GOOGLE_SHEETS_INSTANT_ID`) olarak eklendi.
+- `[x]` **Adım 2:** `backend/google-api.js` içerisine tablo ayrımı değişkeni entegre edildi, böylece atılan verinin türüne göre doğru tabloya yönlendirme sağlanacak.
+- `[x]` **Adım 3:** Gece 03:00'te çalışan raporlama sistemine `REPORT` parametresi eklenerek raporların "Sinyal İstatistik" tablosuna saçılması kesin olarak engellendi.
+- `[x]` **Adım 4:** Sistem AWS'ye entegre edildi.

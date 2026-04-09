@@ -1,0 +1,43 @@
+# PWA (Progressive Web App) Geliştirme Planı
+
+Kullanıcıların (özellikle iPhone sahiplerinin) hiçbir App Store onayına takılmadan Safari üzerinden web sitemize girip, **"Ana Ekrana Ekle"** butonuna basarak sistemi tıpkı bir mobil uygulama (APK/IPA) sarsılmazlığında kullanmaları **PWA (Progressive Web App)** adı verilen mimarinin tam karşılığıdır.
+
+Bu muazzam bir büyüme (Growth Hacking) hamlesi! Apple engellerini tamamen by-pass etmiş oluruz.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Bu aşamada uygulamanın "Web Versiyonunu" nasıl üreteceğimiz konusunda 2 farklı felsefi rotamız var. Sizin tercihiniz projenin geleceğini belirleyecek:
+
+### Opsiyon A (Expo Web PWA - Hızlı & Kod Tekrarı Yok)
+Mevcut yazdığımız **Mobile** (React Native) klasörünün içinde Expo'nun sihirli bir web derleyicisi var. Tüm sayfaları (`Dashboard`, `Analysis` vb.) anında web koduna (`HTML/JS`) dönüştürüyor ve otomatik olarak bir PWA yapıyor.
+- **Avantajı:** Geliştirme süresi 0'a iner. Uygulamaya eklediğimiz bir özellik aynı saniye web sitesinde de olur. Kodlar %100 aynıdır. iPhone kullanıcısı Safari'den girince telefondaki uygulamanın birebir aynısını görür.
+- **Dezavantajı:** Tasarım tamamen "mobil cihaz" için yapıldığından Masaüstü (PC) kullanıcıları ekrana bakınca ince uzun, ortalanmış bir uygulama ekranı görür. (Ancak hedefimiz iPhone kullanıcıları olduğu için bu dezavantaj sorun yaratmayabilir).
+
+### Opsiyon B (Özel React PWA - Ayrı Mimaride Premium Panel)
+Yeni açtığımız `web` klasörüne sadece telefonu değil, Masaüstü PC ekranını da (örneğin Binance arayüzü gibi) dolduracak şekilde özel bir **"Kullanıcı Paneli (Dashboard)"** kodlamak.
+- **Avantajı:** Çok daha premium görünür. VIP üyeler PC'de yayılarak işlem yapabilir.
+- **Dezavantajı:** Artık 2 uygulamanız var. Bir yeni özellik eklendiğinde hem mobil APK'ya (React Native), hem de web stiesine (Vite/React) ayrı ayrı eklenmesi gerekir.
+
+## Proposed Changes
+
+Teknoloji yol haritası (Sizin seçiminize göre):
+
+1. **Giriş (Auth) Sistemi:** 
+   Eğer web üzerinden ilerleyeceksek, Telegram Botumuz Safari'nin veya Chrome'un URL satırına bir `session` şifresi düşürecek şekilde ayarlanacak veya direkt Telegram'ın resmi `Login Widget` (Widget Butonu) kullanılacak.
+2. **PWA Manifest:**
+   Tarayıcının "Bu bir web sitesi değil, bir uygulamadır, Ana Ekrana Kısayol Ekle" demesini sağlayan `manifest.json` dosyası kök dizine çakılacak.
+3. **Servis İşçileri (Service Workers):**
+   Kullanıcı Safari'den çıksa bile telefonunun arka planında hafızayı korumasını sağlayan mekanizmalar yerleştirilecek.
+
+## Open Questions
+
+> [!WARNING]
+> Yukarıdaki felsefi yollardan hangisini tercih ediyorsunuz? 
+> **(1)** *"Zaten iPhone kullanıcılarını hedefliyorum, direkt eldeki uygulamanın (Opsiyon A) aynısını saniyeler içinde Safari için web'e (PWA) dönüştür."* mü?
+> **(2)** *"Hayır, siteye girenler için PC ve Masaüstüne de uyumlu geniş, bambaşka bir Dashboard (Opsiyon B) kodlayalım"* mı?
+
+## Verification Plan
+1. Sizin yönergenizi alır almaz ilgili mimariyi (`web` veya `mobile/web`) yapılandıracağım.
+2. PWA manifest dosyasını ve iOS spesifik meta tag'lerini (örn: `<meta name="apple-mobile-web-app-capable" content="yes">`) HTML head kısmına enjekte edeceğim.
+3. Test için "Ana Ekrana Ekle" özelliği lokalde onaylandıktan sonra bir test build'i çıkaracağız.

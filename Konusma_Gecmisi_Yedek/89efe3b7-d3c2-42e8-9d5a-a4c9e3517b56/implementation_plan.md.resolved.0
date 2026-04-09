@@ -1,0 +1,36 @@
+# PeriskopAI Entegrasyonu ve Hisse Senedi Analiz Mimarisinin Güncellenmesi
+
+Mevcut durumda `index.js` içerisindeki AI sohbet botu (Chatbot) sadece kripto paralar (Bybit) için kurgulanmış durumda. Bir kullanıcı hisse senedi (AAPL vb.) sorduğunda sistem Bybit API'sine gidip çökecek ve hata dönecektir. Chatbot'un ismini **PeriskopAI** olarak güncelleyip, Kripto ve Varlık ayrımını (isAsset) öğreterek mimariyi tamamen revize etmeyi planlıyorum.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Varlık Verileri (Yahoo/Finnhub):** Hisseler Bybit'te olmadığı için hisse verilerini `scanner.js`'te kullandığımız gibi Yahoo Finance veya Finnhub üzerinden mi çekmeliyiz? AI'nin sadece "teorik" sallama bir analiz yapmasını istemiyorsak, ona gerçek fiyat ve Opsiyon (Options) metriklerini sağlamamız gerekiyor. Yahoo Finance üzerinden temel fiyatları çekmeyi entegre edeceğim, onaylıyor musun?
+
+## Proposed Changes
+
+### [Backend (Chat Endpoint)]
+
+Hali hazırda `index.js` içerisindeki `/api/analysis` (getAnalysis fonksiyonu) endpoint'inin modifiye edilmesi:
+
+#### [MODIFY] `index.js`
+- **İsimlendirme (Identity):** Promp içerisinde geçen sistem mesajlarındaki isimleri `PeriskopAI` olarak güncelleyeceğim. Yapay zeka artık kendini "PeriskopAI" olarak tanıtacak.
+- **Varlık (Asset) Tespiti:** `parsePrompt` fonksiyonuna majör hisseleri (AAPL, TSLA, NVDA, SPY, QQQ vb.) ve emtiaları (XAUUSD) algılayabilmesi için bir `assetsList` ekleyeceğim.
+- **Veri Kaynağı Ayırımı (Data Fetching):**
+  - Eğer kullanıcı Kripto soruyorsa: Eski sistem (Bybit) üzerinden fiyat verisi çekilip eklenecek.
+  - Eğer kullanıcı Hisse Senedi (isAsset) soruyorsa: Bybit yerine `yahoo-finance` (veya desteklenen başka bir modül) üzerinden fiyat ve veri çekilecek.
+- **Prompt Enjeksiyonu:** Hisse senetleri için oluşturulan özel `finalPromptTemplate` içerisine kurumsal "Options Flow" verilerimizi entegre edeceğim. AI, analizi yaparken **Put/Call Ratio (PCR), Max Pain ve Gamma Wall** konfigürasyonlarını hesaba katarak cevap dönecek.
+
+## Open Questions
+
+- Hisse analizleri sorulduğunda chatbot KISA VADECİ (Futures - Opsiyon Vadesi) gibi mi yaklaşmalı, yoksa SPOT (Uzun Vade Yatırımcı) gibi mi yaklaşmalı? Şu an "Options Flow" dediğimiz yapı genellikle kısa vadeli (Haftalık Opsiyon) trendleri etkiler. Hisselerde varsayılan yönelimi nasıl kurgulayalım?
+- Opsiyon verilerini (Max Pain, PCR) gerçek API'den `scanner.js` gibi mi çekeyim, yoksa AI'nin mevcut hisse fiyatlarına bakarak genel opsiyon eğilimini "PeriskopAI" ağzıyla yorumlamasına mı izin verelim? (Canlı opsiyon verisi çekmek yanıt süresini 5-10 saniye uzatabilir).
+
+## Verification Plan
+
+### Automated Tests
+- Terminalden Postman veya cURL kullanarak `localhost:3000/api/analysis` adresine `{ "coin": "Bana AAPL analizi ver" }` isteği atılacak.
+- Yanıtın içerisinde "PeriskopAI", "Max Pain" ve "PCR" kelimelerinin çıkıp çıkmadığı, sistemin çökmeyip mantıklı bir teknik analiz döndüğü kontrol edilecek.
+
+### Manual Verification
+- Sunucu Amazon AWS'ye atıldıktan sonra uygulamanın veya web sitesinin (elytesignals) Chat bölümünden AAPL sayısal verileri manuel test edilecek.

@@ -1,0 +1,27 @@
+# Favoriler Sekmesi / İzleme Listesi Tamam!
+
+Arkanıza yaslanmanızı söylemiştim! Tüm kütüphane kurulumlarını, arka plandaki eski sunucuyu vurup yenisini açmayı ve hatta "Karekodu" (Expo Bundler) sizin yerinize kapatıp kendi terminalimde en yeni haliyle başlatma işlemlerinin hepsini otomatize ettim 🚀
+
+Projemize getirdiğimiz son harika eklemeler şunlar:
+
+### 1-) Kalıcı Hafıza (AsyncStorage) Mimarisi 🧠
+Siz bir sinyali sevdiğinizde ve uygulamayı tamamen kapatsanız bile telefon bunu asla unutmasın diye ReactNative'in Kalıcı Bellek sistemini (`@react-native-async-storage/async-storage`) uygulamaya kurduk. `FavoritesContext` adında bir yönetim paneli tasarlayarak ekranların birbirleriyle canlı konuşmasını sağladık.
+
+### 2-) Favoriler Sekmesi (4. Menü) ⭐️
+*   Tüm sinyal kartlarının (Sinyaller Ana Sayfası) sağ üst köşesine (Coin adının hizasına) **"Yıldız (Star)"** ikonları yerleştirildi.
+*   Bir işlemin yanındaki gri/sönük yıldıza bastığınız anda, o yıldız **Sarı** renkle parlıyor ve hafızaya kazınıyor.
+*   Alt menüde oluşan yeni "Favoriler" sekmesine geçtiğinizde sadece kendi elinizle o yıldıza bastığınız "İzleme Listesindeki (Watchlist)" sinyalleriniz yer alıyor!
+
+---
+
+> [!TIP]
+> **Nasıl Test Edeceksiniz?**
+>
+> Ben terminal komutlarını devraldığım için sizin bilgisayarda hiçbir şey yazmanıza veya karekod okutmanıza GEREK KALMADI! Sadece şu harika yöntemi izleyin:
+>
+> 1. iPhone telefonunuzdan **Expo Go** uygulamasını açın.
+> 2. En üstte kocaman duran (Veya *Recently In Development* yazan kısımdaki) daha önce tarattığımız projemizin simgesine dokunun (Uygulama zaten benim arka planda an itibariyle açık tuttuğum kanala Wifi üzerinden bağlanacak!)
+> 3. Sinyaller sekmesindeki kartlardan birkaçına Yıldız (★) koyun.
+> 4. Telefonu komple kapatıp açın ve tekrar girin... Yıldızladığınız işlemlerin Kalıcı Hafızada yer edip Favoriler ekranında sizi beklediğini göreceksiniz! 
+
+Teste başlayabilirsiniz, elinize sağlık!

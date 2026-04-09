@@ -1,0 +1,38 @@
+# Bybit API Entegrasyonu (Veri Sağlayıcı Değişimi)
+
+Bybit, özellikle sürekli (perpetual/futures) vadeli işlemler ve listelenen altcoin sayısı (skalası) bakımından çok daha geniş bir yelpazeye sahip olduğundan, ana veri akış motorumuzu **Binance yerine Bybit V5 API'si** üzerinden çalışacak şekilde yeniden inşa ediyoruz.
+
+Bu entegrasyon tüm yapıyı etkileyen kritik (core) bir değişikliktir.
+
+## Önerilen Değişiklikler ve Veri Haritalaması (Data Mapping)
+
+### 1. Backend: Sinyal Tarayıcı (`scanner.js`)
+*   **Ağ Çekimi (Exchange Info):** Binance'in `exchangeInfo` ucu yerine Bybit'in `instruments-info?category=linear` API'si kullanılacak ve USDT pariteleri (Sadece `USDT` ile bitip sürekli vadeli ticarete açık olanlar) filtrelenecek.
+*   **Mum Verileri (Klines):** Binance'te `[openTime, open, high, low, close]` şeklinde dönen düz liste, Bybit'te `[startTime, open, high, low, close, volume]` şeklinde dönmektedir ve en önemlisi **Bybit veriyi tersten (En yeni mum en başta) vermektedir.**
+    *   *Kritik Çözüm:* Bybit'ten çekilen `.list` array'i işlem görmeden önce `.reverse()` fonksiyonundan geçirilerek mevcut indikatör yapımızın beklediği kronolojik sıralamaya oturtulacak.
+
+#### [MODIFY] [backend/scanner.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/scanner.js)
+
+### 2. Backend: Aktif Sinyal Takipçisi (`index.js`)
+*   Açık pozisyonların anlık PnL ve TP/SL hesaplamasını yapan Cron Job içerisindeki Binance fiyat çekim noktası (`ticker/price`) Bybit'in `tickers?category=linear` noktasıyla değiştirilecek.
+*   Bybit JSON ağacı (`result.list.lastPrice`) formatına uyumlu parse edilecek.
+
+#### [MODIFY] [backend/index.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/index.js)
+
+### 3. Mobil Frontend: Anlık Fiyatlar
+Mobil uygulamadaki canlı fiyat ekranı ve animasyonların çalıştığı tüm sayfalardaki API uçları Bybit'e geçirilecek. Bybit'in verisi çoklu bir hiyerarşi içerdiği için `data.result.list.forEach` şeklinde okunması sağlanacak. Etkilenecek ekranlar:
+*   [MODIFY] `mobile/src/screens/HomeScreen.js`
+*   [MODIFY] `mobile/src/screens/FavoritesScreen.js`
+*   [MODIFY] `mobile/src/screens/SignalDetailScreen.js`
+
+---
+
+> [!WARNING]  
+> **Kullanıcı Onayı İsteniyor (User Review Required):**
+> Bu geçiş sonrası algoritmanız Binance'deki 200 parite yerine Bybit platformundaki **300+ vadeli işlem çiftini** (Memecoinler dahil) taramaya başlayacaktır. Ve Bybit'in hacimleri daha hareketli olduğundan sinyal frekansınız daha da artabilir. 
+> 
+> Hem tarama motorunun (backend) hem de mobil uygulamanın (frontend) altyapısını tamamen Bybit Continuous Futures (Sürekli Vadeli) API'sine taşımamı onaylıyor musunuz? (Onaylarsanız Bybit V5 Linear Market API'lerini kodlamaya hemen başlıyorum).
+
+## Doğrulama Planı
+1. Geçiş tamamlandıktan sonra arka planda `node index.js` başlatılacak, hedefin `api.bybit.com` üzerinden USDT çiftlerini çektiği ve veri listesinin 300'den büyük olduğu kanıtlanacak.
+2. Mobil uygulamada, PnL yüzdelerinin Live Bybit fiyatlarıyla hatasız sekronize olup olmadığı test edilecek.

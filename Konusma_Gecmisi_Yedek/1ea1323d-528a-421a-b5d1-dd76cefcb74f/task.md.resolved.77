@@ -1,0 +1,11 @@
+# Mobile Dashboard Redesign Tasks
+
+- [x] Plan CSS refactoring by grouping Desktop vs Mobile selectors
+- [x] Add `.desktop-sidebar` hiding mechanisms to `style.css`
+- [x] Add `.mobile-top-header` and `.mobile-bottom-nav` styles
+- [x] Refactor `Dashboard.jsx` layout container
+  - [x] Wrap existing sidebar in `desktop-sidebar`
+  - [x] Implement Mobile Top Header (Logo + Profile + Logout)
+  - [x] Implement Mobile Bottom Navigation (Taramalar, Favoriler, İstatistikler)
+- [x] Commit and Push changes to Vercel production
+- [x] Create Walkthrough overview

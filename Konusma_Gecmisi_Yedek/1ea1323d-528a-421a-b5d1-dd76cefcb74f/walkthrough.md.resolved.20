@@ -1,0 +1,16 @@
+# Login Ekranı Modülü
+
+Periskop modelinin marka hissini yükseltmek için aşağıdaki bileşenler başarıyla uygulandı:
+
+1. **Görsel Konsept:**
+   - Ekranda merkezinde sabit bir radar ikonu olan ve etrafa ritmik bir şekilde **3 katmanlı sonar halkaları** yayan bir animasyon döngüsü yaratıldı. (React Native `Animated` kütüphanesi).
+   - "Deep waters", "hedefi bulmak" gibi terimlerle marka karakteri yansıtıldı.
+
+2. **Kullanıcı Etkileşimi (UI):**
+   - Kayıt formu tamamen pas geçilerek modern `Social Login` altyapısına uygun iki buton eklendi:
+     - `Continue with Google` (Şeffaf / Glassmorphism sınırları)
+     - `Connect with Telegram` (Telegram Orijinal Mavisi + Derin Gölge)
+   - Butonlar test işlemi için bağlandıkları an doğrudan `MainTabs` ana ekranına `navigation.replace` üzerinden zıplayacak şekilde kodlandı.
+
+3. **Routing:**
+   - Stack Navigator içerisine `Login` sayfası `initialRouteName` olarak ayarlandı, böylelikle app ilk açılışta bu muhafız ekranına düşüyor.

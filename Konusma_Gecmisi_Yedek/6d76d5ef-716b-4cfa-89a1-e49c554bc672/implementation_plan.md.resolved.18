@@ -1,0 +1,33 @@
+# 📈 Wall Street Edge: Options Flow Entegrasyonu Planı
+
+Senin Perplexity'den gönderdiğin o muazzam *Options Gamma + Max Pain* kurumsal edge promptunu inceledim ve teknik fizibilitesini test ettim. Geleneksel finans (Hisse Senetleri ve Emtialar) için Kripto piyasasında olmayan "Opsiyon Tahtası" gerçekliğini okumak, Win-Rate oranını devasa seviyelere taşıyacaktır. 
+
+Bu entegrasyonu tamamen uygulayabiliriz!
+
+## 🔍 Ar-Ge ve Fizibilite (Test Edildi)
+- Barchart veya CBOE gibi ücretli API'lere ihtiyacımız **YOK!** Sistemimizde halihazırda bulunan `yahoo-finance2` kütüphanesini test ettim. `yahooFinance.options('AAPL')` komutu bize hisselerin ve Altın (GC=F) gibi emtiaların tüm Opsiyon zincirini (Açık Pozisyonlar - Open Interest, Strike Fiyatları, Çağrı/Satım Hacimleri) anlık ve ücretsiz veriyor!
+- FX (EURUSD=X) spot kontrat olduğu için Yahoo'da opsiyonu bulunmuyor. Bu algoritma **sadece Hisse Senetleri ve Emtialar** için çalışacak.
+- Toplam çağrı/satım hacmini (Put/Call Ratio) ve zirve Açık Pozisyonları (Gamma Walls) doğrudan bu veriden hesaplayıp algoritmaya ekleyebiliriz.
+
+## 🛠️ Uygulama Planı (Proposed Changes)
+
+### `backend/scanner.js`
+
+#### [MODIFY] scanner.js
+**Özel Opsiyon Akışı (Options Flow) Analiz Fonksiyonu Eklenecek:**
+`getOptionsFlow(symbol)` adlı yeni bir fonksiyon yaratacağım. Bu fonksiyon `isAsset === true` durumunda çalışacak ve şu hesaplamaları yapacak:
+1. **Put/Call Ratio (PCR):** Toplam Put Open Interest / Toplam Call Open Interest.
+2. **Gamma Wall (Open Interest Proxy):** Gerçek Gamma hesaplaması Black-Scholes gerektirir, bunun yerine Wall Street'in pratik yöntemi olan "En Yüksek Call OI (Call Wall)" ve "En Yüksek Put OI (Put Wall)" noktalarını bulacağız.
+3. **Max Pain Hesaplaması:** Algoritma tüm olası Strike fiyatlarını döngüye sokacak ve hem Put hem de Call alıcılarının toplamda **en fazla parayı kaybedeceği (sıfırlanacağı)** o sihirli fiyat noktasını (Market Maker'ların hedeflediği Max Pain) matematiksel olarak bulacak.
+
+**Scoring Entegrasyonu (`analyzeCoin` içine eklenecek, sadece Varlıklar için):**
+- Eğer Put/Call Ratio ekstrem ise (örn: herkes çağrı-call almışsa ve Market Maker bunları ezmek isterse) **±10 Puan** ters bias puanlaması yapılacak.
+- Fiyat **Max Pain** noktasına yakınsa ve üzerine çekiliyorsa **+8 Puan** eklenecek.
+- Fiyat **Call Wall**'u kırmışsa (Gamma Squeeze potansiyeli) veya **Put Wall**'dan dönüyorsa **+7 Puan** katsayısı verilecek.
+
+## ❓ Açık Sorular & Kullanıcı Onayı
+
+1. **Max Pain Manipülasyonu:** Market Maker'lar genelde fiyatı "Max Pain" noktasında kapatmak ister. Eğer şu anki fiyat Max Pain noktasından çok uzaktaysa (örn: AAPL 150$'da ama Max Pain 160$'da), sistem bu 10$'lık boşluğu fırsat bilip direkt Max Pain yönüne (LONG) +8 Puan versin mi? 
+2. İşlem hacmi oluşturmasını engellemek adına, bunu `scanner.js` içinde de ilk etapta test olarak AAPL, TSLA ve NASDAQ üzerinde başlatıp Altın'ı (GC=F) hariç tutmamı ister misin? (Çünkü Altının opsiyon yapısı bazen future kontrat ay geçişlerinde gecikmeli olabiliyor).
+
+Onaylarsan kodları ateşe veriyorum! 🔥🚀

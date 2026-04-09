@@ -1,0 +1,5 @@
+- [ ] `scanner.js` içine `yahoo-finance2` modülünü dahil et.
+- [ ] Varlıklar (Emtia, Borsa) için yeni bir sembol listesi (`ASSET_SYMBOLS`) tanımla.
+- [ ] Bybit fiyat çekme (`getUsdtPairs`) ve API çağırma noktalarının yanına, Yahoo API kullanarak fiyat çeken yeni bir lojik ekle (`fetchYahooCandles`).
+- [ ] Ana tarama döngüsünü, hem Bybit sembollerini hem de ASSET sembollerini tarayacak şekilde ayarla.
+- [ ] Çıkan sinyallerin telegram kanalı üzerinden `ASSET` mı `CRYPTO` mu olduğunu belirt.

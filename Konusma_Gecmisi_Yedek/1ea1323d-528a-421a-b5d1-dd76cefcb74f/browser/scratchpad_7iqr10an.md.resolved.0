@@ -1,0 +1,10 @@
+# Elyte Signals PWA Verification Task
+
+## Task Checklist
+- [ ] Navigate to http://localhost:8080
+- [ ] Wait for page to render (5 seconds)
+- [ ] Capture screenshot and DOM
+- [ ] Verify if Login or Dashboard UI is visible
+
+## Context
+Checking the React Native Web App (PWA) version of Elyte Signals to ensure it's rendering correctly for iPhone users.

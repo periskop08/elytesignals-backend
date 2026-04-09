@@ -1,0 +1,37 @@
+# PeriskopAI Ultra Etkileşimli Panel Sürümü
+
+PeriskopAI artık sadece bir yapay zeka değil, kullanıcının bir saniyede riskini, hedefini ve giriş noktasını okuyabileceği emojili ve matematik destekli bir asistan haline geldi.
+
+## 1. Niyet ve Kaldıraç Çıkarma (Intent Parsing) Geliştirmesi
+Sistemin ilk filtresine (kullanıcı cümlesini anlama) bir özellik daha eklendi. Sistem artık *“SPOT mu FUTURES mu?”* ayrımını yaparken, kullanıcının komut içerisine gömdüğü **“10x, 20x, 50x”** gibi kaldıraç ifadelerini okuyabiliyor ve bunu hesaba katıyor. Eğer ifade edilmediyse varsayılan olarak **10x** kullanıyor.
+
+## 2. Futures (Kaldıraçlı) Formülü
+Sisteme **500$ Başlangıç Kasası** ve **%2 ($10) Maksimum Risk** kuralı gömüldü. Bu sayede yapay zeka sadece TP ve Stop yüzdelerini vermekle kalmıyor, aynı zamanda kullanıcının elde edeceği Dolar bazlı kârı (12.40$ vs) doğrudan hesaplıyor.
+
+**Canlı NVDA Testi Sonucu (NVDA 20x kaldıraç analizi):**
+> ⚡ **NVDA 20X KALDIRAÇ** ⚡
+> 
+> 💰 **GİRİŞ:** 176.6707$  
+> 🎯 **TP1:** 187.67$ (+6.20% = +$12.40 kâr*)  
+> 🎯 **TP2:** 192.00$ (+8.67% = +$17.34 kâr*)  
+> 🛑 **STOP:** 174.67$ (-1.27% = -$10 risk)  
+> 
+> ⚠️ **KALDIRAÇ UYARISI:** 20x riskli!  
+> 
+> 📊 **PeriskopAI Futures**  
+> *500$ kasa, %2 risk hesabı*
+
+## 3. Spot Sinyali Formülü
+Açıklamalar, makul terimler ve gereksiz yapılar tamamen çöpe atıldı. Sadece tek bakışta eylem planını anlatan ateşli "Sinyal Paneli" şablonu yerleştirildi.
+
+**Canlı AAPL Testi Sonucu (AAPL spot analizi ver):**
+> 🔥 **AAPL SPOT SİNYALİ** 🔥
+> 
+> 💰 **AL:** 255.92$ 
+> 🎯 **TP1:** 266.02$ (+4.30% kâr)
+> 🎯 **TP2:** 288.62$ (+12.75% kâr)
+> 🛑 **STOP:** 243.42$ 
+> 
+> ✅ **KARAR:** AL (Güvenli)
+> 
+> 📈 **PeriskopAI Spot**

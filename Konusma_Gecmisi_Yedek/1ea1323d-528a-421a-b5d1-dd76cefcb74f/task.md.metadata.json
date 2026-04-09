@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Task checklist for generating and sending a nightly Quality Score Report via Telegram.",
+  "updatedAt": "2026-03-31T21:42:33.549487Z",
+  "version": "80"
+}

@@ -1,0 +1,6 @@
+# Google Sheets Servis Entegrasyon Görevleri
+
+- `[x]` **Adım 1:** `backend/scanner.js` içerisine Google Sheets API (`appendToSheet`) modülünün import edilmesi.
+- `[x]` **Adım 2:** Veritabanına (SQLite) kayıt (`INSERT INTO signals`) yapıldığı bloğun ardından `appendToSheet` metodunun sinyal formatına uygun tetiklenmesi `[Tarih, Sembol, Yön, Giriş, Hedef, Stop, Kalite Skoru, Uyarılar]`.
+- `[/]` **Adım 3:** (Beklemede) Kullanıcıdan Tablo `ID` değerinin alınması ve AWS sunucusundaki `.env` dosyasına yazılması.
+- `[ ]` **Adım 4:** (Beklemede) Değişikliklerin AWS sunucusuna aktarılarak servisin yeniden başlatılması.

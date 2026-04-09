@@ -1,0 +1,10 @@
+# Task List
+
+- [/] 1. Update Scanner (backend/scanner.js)
+  - Binance API `klines` verisinden hacim (Volume) dizisini çıkar.
+  - Son 20 mumun (veya tüm gelen mumların) Volume SMA (Basit Hareketli Ortalamasını) hesapla.
+  - Son kapanan (veya güncel) kırılım mumunun hacmini `SMA * 1.5` ile karşılaştır.
+  - Eğer düşükse (RVOL < 1.5), sinyali sahte (Fakeout) olarak işaretle ve atla.
+- [ ] 2. Test & Verification
+  - Backend yeniden başlatılacak.
+  - Konsol loglarında hacim filtresine takılan paritelerin `[VOL-FILTER] Coin rejected due to low relative volume` şeklinde bildirildiğinden emin olunacak.

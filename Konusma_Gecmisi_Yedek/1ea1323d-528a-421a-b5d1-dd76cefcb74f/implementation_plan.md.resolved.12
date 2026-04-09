@@ -1,0 +1,35 @@
+# Elliot Dalga Teorisi (EWT) Entegrasyon Planı
+
+Kullanıcının ilettiği Prompt, Elliot Dalgalarını kodlamak için **en doğru ve evrensel** temel yaklaşımı içeriyor. Özellikle 3 Altın Kural'ın (Dalga 3'ün en kısa olamaması, Dalga 4'ün Dalga 1 tepesine dokunmaması vb.) koda dökülmesi kusursuz bir filtre yaratacaktır. 
+
+Fakat promptun yapay zekaya bırakılan *"subjektifliği ortadan kaldıracak ZigZag mantığı"* kısmında **çok önemli bir boşluk** var. Bunu bizim doldurmamız ve algoritmamızı kusursuzlaştırmamız gerekiyor:
+
+## ⚠️ Aklıma Yatmayan (Eksik Kalan) Tek Nokta: ZigZag Çarpıklığı
+
+**Sorun:** Algoritma bir noktanın "Tepe (Pivot High)" veya "Dip (Pivot Low)" olup olmadığına nasıl karar verecek? Klasik indikatörler "%2 düştüğünde burası tepe olsun" der. Ama Bitcoin için %2 devasa bir dalga iken, PEPE için 1 dakikalık gürültüdür (noise).
+**Benim Çözüm Önerim:** Sizinle bir önceki versiyonda eklediğimiz **ATR (Ortalama Gerçek Dalgalanma)** matematiğini tam da burada kullanacağız! Sabit bir yüzde yerine, "Fiyat o anki ATR değerinin örneğin 2 katı kadar zıt yöne dönerse, bir önceki zirve/dip yeni bir Elliot Pivot noktası olarak işaretlenir" diyeceğiz. Böylece her coin kendi dinamiklerine uygun ve profesyonel dalgalar üretecek.
+
+## Proposed Changes
+
+Kod kalabalıklığı yaratmamak adına `backend/elliott.js` isminde harika bir matematik modülü yaratacağız.
+
+#### [NEW] `backend/elliott.js`
+*   `findPivots(klines, atrValues)` fonksiyonunu barındıracak. Geçmiş 100 mumun içerisinde dinamik ZigZag (ATR bazlı) algoritmasıyla A-B-C ve 1-2-3-4-5 dalga Pivot (dönüm) noktalarını bulacak.
+*   `detectElliottWave(pivots)` fonksiyonunu içerecek. Bulunan son pivotları alıp 3 Altın Elliot Kuralına sokacak.
+*   Çıktı olarak istenen yapılandırılmış JSON formatını (Örn: `current_wave: 3, invalidates_at: 45000`) dönecek.
+
+#### [MODIFY] `backend/scanner.js`
+*   Sinyal tetiklenmeden hemen önce `.detectElliottWave()` fonksiyonunu çağıracak.
+*   Eğer Elliot analizi "Geçersiz Dalga" veya "Düzeltme Dalgasının Sonu Değil" derse (Örneğin C dalgası hala düşüşteyken LONG açmayı engellemek için), Price Action sinyaline güvenmeyip **işlemi reddedecek.** Bu sayede EW uyumsuzluğu olan hiçbir PA işlemine girmeyeceğiz.
+
+#### [MODIFY] `backend/index.js`
+*   "Analiz Sor" (AI) kısmında Gemini için hazırlanan Prompt'un içerisine: `"Elliot Dalga Durumu: X (Şu an 3. İtki dalgasında, 4. dalga onayı için 52000 seviyesi geçilmemeli)"` gibi çok net, veriye dayalı bir metin enjekte edilecek.
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. Elliot Dalgaları çoğu zaman uzar veya kısalır. Acaba bu filtreyi "Sinyal Reddedici" (Katı Filtre) olarak mı kullanalım, yoksa sadece "Destekleyici / Puanlayıcı" ve AI'a yorumlatıcı bir faktör olarak mı ekleyelim? (Önerim: Şimdilik sadece yapay zeka yorumunda ve hedeflerde kullanalım, çünkü katı kural yaparsak günde hiç işlem çıkmayabilir, Elliot yapıları %100 nizami her zaman oluşmaz).
+
+## Verification Plan
+1. `backend/elliott.js` dosyası yaratıldıktan sonra terminalden birkaç coin denenerek 3 Altın Kuralın ihlal edilip edilmediği kontrol edilecek.
+2. Analiz botuna "Elliot'a göre durum nedir?" sorulup botun JSON çıktısını ne kadar iyi anladığı onaylanacak.

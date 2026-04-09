@@ -1,0 +1,58 @@
+# Frekans Optimizasyonu (Skor Sistemi) Tamamlandı!
+
+Perplexity/Yapay Zeka ile tartışarak aldığınız Mükemmel Prompt'u (Önergeyi) birebir sisteme **Puanlama Algoritmasına** dönüştürdük. Eski "katı" reddetme engelleri tarihe karıştı. 
+
+## Neler Değişti?
+
+### 1. Veritabanına Skoru Kaydetme Desteği
+Uygulamayı yeniden başlattığım an, SQLite veritabanına `qualityScore` ve `warnings` adlı iki yeni alan eklendi. Gelen tüm sinyaller artık kaç puanlık bir güce sahip olduklarıyla birlikte kaydediliyor.
+
+### 2. Puan Sistemi İşleyişi (Max 100 Puan)
+`scanner.js` içerisine **CONFIG (Ayar Mekanizması)** entegre edildi:
+- **OB:** Son 20 muma düşürüldü. (OB varsa **+25 Puan**)
+- **FVG:** Zorunluluktan çıkarıldı. (Varsa **+15 Bonus Puan**)
+- **ADX:** Eğer Puan 25'ten düşükse (Range Rejim) **+15 Puan**.
+- **Hacim (RVOL):** Son 3 mum, 20 muma kıyasla en az 1.2x hacimliyse **+15 Puan**.
+- **Risk Ödül (R:R):** 1.2'ye kadar kabul ediliyor. Eğer R/R muazzam (>= 2.0) ise ekstra **+15 Puan**.
+- **4H Trend:** Fiyat 4H hareketli ortalamasına uygunsa **+15 Puan**. Değilse `Counter-trend 4H` olarak sadece "Uyarılar" bloğuna yazılıyor.
+
+### Sinyal Tetik Sınırı: 40 Puan
+```javascript
+const CONFIG = {
+    minRR: 1.2,           // 1.0-2.0 arası
+    obLookback: 20,       // 14-50 arası  
+    minScore: 40,         // 30-70 arası
+    fvgRequired: false,   // Opsiyonel FVG
+    sma50Filter: 'soft',  // Trend sadece uyarır, bloklamaz
+    adxThreshold: 25      // ADX Range tespit eşiği
+};
+```
+
+---
+
+## 💥 Anında Gelen Yeni Sinyaller (Test Sonuçları)
+Sunucuyu çalıştırır çalıştırmaz, sistemin kapısını araladığımız için saniyeler içinde puan barajını (40) geçen enfes sinyaller düşmeye başladı. İşte terminalden loglanmış gerçek bir çıktı:
+
+```json
+[SCANNER] New LONG signal for LINKUSDT!
+{
+  "symbol": "LINKUSDT",
+  "direction": "LONG",
+  "qualityScore": 60,
+  "breakdown": {
+    "ob": false,
+    "fvg": true,
+    "rvol": 2.75,
+    "adx": 24,
+    "rr": 2.46,
+    "trend4h": "bearish"
+  },
+  "warnings": [
+    "Counter-trend 4H"
+  ]
+}
+```
+**Analiz:** LINK LONG sinyali **60 puan** aldı. Nitekim FVG yakalamış (+15), devasa hacim var (+15), ADX pazarında uygun yerde (+15) ve 2.46'lık muazzam bir R:R oranına (+15) sahip. Eski sistemde bu sinyal, 4H Trend'in tersi olduğu için (ayı) **reddediliyordu**. Artık sadece bir uyarı (`Counter-trend 4H`) aldı ve skoru yettiği için direkt veritabanına "Başarılı" kaydoldu!
+
+## Sonraki Adım Planda Ne Olmalı?
+Bu veriler direkt arka planda çalışıp 24 saat paper-trading backtest yapmanıza olanak tanıyacak. Mobil ekrana bu skorları tasarlamak isterseniz, tek bir tasarım dokunuşuyla Sinyal ekranınıza o 60 skoru ve FVG ikonlarını çekebilirim. Testin keyfini çıkarın!

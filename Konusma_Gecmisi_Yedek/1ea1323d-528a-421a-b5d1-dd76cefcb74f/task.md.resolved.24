@@ -1,0 +1,10 @@
+# Hedef: AI Niyet Okuyucu ve Dinamik Analiz Yönlendirici
+
+Kullanıcı Chat mesajı attığında, backend'in bu mesajı okuyup niyet tespiti yapmasını, sadece gerekli zaman dilimlerini (Spot için MTF 5 pencere, Futures için 1 Saatlik) fetch etmesini sağlayacağız.
+
+- [ ] Node.js içerisinde `getAnalysisRouter` fonksiyonunun yazılması
+- [ ] İlk aşama: Gemini API'si ile `SPOT`, `FUTURES`, veya `UNCLEAR` sınıflandırma promptu
+- [ ] `UNCLEAR` durumu: API fetch yapmadan geri soru sorulması
+- [ ] `FUTURES` durumu: Sadece 1h fetch, agresif kısa vadeli Stop-Loss'lu Prompt tasarımı
+- [ ] `SPOT` durumu: Mevcut 5 Promise.all fetch, uzun vadeli MTF Spot Prompt tasarımı
+- [ ] Sunucunun yeniden başlatılması ve test edilmesi

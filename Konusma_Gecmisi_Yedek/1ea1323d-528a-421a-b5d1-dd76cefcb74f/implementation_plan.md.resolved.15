@@ -1,0 +1,30 @@
+# AI Hafıza Mimarisi (Context Memory)
+
+Yapay zekanın spot, futures veya unclear kararlarından sonra kullanıcının arka arkaya verdiği tek satırlık cevapları ("spot", "long açacağım" vb.) anlayabilmesi için **Sohbet Hafızası (History)** sistemini kuruyoruz.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Arayüzden sunucuya artık sadece son mesaj değil, sen o sohbet sekmesini kapatana kadar yaptığın **son 10 mesajın tamamı** bağlam (history) olarak gönderilecek. Bu sayede AI, daha önce XRP sorduğunu anlayıp "SPOT" dediğinde sana XRP'nin spot verisini çekeceğini bilecek! Onayladığın an sisteme hafıza (Memory) yeteneğini yüklüyorum.
+
+## Proposed Changes
+
+### [Backend ve Frontend Entegrasyonu]
+
+#### [MODIFY] mobile/src/screens/AnalysisScreen.js
+- `axios.post` isteği güncellenecek: Artık sadece `coin: userMessage.text` değil, state içerisinde tuttuğumuz `messages` dizisindeki son 10 mesajı da `history` objesi olarak backend'e yollayacak.
+- API Parametresi `prompt` (son soru) ve `history` (geçmiş sorular) olarak değişecek.
+
+#### [MODIFY] backend/index.js
+1. `getAnalysis(prompt, history)` artık geçmişi de kabul edecek.
+2. Sabit Regex kodlarına (eski `parsePrompt`) veda edeceğiz. 
+3. İlk Gemini filtresi artık **Büyük Bağlam Okuyucusu (Context Extractor)** olacak. Gönderilen 10 mesajlık geçmişi saniyelik okuyup doğrudan şu JSON objesini fırlatacak: `{"symbol": "XRP", "intent": "SPOT"}`.
+4. Çıkan bu niyet ve hedef coin ile Binance API sorguları (Eğer intent UNCLEAR değilse) kusursuz tetiklenecek.
+
+## Beklenen Davranış Akışı
+1. Kullanıcı: "XRP ne olur?"
+2. AI: (Geçmişi okur -> Symbol: XRP, Intent: UNCLEAR) -> "Dostum long mu gireceksin spot mu yapacaksın?"
+3. Kullanıcı: "İşlem açıcam"
+4. AI: (Geçmişi okur -> Symbol: XRP, Kullanıcı işlem diyor ama spot mu marjin mi anlamaz -> Intent: UNCLEAR) -> "Long/Short kaldıraç mı açıyorsun yoksa spot mu alacaksın?"
+5. Kullanıcı: "Spot"
+6. AI: (Senaryoyu kurar -> Symbol: geçmiş 4. satırdaki XRP, Intent: SPOT) -> 5 Farklı zaman diliminde devasa SPOT XRP Setup'ını çıkarır!

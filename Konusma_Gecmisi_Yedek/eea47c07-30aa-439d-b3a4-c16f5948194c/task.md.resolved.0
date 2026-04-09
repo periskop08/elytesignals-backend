@@ -1,0 +1,3 @@
+- `[ ]` Create `mobile/src/screens/AITerminalScreen.js`
+- `[ ]` Update `mobile/src/navigation/AppNavigator.js` to add the new `AI Terminal` tab tab.
+- `[ ]` Verify navigation and UI layout

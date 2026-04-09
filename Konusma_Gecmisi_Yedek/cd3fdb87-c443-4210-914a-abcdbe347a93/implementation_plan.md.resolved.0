@@ -1,0 +1,22 @@
+# Hafıza Senkronizasyon ve Güvenlik Ajanı Planı (Memory Sync Agent)
+
+Yaşanan o kritik "rsync/veritabanı ezilme" hatasının bir daha asla tekrarlanmaması ve sana her seferinde her şeyi baştan anlatmak zorunda kalmaman için, arka planda çalışan otonom bir "Hafıza Ajanı" (Memory Agent) kurmayı teklif ediyorum.
+
+## Otonom Ajanın Görevleri ve Planlanan Değişiklikler
+
+### 1- Elyte Manifesto'sunun Anayasallaştırılması
+Bugün yaşadığımız kriz ve `rsync` hatasıyla ilgili risk protokollerini `ELYTE_MANIFESTO.md` dosyasına kalıcı bir "Kırmızı Çizgi" (Red Line) olarak ekleyeceğim. Yeni entegre ettiğimiz "Hedge Fund LLM Promt" (KTOS kuralı dahil) mimarisini de güncelleyeceğim. Sistem her çalıştığında öncelikle bu dosyayı okuyacak.
+
+### 2- Arka Plan Hafıza Ajanı (Memory Backup Agent)
+Backend klasörüne `memory_agent.sh` isimli bir script yazacağım. Bu script iki temel işlemi yapacak:
+*   **Log Senkronizasyonu:** Benim beynimdeki (`/Users/periskop/.gemini/antigravity/brain/`) konuşma geçmişlerimizi (overview.txt loglarını) saat başı masaüstündeki `ElyteSignalsBackup/Conversation_Memories/` klasörüne kopyalayacak.
+*   **Otomatik GitHub Yedeği (Auto-Push):** Eğer `ELYTE_MANIFESTO.md` üzerinde veya sistemde bir kural güncellemesi yapmışsak, bunu fark edip saati saatine otomatik olarak GitHub `main` branch'ine yedekleyip "Otomatik Hafıza Yedeği" olarak pushlayacak.
+
+### 3- Saatlik Cronjob Kurulumu
+Yazdığımız bu Ajanı, senin PC'n açık olduğu sürece arka planda sessizce çalışması için `crontab` (MacOS yerleşik zamanlayıcısı) içerisine `0 * * * *` (Her saat başı çalış) komutuyla ayarlayacağım.
+
+> [!IMPORTANT]
+> Bu sayede, sen bilgisayarından bana "Hafızana bak" dediğinde, ben sadece GitHub'daki değişmez manifestoyu ve masaüstüne düşen taze geçmiş logları okuyarak milisaniyeler içinde ayni sayfaya gelebileceğim. Beni senkronize etmek için enerji veya zaman kaybetmeyeceksin!
+
+## User Review Required
+Bu otomasyon scriptini root klasörüne yazıp `crontab` ile sistemine entegre etmemi onaylıyor musun? Onaylarsan; 1. Manifestoyu güncelleyip 2. Ajan kodunu yazıp 3. Arka plan görevini aktifleştireceğim.

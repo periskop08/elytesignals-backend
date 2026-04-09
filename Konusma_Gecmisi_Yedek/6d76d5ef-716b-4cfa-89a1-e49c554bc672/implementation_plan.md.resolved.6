@@ -1,0 +1,31 @@
+# Majör (BTC/ETH) İşlemleri İçin Optimizasyon Planı
+
+Sorduğun soru sistemdeki çok ince ve tehlikeli bir mantık açığını ortaya çıkardı! Sistemimiz şu anda tüm coinleri "Altcoin" olarak varsayıp ona göre muamele ediyor. Yani şu an BTC veya ETH için bir analiz yakalarsa, onları sıradan bir altcoinmiş gibi cezalandırır.
+
+Örneğin: Dominans (Para akışı) `BULL` iken altcoinlere `-15` Puan ceza kesiyoruz çünkü para oradan kaçıyor. Ancak işleme giren coin bizzat **Bitcoin (BTCUSDT)** ise, paranın ona aktığı bir senaryoda ödüllendirilmesi gerekirken kendi kendine `-15` ceza kesecektir!
+
+Bu sorunu çözmek için Majör Coinlere (Sadece BTC ve ETH) özel ufak bir "Kural Bükme Yollaması (Bypass)" inşa edeceğim.
+
+## Proposed Changes
+
+### [MODIFY] `backend/scanner.js`
+
+1. **BTCUSDT İçin Dominans Tersine Çevirme (Reverse BTCDOM Effect)**
+   - Puanlama algoritmasına şu İstisnayı ekleyeceğim:
+     ```javascript
+     if (symbol === 'BTCUSDT') {
+         // Eğer BTC alıyorsak ve Dominans da boğa ise (Para BTC'ye akıyorsa) bu bizim için HARİKA bir şeydir!
+         // Ceza yerine +15 Puan Ödül verilir.
+         // Eğer Dominans Ayı ise (Para altlara akıyorsa) BTC zayıflayacağı için BTC Long işlemine -15 ceza kesilir.
+     }
+     ```
+
+2. **ETHUSDT İçin Doğrudan Temsiliyet İstisnası**
+   - Zaten kendi trendini kendi belirlediği (Total marketi temsil ettiği) için Altcoinler gibi BTCDOM cezasını alabilir (Dominans artışı ETH'yi de ezer).
+   - Sadece kendi kendisinin makro engeline takılmaması için ETHUSDT sinyallerine özel ufak bir serbestlik sağlanacak.
+
+## User Review Required
+
+> [!WARNING]
+> Mükemmel bir detay yakaladın dostum. Mevcut sistemde BTC kendisine bile Altcoin muamelesi yapıp yanlış ceza kesiyor. 
+> Bu bahsettiğim "BTC'ye özel Ters Dominans Puanlaması (Ayrıcalık)" planı sence de uygun mu? Onaylarsan kodu hemen Majör Coinler için güncelleyeceğim!

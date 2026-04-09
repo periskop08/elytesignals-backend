@@ -1,0 +1,21 @@
+# Otonom Ticaret Limitleri ve Favori Senkronizasyonu Sonuç Raporu
+
+NXPCUSDT (veya herhangi bir parite) gün içerisinde birden çok kez sinyal üretip `Stop-Loss` veya `Take-Profit` olduktan sonra tekrar geldiğinde, sistemin ikinci (veya üçüncü) bir hamleyi düşünmeden otonom olarak **AÇMAMASI** için gerekli güvenlik kilitleri ve "Favori" senkronizasyon mantığı kuruldu.
+
+## Yapılan Güvenlik Güncellemeleri
+
+### 1- Günlük Duplicate Kalkanı (Aynı Parite Testi)
+Daha önceden `scanner.js` arka planda sadece `user_trades` (İşlem kütüphanesini) sorguluyordu. Artık doğrudan `signals` tablosuna bakıyor:
+- **Mantık:** Sinyal havuza düştüğü an, gün içinde bu coine ait başka bir "Sinyal Logu" (`signals`) var mı diye kontrol edilir.
+- **Sonuç:** Eğer gün içerisinde (Örn: NXPCUSDT) daha önceden 1 kere bile sinyal listesine düşmüşse; otopilot bunu **`length > 1`** olarak yakalar. "Bugün bu coinin şansını denedik, işleme DEĞİL sadece vitrine (Dashboard'a) atıyorum" diyerek **otomatik alımı engeller.**
+
+> [!TIP]
+> Böylece risk oranımız tek bir günde aynı pariteye inatla kafa atıp arka arkaya stop yiyerek kâr marjını eritmekten kurtarılmış oldu! Günün 2. ve 3. sinyalleri sadece ekrana "Görsel Fırsat" olarak düşecek.
+
+### 2- Otopilot & Manuel Favori Senkronizasyon Kaynaşması
+Daha önce Dashboard üzerinden "Favori (Yıldız)" ikonuna bastığında sistem sadece işlemi açıyordu fakat Otopilot izleme sisteminden mahrum kalıyordu. Artık senin manuel dokunuşun tam entegre!
+- **Kâr-Zarar (PnL) Eşleşmesi:** Sen favoriye basıp bir işlemi (2. defa gelmiş bir sinyal olsa dahi) manuel olarak başlattığında, bu işlem anında **`user_trades`** (Otopilot Döngüsü) tablosuna kayıt edilir.
+- **Sonuç:** Favoriye aldığın bir işlem, sanki "sistem tamamen kendisi bulup %100 kendi iradesiyle" açmış gibi takip döngüsüne girer. Yani hedefi bulduğunda kendi kendini "NATIVE_TP" olarak kapatır veya %2 kâra ulaştığında "Başa Baş / Stop-Loss" oranını otomatik günceller.
+
+### 3- Canlı Sistem Güncellemesi ve Güvenlik Testi
+`deploy.sh` scripti (geçtiğimiz saatin devrimi) sayesinde üretim `.db` dosyaları atlanarak en saf ve güvenilir haliyle kodlar AWS sunucusuna itildi ve zeka motoru sıfırlanarak devreye alındı.

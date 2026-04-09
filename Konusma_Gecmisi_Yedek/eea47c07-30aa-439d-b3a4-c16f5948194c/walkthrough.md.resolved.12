@@ -1,0 +1,21 @@
+# Conversational Trading Assistant Upgrade
+
+The AI has successfully been transformed from a static signal generator into a context-aware trading assistant capable of dynamic problem solving and analyzing user trades.
+
+## 1. Context Memory (History Injection)
+The frontend `Dashboard.jsx` was modified to pass the live conversational `chatLog` to the backend. The backend's Intent Extractor now reads your previous messages to understand the full context of a conversation.
+
+## 2. Intent Recognition Expansion
+The AI now parses four main intents:
+- **SPOT**: Dedicated logic for Spot accumulation and trend following.
+- **FUTURES**: Strict futures setups with predefined R:R and Risk rules.
+- **CONVERSATION** [NEW]: The conversational mode where the AI understands you are asking for advice (e.g. "I am losing money on STBL, where should I add?").
+- **UNCLEAR**: Failsafes to prevent poor interpretations.
+
+## 3. Dynamic Analysis & Formatting
+- **Old System**: The AI was explicitly commanded to **"ONLY output the UI template, DO NOT write paragraphs."** This blocked it from explaining why an entry was bad or analyzing your specific situation.
+- **New System**: If the user intent is "CONVERSATION", the AI drops the UI template mask and answers you conversationally using the exact technical framework of the **Periskop Modeli**, highlighting missing Order Blocks, Sweeps, AVWAP proximity, etc.
+
+## Ready for Testing
+You can now ask the AI conversational questions in the dashboard natively. Example:
+> *"1 BTC aldım ama terste kaldım maliyetim 65K sence nereden ekleme yapmalıyım?"*

@@ -1,0 +1,33 @@
+# Hedef
+Elyte Signals platformunda "Nasdaq Barometresi" panelinde yer alan AAPL, NVDA, MSFT gibi şirketlere ait finansal oranların (İleri F/K, PEG, Borç Rasyoları ve Fiyat) tasarım sürecinde koyduğumuz statik örnek (mock) verilerden temizlenerek tamamen canlı ve gerçek zamanlı **Yahoo Finance** verilerine bağlanması.
+
+## User Review Required
+
+> [!IMPORTANT]  
+> Kullanılacak `yahoo-finance2` kütüphanesi saniyede çok fazla hisse sorgulandığında IP blokajı yapabilir. Bu nedenle sistemin performansını ve güvenliğini korumak adına veriler **Her Sayfa Yenilendiğinde Değil, Arka Planda Her 1 Saatte Bir** çekilip sunucu önbelleğine kaydedilecektir. Böylece siteye giren kullanıcılar ışık hızında (0 milisaniye gecikme ile) son 1 saate ait en güncel veriyi görecektir. Bu yaklaşımı onaylıyor musun?
+
+## Proposed Changes
+
+### [Backend (Sunucu)]
+
+#### [MODIFY] backend/index.js
+- `global.nasdaqCache` isimli bir geçici hafıza değişkeni yaratılacak.
+- Sunucu ayağa kalktığında ve `node-cron` kütüphanesi yardımıyla **her saat başı** çalışacak asenkron bir `fetchNasdaqData()` fonksiyonu eklenecek.
+- Bu fonksiyon `['NVDA', 'AAPL', 'MSFT', 'AMZN', 'META', 'GOOGL', 'TSLA', 'PLTR', 'AVGO']` hisseleri için Yahoo Finance üzerinden tek tek bilgileri çekecek.
+- `app.get('/api/macro-risk')` uç noktası (endpoint) içindeki `stocks` dizisine elle yazdığımız sahte veriler silinip, yerine bu dinamik `global.nasdaqCache` hafızası bağlanacak.
+
+### [Frontend (Kullanıcı Arayüzü)]
+
+#### [MODIFY Yok] web/src/pages/Dashboard.jsx
+- Arayüz kodlarında hiçbir değişiklik yapılmasına gerek yoktur. Çünkü ön yüz, halihazırda uç noktadan gelen verileri eksiksiz ve şık bir şekilde formatlayacak yapıdadır. Arka uçtan gerçek veriler geldiğinde ekran otomatik olarak gerçek borsa rakamlarına adapte olacaktır.
+
+## Open Questions
+
+> [!NOTE]  
+> Saatlik güncelleme frekansı sence yeterli mi? Borsanın açık olduğu saatlerde hisse fiyatları dakikada bir değişiyor ancak F/K, PEG ve Özkaynak Borçluluğu gibi majör rasyolar temel analize girdiği için günde 1 kez bile değişmesi kafidir. Sadece fiyat 1-2 saat geriden gelebilir. Bunu daha sıkılaştırmamı (örneğin 15 dakikada bir) ister misin?
+
+## Verification Plan
+
+### Manual Verification
+- Plan onaylandığı an entegrasyonu tamamlayıp Vercel ön yüzünde ve AWS arka yüzünde canlıya alacağım.
+- Sisteme girdiğinde Apple (AAPL) fiyatının ve F/K oranının doğrudan o anlık borsa rakamıyla eşleşip eşleşmediğini teyit etmeni isteyeceğim.

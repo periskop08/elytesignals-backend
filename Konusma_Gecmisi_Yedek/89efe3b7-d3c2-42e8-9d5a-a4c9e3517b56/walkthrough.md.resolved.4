@@ -1,0 +1,38 @@
+# Makro Pusula (Macro Compass) Canlı Entegrasyonu
+
+Piyasa trendinin en tepe yöneticileri olan **Bitcoin (Kripto Gücü)** ve **DXY (Dolar Gücü)** metrikleri için arka planda yeni bir API modülü ve ön yüzde estetik bir Dashboard şeridi inşa edildi.
+
+## Neler Yapıldı?
+
+### 1. Arka Plan Zekası (Backend)
+- Sisteme `updateMacroStatus` isminde yepyeni bir otopilot zamanlayıcı eklendi.
+- Bu zamanlayıcı arka planda saatte bir uyanarak;
+  - `BTCUSDT` verilerini (Günlük/1D mumları ile) tarıyor, ADX metriklerine göre "BULL" ya da "BEAR" olduğuna karar veriyor.
+  - `DX-Y.NYB` (Dolar Endeksi) verilerini Yahoo Finance üzerinden çekiyor, SMA ve fiyat korelasyonuna göre (Düşüş/Yükseliş) trendini tespit ediyor.
+- Artık sunucu `GET /api/macro` adresinde her an taze makro verilerini dağıtıyor.
+
+*(Canlı Sunucu Çıktısı Testinden Örnek)*
+```json
+{
+  "btc": {
+    "trend": "AYI 🔴",
+    "type": "BEAR",
+    "smc": "ADX Regime: 15.3 (Range Bound)"
+  },
+  "dxy": {
+    "trend": "AYI (DÜŞÜŞ) 🟢",
+    "type": "BEAR",
+    "smc": "Options Flow Metrics: PCR: 1.38"
+  }
+}
+```
+
+### 2. Arayüz Güncellemesi (Web Dashboard)
+- `Dashboard.jsx` dosyasına `macroData` havuzu açıldı.
+- Sinyallerin "Canlı Akış" panosunun hemen tepesine o muazzam Glassmorphism (Buzlu Cam) **Makro Pusula** bileşeni kodlandı.
+- Bitcoin yükselişteyse yeşil `BOĞA`, düşüşteyse kırmızı `AYI` etiketleriyle ekranda parlıyor. İşin psikolojik tarafı da desteklendi (DXY düşüyorsa bu kripto için iyi bir haber olduğu için o da Yeşile boyanıyor).
+
+## Aksiyon Gereksinimi
+
+> [!IMPORTANT]
+> Backend (Sunucu) tamamlandı ve an itibarıyla AWS üzerinde bu veriyi üretip dışarı sunuyor. Yapman gereken tek şey kendi bilgisayarındaki Web Arayüzü klasörünün içindeyken terminalden (Vercel ya da hosting sağlayıcın) **"deploy" (veya build)** komutunu çalıştırıp bu yeni arayüz kodunu canlı web sitene yansıtmak! İşlem bu kadar. 🚀

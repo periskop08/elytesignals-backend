@@ -1,0 +1,7 @@
+# 🔄 Auto-Rebalance Motoru (Portfolio Engine) Uygulama Adımları
+
+- `[x]` **Geliştirme - Backend Asistanı:** `crypto-signal-app/backend/portfolio_engine.js` isminde yeni bir dosya yarat. Buraya Drawdown kesici, 30% maksimum ağırlık limiti ve AI Skoru orantısı matematiğini kodla.
+- `[x]` **Geliştirme - API Entegrasyonu:** `index.js` (ve `scratch/index.js`) içerisine `POST /api/portfolio/rebalance` yolunu ekleyerek hazırlanan asistanı bağla.
+- `[x]` **Geliştirme - Test Verisi (Drawdown Mock):** Rebalance etkisini sahnede görebilmek için veritabanında `TSLA` hissesine `%16` ve `PLTR` hissesine `%26` Drawdown (zarar) mocku ayarla.
+- `[x]` **Geliştirme - Frontend Butonu:** `PortfolioManager.jsx` içerisindeki `[Auto Rebalance]` butonunu işlevsel hale getir (`onClick`), "Hesaplanıyor..." loading animasyonlarını UI'a bağla.
+- `[x]` **Canlıya Alma:** Backend API değişikliklerini AWS'ye gönder, pm2'yi yeniden başlat ve Frontend değişikliklerini Vercel Environment'a prod olarak çıkart.

@@ -1,0 +1,27 @@
+# Kapsamlı UX, Canlı PnL ve Geçmiş Takibi Planı
+
+Deneyiminiz geliştikçe eksikleri nokta atışı tespit etmeniz harika! Söylediğiniz tüm özellikler, uygulamanızı sıradan bir "Sinyal uygulaması" olmaktan çıkarıp, adeta tam teşekküllü bir **"Takip ve Portföy Terminali"** haline getirecek.
+
+Taleplerinizi hayata geçirmek için gereken teknik plan şu şekilde:
+
+## 1. Canlı % PnL (Kâr/Zarar) Durumu Gösterimi
+*   Binance üzerinden anlık olarak (her saniye/yenilemede) BÜTÜN coinlerin canlı fiyatları çekilerek Sinyaller sistemimizle harmanlanacak.
+*   "Bekliyor (Active)" durumundaki tüm sinyallerin kartvizitlerinin sağ alt/üst köşesinde, yeşil veya kırmızı renklerde o anki anlık kâr/zararı belirecek (Örn: <span style="color:green">**%+1.45**</span> veya <span style="color:red">**%-0.80**</span>).
+*   Uzun (LONG) işlemlerde girişten yükseği kâr, Kısa (SHORT) işlemlerde girişten düşüğü kâr sayacak şekilde formülize edilecek.
+
+## 2. Navigasyon ve "Favoriler -> Grafiğe Gitme" Sorunu
+*   Şu anda sadece "Ana Sayfadaki (Sinyaller)" kartlara tıkladığınızda Analiz ekranını açması, uygulamanın navigasyon hiyerarşisindeki bir sınırlamadan kaynaklanıyor (Grafik ekranı sadece Ana Sayfa grubuna tanımlı).
+*   Sistemin omurgasını (AppNavigator.js) yeniden inşa edeceğim. Artık **"SignalDetail (Grafik) Ekranı"** bütün sekmelerin üstünde, global bir sayfa olacak. 
+*   Böylece ister Favorilerde, ister Ana sayfada bir karta tıklayın, anında tam ekran Grafikli analizin içine girebileceksiniz.
+
+## 3. İstatistiklerden Detaylı İşlem Listesini Görme (Geçmiş Ekranı)
+*   **Backend (Sunucu):** `GET /api/signals/history` adında yepyeni bir uç yazacağım. Bu uç sadece "Kazananları" veya "Kaybedenleri" filtresiyle size getirecek.
+*   **Mobil Uygulama:** Ana Sayfa formunda olan, yepyeni bir **`SignalHistoryScreen.js`** *(Geçmiş İşlemler Ekranı)* tasarlayacağım.
+*   İstatistik sayfasındaki "Başarılı" butonuna bastığınızda, TP olan tüm işlemlerin tarihli dökümünü listeleyecek, onlara da tıkladığınızda yine Grafiğe uçabileceksiniz. Aynısı "Başarısız (Loss)" butonu için de tıkır tıkır çalışacak.
+
+---
+
+## User Review Required
+> [!IMPORTANT]
+> Çok büyük çaplı ama uygulamayı zirveye taşıyacak bu özellikleri kodlamaya başlamadan önce planı onaylıyor musunuz?
+> Sadece onaylamanız yeterli, tüm altyapıyı ben yazıp güncelleyeceğim!

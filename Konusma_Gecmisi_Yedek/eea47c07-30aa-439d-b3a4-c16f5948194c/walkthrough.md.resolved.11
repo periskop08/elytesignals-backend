@@ -1,0 +1,22 @@
+# Gemini AI Sinyal Stratejisi Adaptasyonu
+
+Sistemin web arayüzünde kullanılan AI (Yapay Zeka) altyapısı, eski OpenAI metotlarından ve silinen Elliott yapılarından tamamen koparılarak modern Gemini ve "Kurumsal Disiplin" konseptine geçirildi.
+
+## Neler Yapıldı?
+### 1. Gemini Native Mimari Geçiși
+Backend üzerindeki `/api/analysis` (Chatbot) ve `/api/llm/analyze` (Hisse Raporu) metotları `gemini-2.5-pro` ve `gemini-2.5-flash` model altyapılarına geçirildi.
+`chat.completions.create` üzerinden eski SDK formatıyla çağıran `getAnalysis` fonksiyonu tamamen Google AI (`model.generateContent`) SDK formuna çevrildi.
+
+### 2. "Periskop Modeli" Zekası (Strateji Promptu)
+Artık chatbot sana sinyal veya analiz verdiğinde, **Elliott Dalga senaryolarını referans almak yerine** aktif "Sinyal/Scanner" script'lerimizin gerçek kısıtlamalarını kullanıyor:
+* **Hacim Filtresi (Volume Constraint)**: Sığ veya riskli mi inceliyor. Hacim dar ise "Aşırı Riskli" uyarısı yapıyor.
+* **Trend & 200 SMA Kontrolü**: Fiyat, günlük ortalamalara (SMA200) ne yönde ilerliyor, trende karşı mıyız tespit edip belirtiyor.
+* **Katı R:R (Risk/Ödül) Barajı**: R:R beklediği gibi 1.0 üzerinden değilse işlemi **Açıkça Reddediyor**. ("Burada R:R oranı zayıf, işlem yasak" vb.)
+* **Likidite ve FVG**: OrderBlock veya Gap görürse puana etki ettiğinden haberdar ve bunu sana gururla belirtiyor.
+
+_Not: Tolerans sağladığın için; "R:R uyumsuz olsa bile, diğer metrikler muazzamsa 'Çok Riskli Ama Denenebilir (Esnek Karar)'" demesi için bota opsiyon tanındı._
+
+### 3. Hedef ve Testler
+- Yeni AI mimarisi, AWS ana Backend sunucusunda (13.60.44.209) devrede.
+- Tüm `index.js` ve `test_prompt.js` dosyalarındaki geçersiz modeller `gemini-2.5-pro` şeklinde düzeltildi.
+- Artık sana sistemdeki "Güvenli - Yasaklı - Riskli Ama Denenebilir" terminolojisiyle konuşacak.

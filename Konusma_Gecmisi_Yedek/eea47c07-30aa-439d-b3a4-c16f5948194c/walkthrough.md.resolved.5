@@ -1,0 +1,31 @@
+# Elyte Scanner PineScript V2 (AWS Parity Match)
+
+TradingView üzerindeki `elyte_scanner.pine` indikatörümüz, AWS Node.js botu ile %100 uyumlu çalışması için **"V2 Parity"** güncellemesini almıştır.
+
+## Yenilikler (V2 Güncellemesi ile Gelenler)
+
+Geliştirdiğimiz yeni Pine Script koduna Amazon sunucusunda çalışan en hayati 3 yeni beyin modülü eklendi:
+
+### 1. 4 Saatlik Multi-Timeframe Trend Filtresi (+15 / -5 Puan)
+Bot saatlik mumlarda (1H) bir sinyal yakaladığında, gizlice 4 Saatlik grafiğin 50 Günlük hareketli ortalamasına (SMA) sorar:
+- Eğer yönler uyumluysa masaya **+15 Puan** ekstra güç koyar.
+- Eğer 4H trendine karşı işlem açılıyorsa (tehlikeliyse) **-5 Puan** ceza keser.
+
+### 2. Günlük (1D) Golden Cross Çekimi (+10 Puan)
+Eğer yakalanan LONG sinyali sırasında fiyat Günlük (1D) tabloda MA50 > MA200 (Golden Cross) eşiğinin üzerindeyse, fiyatın patlama yapacağı kabul edilir ve **+10 Puan** eklenir.
+
+### 3. Dinamik Risk/Reward (R:R) Simülasyonu (+25 / +5 Puan)
+En büyük sıçrama bu kısımda gerçekleşir. Sinyal oluştuğu an arka planda geçici bir emir simülasyonu yapılır:
+- **Stop Loss:** `Fiyat +/- (ATR Değeri * 1.5)`
+- **Take Profit (Hedef):** `50 Barlık Zirve/Dip Denge (EQ) Noktası`
+Eğer hedef / risk (kazanç oranı) > 2.0 üzerinde ise, bot en iştahlı puan olan **+25 Puan**'ı direk kasaya ekler.
+
+## Nasıl Güncellenir?
+1. Sağda bulunan `elyte_scanner.pine` kod alanını komple kopyalayın.
+2. TradingView'da alttaki **Pine Editörü**'nü açın, mevcut kodları silip yeni kodları yapıştırın.
+3. Açık olan eski indikatörü grafikten kaldırın (`x` tuşu ile).
+4. Pine Editor üzerinden **"Grafiğe Ekle (Add to chart)"** diyerek yeni V2 kodunu çalıştırın.
+5. Uyarı: Eğer mevcut "Alarm"ınız eski versiyona kuruluysa silip "V2" için tekrar baştan "Her çubuk kapanışında bir kez" diyerek alarm kurun!
+
+> [!TIP]
+> Artık grafik üzerindeki sinyal etiketlerinde sadece "Skor" değil, aynı zamanda o işlemin AWS gözündeki **R:R (Risk/Ödül) Oranı** da yazacak.

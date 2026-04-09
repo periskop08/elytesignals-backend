@@ -1,0 +1,39 @@
+# Otonom Keşif Robotu (AI Stock Screener)
+
+Amerika borsasındaki potansiyel fırsatları her sabah tarayan, yüksek potansiyelli olanları tamamen otonom bir şekilde portföye ekleyen arka plan "Otomatik Kaşif" motorunun yapısı.
+
+## User Review Required
+
+> [!IMPORTANT]
+> Yapay Zekanın bu derece otonom çalışması sunucuda her sabah OpenAI/Gemini limitlerini kullanmasına sebep olabilir. Günlük tarama yapılacağı için faturalandırma açısından sorun olmayacaktır (günde 1-2 kez). Planlandığı gibi hisse başı %5 portföy ağırlığı ayrılacaktır.
+
+## Proposed Changes
+
+### [Backend] Motorun İnşası
+
+#### [NEW] backend/screener_engine.js
+- Yeni bir JavaScript dosyası ile "Autoscreen" (Otomatik Tarama) modülü yazılacak.
+- `yahoo-finance2` `screener` fonksiyonu ile Wall Street'teki (Teknoloji, Sağlık, Fiyatlanmamış Ucuz Hisseler vb.) kategorilerden rastgele 5 adet potansiyel büyüme hissesi seçilecek.
+- Seçilen bu hisseler, arka uçta Gemini 3.1 Pro sistemine gönderilip analiz testine (CEO Skoru, Edge Skoru vs.) sokulacak.
+
+#### [MODIFY] backend/index.js
+- `screener_engine.js` modülü ana dosyaya dahil edilecek ve `node-cron` yardımıyla hafta içi her sabah saat 09:00'da çalışacak şekilde programlanacak.
+- Otomatik keşif motorunun `portfolio_assets` tablosunu güncellemesi (eğer AI skoru 85+ ise) tanımlanacak.
+
+#### [MODIFY] backend/scanner.js veya telegram_bot.js
+- Keşfedilen yeni hisse için Telegram panosuna otomatik bildirim fırlatma entegrasyonu yazılacak:
+  *"🎯 YAPAY ZEKA KEŞFİ: Varlık Yöneticisi [AAPL] hissesini çok beğendi ve portföye %5 ağırlıkla dahil etti. Siteye gidip raporu okuyun."*
+
+### [Frontend] Arayüz Entegrasyonu
+- Arayüz kodlarında hiçbir büyük değişikliğe gerek yoktur. Veritabanına sızan yeni veriyi arayüz otomatik olarak "Watchlist" sekmesinde çekecek ve AI skorunu listeleyecektir.
+
+## Open Questions
+
+> [!NOTE]
+> Bu taramaların Telegrama sadece %85 üzeri skor alınca yansımasını isteyeceğiz. Ancak Robot her sabah otonom çalışacağı için, arta kalan diğer %95 portföy ağırlığının üzerine sürekli %5 eklene eklene toplam portföy ağırlığı %100'ü geçerse varlık yöneticisi sistemin bozulmaması için bir otomatik satış yapsın mı? Yoksa portföy yönetim mantığın (Rebalance) zaten esnek mi? Bence ağırlıkları %100 skalasında sınırlı tutmalıyız.
+
+## Verification Plan
+
+### Automated Tests
+- Geliştirme tamamlanınca yerel ortamda sahte bir tetikleme ile (her saniye) motor çalıştırılıp veritabanına eklenip eklenmediği test edilecektir.
+- Test başarılı olursa kodlar AWS üzerinden canlıya çekilecek ve PM2 loglarından Screener'ın gücü teyit edilecektir.

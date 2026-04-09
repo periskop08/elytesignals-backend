@@ -1,0 +1,14 @@
+# Task List
+
+- [x] 1. Update Database (Backend)
+  - `ALTER TABLE signals ADD COLUMN reachedTwoPercent INTEGER DEFAULT 0` eklenecek.
+- [x] 2. Update Scanner (backend/scanner.js)
+  - `checkActiveSignals` içerisinde fiyat kontrolü yaparken %2 kâr barajını geçtiyse `reachedTwoPercent = 1` şeklinde DB güncellemesi eklenecek.
+  - Hızlandırma için toplu (batch) fiyat sorgusu entegre edilecek.
+- [x] 3. Update API Endpoint (backend/index.js)
+  - `/api/signals/stats` içeriği `activeLong`, `activeShort`, `activeInProfit`, `activeInLoss`, `reachedTwoPercentCount` döncek şekilde revize edilecek.
+- [x] 4. Update UI (Mobile Frontend)
+  - `DashboardScreen.js` üzerinden anlık dönen kâr/zarar ve long/short bilgileri tasarıma (kutu şeklinde) yedirilecek.
+  - `SignalHistoryScreen.js` (İstatistik sayfası) içerisine "%2 Kâr Barajını Görenler" vurgulanacak.
+- [x] 5. Test
+  - Backend yeniden başlatılıp hata olup olmadığı incelenecek.

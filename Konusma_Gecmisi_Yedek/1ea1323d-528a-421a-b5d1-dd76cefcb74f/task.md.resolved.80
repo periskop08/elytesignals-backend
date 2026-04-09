@@ -1,0 +1,9 @@
+# Günlük Kalite Skor Raporu Otomasyonu Görevleri
+
+- `[/]` `backend/scanner.js` dosyasına `sendNightlyReport` fonksiyonunu eklemek.
+  - Veritabanından (signals.db) dünkü işlemleri getirecek sorgunun çalıştırılması.
+  - Kalite skorlarına (Quality Score) göre gruplama ve kâr zarar hesabı algoritmasının yazılması.
+  - Telegram `sendDocument` fonksiyonu kullanılarak raporun hazırlanıp gruba yollanması.
+- `[ ]` `node-cron` paketinin doğru saat dilimini (Europe/Istanbul) test etmek ve `startScanner` metoduna `0 3 * * *` (Gece 03:00) şeklinde dahil etmek.
+- `[ ]` Geçici bir komut aracılığıyla test raporu göndererek Telegram kısmını ve markdown formatını denemek.
+- `[ ]` Sunucuyu yeniden başlatarak canlıya geçişi tamamlamak.

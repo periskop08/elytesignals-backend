@@ -1,0 +1,32 @@
+# Upgrade Elyte Scanner PineScript to Match AWS
+
+We will update the `elyte_scanner.pine` indicator to bring it as close to 100% parity with the AWS Node.js `scanner.js` engine as mathematically possible without hitting TradingView's constraints.
+
+## Proposed Changes
+
+We will introduce the following missing metrics to `elyte_scanner.pine`.
+
+### 1. Multi-Timeframe (MTF) Data Fetching
+We will use TradingView's `request.security()` to dynamically look at the 4-Hour and 1-Day charts to provide "Big Picture" points, mimicking the AWS bot's multi-dimensional view.
+- **4H Trend Check (+15 Pts)**: Fetch 4H SMA(50). If current 1H signal directions align with the 4H SMA, add 15 points.
+- **1D Golden Cross (+10 Pts)**: Fetch 1D SMA(50) and SMA(200). If it's a LONG signal and Daily is in Golden Cross, add 10 points. 
+
+### 2. Risk/Reward (R:R) Calculation Engine
+We will calculate the pseudo entry, simulated stop-loss, and take-profit targets directly inside PineScript at the moment the sweep occurs.
+- Stop Loss: `Current Price +/- (ATR * 1.5)`
+- Take Profit: `EQ` (Equilibrium of the 50-candle range)
+- If Reward / Risk >= 2.0: **+25 Points**
+- If Reward / Risk >= 1.2: **+5 Points**
+
+### 3. Hidden Divergence Checker
+Implement a loop-based scanner that checks the RSI of the previous localized dip/peak. If price forms a higher low but RSI forms a lower low (Hidden Bullish Divergence), we reward **+5 Points**.
+
+### 4. Visual Adjustments
+We will update the `alertcondition` and the tooltip logs to dynamically display the final R:R ratio alongside the new inflated 70-80 point scores so you see exactly what the AWS bot sees.
+
+## User Review Required
+
+> [!WARNING]
+> TradingView's `request.security()` function can cause slight performance delays on the chart because it has to fetch multiple timeframes at once. Are you okay with the indicator taking ~1-2 seconds to load on the chart in exchange for full system parity?
+> 
+> Lütfen bu taslağı onaylıyorsan "Devam et" de, sana Pine Script'in v2.0 (Full AWS Parity) kodlarını artifact olarak oluşturayım!

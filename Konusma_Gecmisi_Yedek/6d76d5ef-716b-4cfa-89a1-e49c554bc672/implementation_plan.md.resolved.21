@@ -1,0 +1,45 @@
+# Gelişmiş Manuel BingX Trader (Favori Tuşunu Ticaret Tuşuna Çevirme)
+
+Mevcut sistemde Web Sitesindeki (Dashboard) "Yıldız / Favori" butonu sadece sinyali yer imlerine (bookmark) eklemek içindi ve arka planda **gerçek bir işlem açmıyordu**. İşlemi kapatma butonu da doğal olarak sadece veritabanında işlemi kapatıp BingX portalına herhangi bir komut göndermiyordu.
+
+Senin harika fikrine göre: **Artık Yıldız (Favori) Tuşu, Manuel Satın Alma Tuşu Olacak!** 
+
+Eğer bir sinyalin fiyatı tekrar giriş noktasına geldiyse, sağ taraftaki Yıldız ikonuna tıkladığın an tıpkı otomatik botun yaptığı gibi BingX borsasına **bizzat emri gönderecek ($10 risk ile)** ve onu aktif bir pozisyona dönüştürecek! Tekrar kapattığında da BingX'i tetikleyip borsadaki işlemi anında boğacak.
+
+## User Review Required
+
+> [!WARNING]
+> **ÖNEMLİ:** Bu plan uygulandıktan sonra, "Favorilere Ekle (Yıldız)" butonuna her bastığında işlemi cüzdanındaki **gerçek bakiyeni kullanarak BingX üzerinde işleme alacaktır.** Önceden sadece "Takip" amaçlıydı, artık **Direkt İşleme Girme** yetkisine sahip olacak! Bunu bilmek ve yıldızlara yanlışlıkla dokunmamak önem taşıyor.
+
+## Proposed Changes
+
+### Backend (Node.js)
+
+#### [MODIFY] [index.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/index.js)
+- `/api/favorites/toggle`: Eğer ki bir sinyal favorilere ekleniyorsa (`action === 'added'`), sinyalin TP/SL ve Giriş parametreleri veritabanından çekilecek ve **`bingx-trade.js`** üzerinden BingX borsasına canlı olarak `placeOrder()` (Piyasadan Alım) emri yollanacak!
+- `/api/favorites/close`: "İşlemi Sonlandır" butonuna basıldığında hem veritabanındaki işlemi (KÂR / ZARAR olarak) `WIN` ya da `LOSS` kaydedecek, hem de BingX borsasına anında **`closePosition()`** komutunu atıp işlemi sonlandıracak.
+
+#### [MODIFY] [database.js](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/database.js)
+- `favorites` tablosuna BingX borsasındaki "Sipariş Kimliği (OrderID)"ni de tutabilmemiz için `bybitOrderId TEXT` (veya `bingxOrderId`) adında yeni bir sütun eklenecek. Böylece işlem kapatılırken borsadaki siparişle eşleşmesi izlenecek.
+
+---
+
+### Frontend (React / Vercel)
+
+#### [MODIFY] [Dashboard.jsx](file:///Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/web/src/pages/Dashboard.jsx)
+- **Tıklananların Gizlenmesi:** Kullanıcı işlemi "İşlemi Sonlandır" diyerek kapattığı an durum "KÂRLA kapatıldı" olmayacak, doğrudan **Favoriler anasayfasından buharlaşıp kaybolacak**. (Görme kirliliği yapmaması için `favFilter` filtrelemesinde sadece `ACTIVE` olanlar listelenecek).
+- **İstatistiklere Yazma:** Ekranda (favoriler listesinde) yok olacak ancak arka planda `CLOSED_WIN` ya da `CLOSED_LOSS` olarak mühürlendiği için **Kişisel Performans (İstatistikler)** ekranına kazanç ya da zararınla birlikte anında matematiksel olarak eklenecek!
+- **Tekrar İşleme Girme Özelliği:** Eğer bir sinyali kapattıysan, "Taramalar" sayfasından o sinyali bulup tekrar Yıldız (Favori) butonuna basarak 2. ya da 3. defa tekrar tetiği çekebileceksin! Her defasında yeniden borsada açılacak ve yeni bir "İşlemi Kapat" döngüsü sunacak.
+
+## Open Questions
+
+> [!IMPORTANT]
+> - "Yıldıza Basıldığında Gerçek İşlem Açma" fikri oldukça güçlü ama "Acaba yanlışlıkla basarsam anında işleme girer mi?" stresini ortadan kaldırmak için, **Yıldıza basılınca "İşleme (BingX'e) girilecek emin misiniz?"** şeklinde ufak bir onay kutusu çıkartmamı ister misin yoksa **tek tıkla direkt acımadan açsın mı?**
+
+## Verification Plan
+
+### Manual Verification
+1. Sen web sitesinden (Dashboard) rastgele bir eski veya yeni sinyalin Yıldız İkonuna tıklayacaksın.
+2. Anında BingX ekranında telefonundan işleme Girdiğini teyit edeceğiz.
+3. Yine web sitesinden Favoriler bölümüne gelip kırmızı "İşlemi Kapat" tuşuna basacaksın.
+4. Ekrandan otomatik olarak kaybolduğunu, uygulamanın BingX üzerinden kapattığını ve İstatistik ekranındaki Kâr yüzdesini yukarı / aşağı çektiğini aynı anda göreceğiz!
