@@ -263,7 +263,7 @@ async function getUsdtPairsAndAssets() {
     try {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
-        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT'];
+        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT', 'NXPC-USDT'];
         
         let cryptoPairs = [];
         let tradFiAssets = [];
@@ -1226,12 +1226,12 @@ async function analyzeCoin(symbolInfo) {
         let finalRR = risk > 0 ? (reward / risk) : 0;
         breakdown.rr = parseFloat(finalRR.toFixed(2));
 
-        // Puanlamalar SUNİ değil, DOĞAL/ORGANİK RR üzerinden yapılmalı
-        if (organicRR >= 2.0) {
+        // Puanlamalar GEÇİCİ TEST İÇİN eski haline (SUNİ/UZATILMIŞ) RR üzerinden yapılıyor
+        if (finalRR >= 2.0) {
             qualityScore += 25; // Base 15 + R:R Bonus 10
             warnings.push('High R:R Bonus (+25)');
         }
-        else if (organicRR >= 1.5) {
+        else if (finalRR >= 1.5) {
             qualityScore += 5;
             warnings.push('Good R:R Bonus (+5)');
         }
