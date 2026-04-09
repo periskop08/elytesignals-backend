@@ -6,6 +6,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const { appendToSheet } = require('./google-api');
 const { placeOrder, getPosition, updateStopLoss } = require('./bingx-trade');
+const { generatePnlImage } = require('./pnl-generator');
 const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
 
@@ -483,8 +484,19 @@ async function checkActiveSignals() {
                                         } else {
                                             msg = `🛑 *STOP LOSS!* [${signal.symbol}]\nİşlem maalesef zarardurdur seviyesine temas etti ve kapatıldı.\n\nRisk yönetimi daima hayat kurtarır. 🛡️`;
                                         }
+                                    
+                                    // PNL KARTI & TELEGRAM GONDERIMI
+                                    const pnlPercentageCalc = trade.type === 'LONG' ? ((currentP - trade.entryPrice) / trade.entryPrice) * 100 * 10 : ((trade.entryPrice - currentP) / trade.entryPrice) * 100 * 10;
+                                    const isWin = pnl >= 0;
+                                    
+                                    const imageBuffer = await generatePnlImage(trade.symbol, `${trade.type} 10X`, pnlPercentageCalc, pnl, isWin);
+
+                                    if (imageBuffer) {
+                                        await telegramBot.sendPhoto(process.env.TELEGRAM_VIP_GROUP_ID, imageBuffer, { caption: msg, parse_mode: 'Markdown' }, { filename: 'pnl.png', contentType: 'image/png' });
+                                    } else {
+                                        await telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
                                     }
-                                    telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
+                                    
                                 } catch (tgErr) {
                                     console.error("TG Send Error on Close:", tgErr.message);
                                 }
