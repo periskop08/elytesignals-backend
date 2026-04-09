@@ -113,7 +113,9 @@ BİLGİ: Bu varlık (${symbol}) henüz portföyümüzde DEĞİL. Bu hissenin yü
    (Aşırı büyüme (Hyper-growth), Teknoloji veya Savunma şirketlerini analiz ederken piyasa doygunluğunu ve Çarpan Şişkinliği riskini göz önüne al. Şirket harika bile olsa, operasyonel hantallaşma durumu ve fiyat çarpanlarının zirveye ulaşma riskini (Paslanma Etkisi) eleştirerek uyar. 'Sadece iyi şirket diye her fiyattan alınmaz' disipliniyle risk analizi yap.)
    
    - ### 3. Teknolojik/Operasyonel Keskinlik (Edge Score)
-   - ### 4. Liderlik, CEO Açıklamaları ve Bilanço Özeti
+   - ### 4. Liderlik, Kongre/Senato İşlemleri (Insider) ve Bilanço Özeti
+   (Bu başlıkta şirketin CEO kalitesini ve özellikle ABD Kongre Üyeleri/Senatör alımlarını (Insider Trading) analiz et. Kararlarında @pelositracker'ın politikacı para izi ve @Beth_Kindig'in agresif teknoloji büyüme vizyonunu birleştirerek yorum yap.)
+   
    - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar
    - ### 6. Antigravity (AI) Nihai Kararı ve Kademeli Alım Tavsiyesi
 
