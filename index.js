@@ -147,7 +147,7 @@ app.get('/api/signals/stats', async (req, res) => {
     if (days) {
          timeFilter = ` AND createdAt >= datetime('now', '-${days} days')`;
     }
-    const signals = await db.all(`SELECT * FROM signals WHERE status IN ('WIN', 'LOSS')${timeFilter}`);
+    const signals = await db.all(`SELECT * FROM signals WHERE status IN ('WIN', 'LOSS', 'BREAKEVEN')${timeFilter}`);
     const activeSignals = await db.all(`SELECT * FROM signals WHERE status = 'ACTIVE'`);
     const reachedTwoPercentData = await db.get(`SELECT COUNT(*) as count FROM signals WHERE reachedTwoPercent = 1${timeFilter}`);
     
@@ -187,6 +187,7 @@ app.get('/api/signals/stats', async (req, res) => {
     
     let wins = 0;
     let losses = 0;
+    let breakevens = 0;
     let totalProfit = 0;
     let totalWinPercentage = 0;
     let totalLossPercentage = 0;
@@ -226,6 +227,9 @@ app.get('/api/signals/stats', async (req, res) => {
             } else {
                 totalLossPercentage += ((stop - entry) / entry) * 100 * 10;
             }
+        } else if (s.status === 'BREAKEVEN') {
+            breakevens++;
+            totalProfit += realNet !== null ? realNet : 0;
         }
     });
 
@@ -234,10 +238,11 @@ app.get('/api/signals/stats', async (req, res) => {
         closedSignals: signals.length,
         wins,
         losses,
+        breakevens,
         totalProfit,
         totalWinPercentage,
         totalLossPercentage,
-        winRate: signals.length > 0 ? (wins / signals.length) * 100 : 0,
+        winRate: (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0,
         activeLong,
         activeShort,
         activeInProfit,
@@ -253,8 +258,8 @@ app.get('/api/signals/stats', async (req, res) => {
 // Geçmiş Sinyaller (WIN veya LOSS) endpoint'i
 app.get('/api/signals/history', async (req, res) => {
     try {
-        const { status, symbol } = req.query; // 'WIN' veya 'LOSS' ve opsiyonel 'symbol'
-        let query = "SELECT * FROM signals WHERE status IN ('WIN', 'LOSS')";
+        const { status, symbol } = req.query; // 'WIN', 'LOSS' veya 'BREAKEVEN' ve opsiyonel 'symbol'
+        let query = "SELECT * FROM signals WHERE status IN ('WIN', 'LOSS', 'BREAKEVEN')";
         let params = [];
         
         if (status) {

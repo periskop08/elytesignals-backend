@@ -460,8 +460,14 @@ async function checkActiveSignals() {
                 }
 
                 // %2 kâr barajı kontrolü
+                let isBreakevenCandid = signal.reachedTwoPercent;
                 if (pnl >= 2.0 && !signal.reachedTwoPercent) {
                     await db.run("UPDATE signals SET reachedTwoPercent = 1 WHERE id = ?", [signal.id]);
+                    isBreakevenCandid = 1;
+                }
+
+                if (newStatus === 'LOSS' && isBreakevenCandid) {
+                    newStatus = 'BREAKEVEN';
                 }
 
                 if (newStatus) {
