@@ -71,28 +71,53 @@ async function runDailyScreener() {
             try {
                 // Fetch basic fundamental info for the prompt or baseline
                 let currentPrice = 0;
+                let metricsObj = {};
                 try {
-                     const qs = await yahooFinance.quoteSummary(symbol, { modules: ['price'] });
+                     const qs = await yahooFinance.quoteSummary(symbol, { modules: ['price', 'defaultKeyStatistics', 'financialData'] });
                      currentPrice = qs?.price?.regularMarketPrice || 0;
+                     metricsObj.pegRatio = qs?.defaultKeyStatistics?.pegRatio !== undefined ? qs.defaultKeyStatistics.pegRatio.toFixed(2) : "Bilinmiyor";
+                     metricsObj.forwardPE = qs?.defaultKeyStatistics?.forwardPE !== undefined ? qs.defaultKeyStatistics.forwardPE.toFixed(2) : "Bilinmiyor";
+                     metricsObj.trailingPE = qs?.defaultKeyStatistics?.trailingPE !== undefined ? qs.defaultKeyStatistics.trailingPE.toFixed(2) : "Bilinmiyor";
+                     metricsObj.priceToSales = qs?.defaultKeyStatistics?.priceToSalesTrailing12Months !== undefined ? qs.defaultKeyStatistics.priceToSalesTrailing12Months.toFixed(2) : "Bilinmiyor";
+                     metricsObj.fcf = qs?.financialData?.freeCashflow ? `$${(qs.financialData.freeCashflow / 1e9).toFixed(2)} Milyar` : "Bilinmiyor";
+                     metricsObj.debtToEbitda = (qs?.financialData?.totalDebt && qs?.financialData?.ebitda) ? (qs.financialData.totalDebt / qs.financialData.ebitda).toFixed(2) : "Bilinmiyor";
+                     metricsObj.revenueGrowth = qs?.financialData?.revenueGrowth !== undefined ? (qs.financialData.revenueGrowth * 100).toFixed(2) + "%" : "Bilinmiyor";
                 } catch(e) {}
 
                 const promptTemplate = `
 Sen bir Wall Street Hedge Fund Quants Yöneticisisin. Sana gönderilen yeni ve gözden kaçmış olabilecek potansiyel hisse senedi hakkında detaylı bir "Investment Thesis" (Yatırım Tezi) oluştur.
-Analiz Edilecek (Screener'dan düşen) Varlık: ${symbol}
 
-BİLGİ: Bu varlık (${symbol}) henüz portföyümüzde DEĞİL. Bu hissenin yüksek potansiyelli bir teknoloji, sağlık veya endüstri hissesi olup olmadığını incele ve rapora MUTLAKA teknik analize (destek/direnç, FVG, vs.) veya makro döngülere dayanarak tahmini bir "Optimal Alım Fiyatı (Entry Price) ve Kademeli Alım Bölgesi" ÖNERMENİ İSTİYORUM. Bu alım tavsiyesini raporun bir alt başlığı olarak ekle.
+Analiz Edilecek (Screener'dan düşen) Varlık: ${symbol}
+Güncel Fiyat: $${currentPrice}
+
+=== FINANSAL VERİ SETİ (Genişletilmiş) ===
+- PEG Oranı: ${metricsObj.pegRatio}
+- İleri F/K (Forward PE): ${metricsObj.forwardPE}
+- Güncel F/K (Trailing PE): ${metricsObj.trailingPE}
+- Fiyat/Satış (P/S): ${metricsObj.priceToSales}
+- Serbest Nakit Akışı (FCF): ${metricsObj.fcf}
+- Borç / FAVÖK: ${metricsObj.debtToEbitda}
+- Çeyreklik Gelir Büyümesi: ${metricsObj.revenueGrowth}
+==========================================
+
+BİLGİ: Bu varlık (${symbol}) henüz portföyümüzde DEĞİL. Bu hissenin yüksek potansiyelli bir hisse olup olmadığını incele ve rapora MUTLAKA teknik analize (destek/direnç, FVG, vs.) veya makro döngülere dayanarak tahmini bir "Optimal Alım Fiyatı (Entry Price) ve Kademeli Alım Bölgesi" ÖNERMENİ İSTİYORUM.
 
 ÇOK ÖNEMLİ KURALLAR:
 1. "summary" ve "detailedReport" ALANLARININ TAMAMINI %100 TÜRKÇE VE AKICI YAZACAKSIN.
 2. "detailedReport" ALANI ÇOK DETAYLI, UZUN VE KAPSAMLI OLMALIDIR (En az 500 kelime). Raporu tam olarak şu Markdown başlıklarıyla yapılandır:
-   - ### 1. Hacim ve Piyasa Talebi
-   - ### 2. Teknolojik/Operasyonel Keskinlik (Edge Score)
-   - ### 3. Liderlik, CEO Açıklamaları ve İçeriden Öğrenenler
-   - ### 4. Bilanço ve Temel Analiz
-   - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar
-   - ### 6. Antigravity (AI) Nihai Kararı ve İşlem Tavsiyesi
 
-3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Analist yorumlarını ve hedef fiyatlarını eski verilerden DEĞİL, KESİNLİKLE en son açıklanan güncel (2025 son çeyrek / 2026) bilanço verilerine göre al! Mutlaka spesifik kurumsal analist (Goldman Sachs, Morgan Stanley vb.) güncel fiyat tahminleri yaz (yılın 2026 olduğunu unutma). Eski verileri kopyalama.
+   - ### 1. Genişletilmiş Finansal İzleme Tablosu
+   (Bu başlığın tam altına PEG, F/K, P/S, Nakit Akışı gibi *yukarıda sağladığım* metrikleri kullanan vizyoner ve şık bir Markdown tablosu ekle ve rakamları profesyonelce yorumla. Tablonun çok anlaşılır olmasına dikkat et.)
+   
+   - ### 2. Mükemmel Şirket ve Çarpan Şişkinliği Riski (Paslanma Etkisi)
+   (Aşırı büyüme (Hyper-growth), Teknoloji veya Savunma şirketlerini analiz ederken piyasa doygunluğunu ve Çarpan Şişkinliği riskini göz önüne al. Şirket harika bile olsa, operasyonel hantallaşma durumu ve fiyat çarpanlarının zirveye ulaşma riskini (Paslanma Etkisi) eleştirerek uyar. 'Sadece iyi şirket diye her fiyattan alınmaz' disipliniyle risk analizi yap.)
+   
+   - ### 3. Teknolojik/Operasyonel Keskinlik (Edge Score)
+   - ### 4. Liderlik, CEO Açıklamaları ve Bilanço Özeti
+   - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar
+   - ### 6. Antigravity (AI) Nihai Kararı ve Kademeli Alım Tavsiyesi
+
+3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Analist yorumlarını KESİNLİKLE en son açıklanan güncel bilançolara göre al! Mutlaka spesifik kurumsal analist (Goldman Sachs vb.) güncel fiyat tahminleri yaz (yılın 2026 olduğunu unutma).
 4. Her başlığın altını, yatırım jargonlarıyla çok detaylı doldur. Rapor yarım kesilmemelidir.
 
 Lütfen SADECE JSON FORMATINDA YANIT VER:
