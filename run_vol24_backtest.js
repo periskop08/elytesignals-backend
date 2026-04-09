@@ -192,7 +192,7 @@ async function backtest(assetInfo) {
 
 async function run() {
     process.stdout.write("Fetching top BingX pairs for 1 month Soft Filter 200 SMA backtest...\n");
-    const pairs = await getTopPairsBingX(200); 
+    const pairs = await getTopPairsBingX(50); 
     
     let stats = { totalTrades: 0, longs: 0, shorts: 0, tp: 0, sl: 0, tpLong: 0, slLong: 0, tpShort: 0, slShort: 0, pending: 0 };
     
