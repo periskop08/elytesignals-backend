@@ -23,7 +23,7 @@ async function generatePnlImage(symbol, side, pnlPercentage, netUsdProfit, isWin
         const symbolStr = symbol.replace('-USDT', '');
         
         // Sadece yazi kismini (ortadaki maskeleme alanini) donduren SVG sarmalayıcısı
-        const svgOverlay = \`
+        const svgOverlay = `
         <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
             <!-- Orjinal metni tamamen maskeleyen glass/kutu efekti. Parlak distan etkilenmez. -->
             <rect x="100" y="270" width="824" height="420" rx="20" fill="rgba(10, 14, 25, 0.95)" stroke="transparent" />
@@ -43,7 +43,7 @@ async function generatePnlImage(symbol, side, pnlPercentage, netUsdProfit, isWin
                 \${profitStr}
             </text>
         </svg>
-        \`;
+        `;
 
         // Ana resmi (16:9 mockup) alıp üzerine SVG katmanını çakıyoruz
         return await sharp(basePath)
