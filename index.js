@@ -324,6 +324,15 @@ app.post('/api/signals/admin/close', async (req, res) => {
                 console.error("TG Send Error on Admin Close:", tgErr.message);
             }
         }
+        // Google Sheets'te Güncelle
+        try {
+            const googleApi = require('./google-api');
+            if (googleApi.updateSheetSignalStatus) {
+                await googleApi.updateSheetSignalStatus(signal.id, newStatus);
+            }
+        } catch (sheetErr) {
+            console.error("Google Sheets update failed on Admin Close:", sheetErr.message);
+        }
         
         res.json({ success: true, newStatus });
     } catch (err) {
