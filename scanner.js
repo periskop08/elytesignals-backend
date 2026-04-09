@@ -350,7 +350,20 @@ async function checkActiveSignals() {
         // Batch fetch all prices at once (BingX API)
         const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const priceMap = {};
-        res.data.data.forEach(t => priceMap[t.symbol.replace('-', '')] = parseFloat(t.lastPrice));
+        
+        // TradFi Tercuman (Reverse Map) 
+        const reverseMap = {};
+        if (global.BINGX_SYMBOL_MAP) {
+             Object.keys(global.BINGX_SYMBOL_MAP).forEach(k => {
+                 reverseMap[global.BINGX_SYMBOL_MAP[k]] = k;
+             });
+        }
+
+        res.data.data.forEach(t => {
+             let mappedKey = t.symbol.replace('-', '');
+             if (reverseMap[t.symbol]) mappedKey = reverseMap[t.symbol];
+             priceMap[mappedKey] = parseFloat(t.lastPrice);
+        });
 
         // --- AUTO TRADING CHECK START ---
         if (process.env.BINGX_API_KEY) {
