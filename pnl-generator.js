@@ -25,12 +25,9 @@ async function generatePnlImage(symbol, side, pnlPercentage, netUsdProfit, isWin
         // Sadece yazi kismini (ortadaki maskeleme alanini) donduren SVG sarmalayıcısı
         const svgOverlay = `
         <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
-            <!-- Orjinal metni tamamen maskeleyen glass/kutu efekti. Parlak distan etkilenmez. -->
-            <rect x="100" y="270" width="824" height="420" rx="20" fill="rgba(10, 14, 25, 0.95)" stroke="transparent" />
-
             <!-- Ust İsimler (Sembol & Yön) -->
             <text x="512" y="380" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="34" fill="#A0AEC0" text-anchor="middle" letter-spacing="3">
-                \${symbolStr}   •   \${side}
+                ${symbolStr}   •   ${side}
             </text>
 
             <!-- Devasa ROE -->
