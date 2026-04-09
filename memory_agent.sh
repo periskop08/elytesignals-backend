@@ -8,7 +8,7 @@ echo "[$(date)] Memory Agent uyanıyor..." >> $LOG_FILE
 
 # 1. Antigravity Loglarını Sohbet Günlüğüne Süz
 echo "Sistem loglarından (overview.txt) konuşmalar günlüğe çıkartılıyor..." >> $LOG_FILE
-/Users/periskop/.nvm/versions/node/v20.18.0/bin/node /Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/diary_extractor.js >> $LOG_FILE 2>&1
+/Users/periskop/.nvm/versions/node/v24.14.1/bin/node /Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/diary_extractor.js >> $LOG_FILE 2>&1
 
 # 2. Hafıza Senkronizasyonu (Brain klasörü ham kopyası)
 echo "Conversational memory senkronize ediliyor..." >> $LOG_FILE
