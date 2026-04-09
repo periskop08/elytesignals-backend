@@ -281,6 +281,34 @@ app.get('/api/signals/history', async (req, res) => {
     }
 });
 
+app.post('/api/signals/admin/close', async (req, res) => {
+    try {
+        const { telegramId, signalId, currentPrice, pnl } = req.body;
+        
+        if (telegramId !== '1194576674') {
+            return res.status(403).json({ error: 'Yetkisiz erişim.' });
+        }
+
+        const signal = await db.get("SELECT * FROM signals WHERE id = ?", [signalId]);
+        if (!signal) return res.status(404).json({ error: 'Sinyal bulunamadı.' });
+        if (signal.status !== 'ACTIVE') return res.status(400).json({ error: 'Sinyal zaten kapalı.' });
+
+        const newStatus = pnl >= 0 ? 'WIN' : 'LOSS';
+        
+        // Matematiksel bozulmayı engellemek için, anlık fiyata göre update
+        if (newStatus === 'WIN') {
+            await db.run("UPDATE signals SET status = ?, targetPrice = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, currentPrice, signalId]);
+        } else {
+            await db.run("UPDATE signals SET status = ?, stopPrice = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, currentPrice, signalId]);
+        }
+        
+        res.json({ success: true, newStatus });
+    } catch (err) {
+        console.error("Admin close error:", err);
+        res.status(500).json({ error: 'İşlem kapatılırken sunucu hatası.' });
+    }
+});
+
 const cryptoAliases = {
     "bitcoin": "BTCUSDT", "btc": "BTCUSDT",
     "ethereum": "ETHUSDT", "eth": "ETHUSDT", "ether": "ETHUSDT",
