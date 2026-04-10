@@ -32,7 +32,21 @@ global.nasdaqCache = {
 
 async function fetchNasdaqData() {
     console.log("[Nasdaq] Canlı veriler çekiliyor...");
-    const nasdaqTickers = ["NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "TSLA", "PLTR", "AVGO", "QQQ", "KTOS"];
+    
+    // DB'den dinamik olarak mevcut hisseleri al, benzersiz sembolleri topla
+    let dbTickers = [];
+    if (typeof db !== 'undefined' && db.all) {
+        try {
+            const rows = await db.all("SELECT symbol FROM portfolio_assets WHERE allocatedPercentage > 0");
+            if (rows) dbTickers = rows.map(r => r.symbol);
+        } catch (e) {
+            console.error("DB symbol fetch error inside fetchNasdaqData", e);
+        }
+    }
+
+    const baseTickers = ["NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "TSLA", "PLTR", "AVGO", "QQQ", "KTOS"];
+    const nasdaqTickers = [...new Set([...baseTickers, ...dbTickers])];
+    
     const updatedStocks = [];
 
     for (const symbol of nasdaqTickers) {
