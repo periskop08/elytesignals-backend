@@ -1383,6 +1383,16 @@ app.post('/api/llm/analyze', async (req, res) => {
         (async () => {
             try {
 
+        let currentPrice = "Bilinmiyor";
+        try {
+            const res = await yahooFinance.quoteSummary(cleanSymbol, { modules: ['price'] });
+            if (res && res.price && res.price.regularMarketPrice) {
+                currentPrice = res.price.regularMarketPrice.toFixed(2);
+            }
+        } catch(e) {
+            console.log("Yahoo price fetch error for LLM:", e.message);
+        }
+
         const existingAsset = await db.get("SELECT * FROM portfolio_assets WHERE symbol = ?", [cleanSymbol]);
         
         let extraInstruction = `ŞU ANKİ TARİH: 06-04-2026. Meta'nın geçmişteki vizyonsuz Metaverse birimlerini kapattığını/küçülttüğünü, tüm big-tech şirketlerinin yapay zekaya (AI) abandığını bil. 2022-2023 konularından bahsetme.\n`;
@@ -1397,6 +1407,7 @@ app.post('/api/llm/analyze', async (req, res) => {
         const promptTemplate = `
 Sen bir gelişmiş kurumsal yatırım danışmanısın (Hedge Fund Mimarisi).
 Analiz Edilecek Varlık: ${cleanSymbol}
+CANLI GÜNCEL FİYAT: $${currentPrice}
 
 ${extraInstruction}
 BİLGİ: Yatırım stratejisi (PeriskopAI) şu şekilde çalışır:
