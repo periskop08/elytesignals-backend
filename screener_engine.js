@@ -120,6 +120,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver. Asla JSON formatı dışında düz
     "insiderScore": [0-100],
     "patentScore": [0-100],
     "sentimentPercent": [0-100],
+    "entryPriceTarget": [0.00 şeklinde RAKAMSAL Optimal Alım Noktası],
     "summary": "120 karakterlik veri odaklı özet ve nihai AL/SAT/TUT/BEKLE kararı",
     "detailedReport": "Aşağıdaki Örnek Analiz Şablonunu aynen kullanarak oluşturulmuş kapsamlı rapor."
 }
@@ -158,11 +159,13 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver. Asla JSON formatı dışında düz
                        [symbol, parsed.ceoScore || 0, parsed.edgeScore || 0, parsed.earningsScore || 0, parsed.insiderScore || 0, parsed.patentScore || 0, parsed.sentimentPercent || 0, parsed.summary, parsed.detailedReport]
                     );
 
-                    // Insert into Portfolio Asset (5% fixed weighting allocation!)
-                    const qty = currentPrice > 0 ? Math.floor((500 * 0.05) / currentPrice) : 10;
+                    // Insert into Portfolio Asset (2% immediate, 3% pending weighting allocation!)
+                    const qty = currentPrice > 0 ? Math.floor((500 * 0.02) / currentPrice) : 1;
+                    const entryTarget = parsed.entryPriceTarget ? parseFloat(parsed.entryPriceTarget) : 0;
+                    
                     await db.run(
-                        "INSERT INTO portfolio_assets (symbol, type, allocatedPercentage, averageCost, quantity, aiScore, ceoScore, edgeScore, insiderScore, patentScore, lastStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [symbol, 'STOCK', 5, currentPrice || 0, qty || 1, parsed.sentimentPercent || 0, parsed.ceoScore || 0, parsed.edgeScore || 0, parsed.insiderScore || 0, parsed.patentScore || 0, 'ACTIVE']
+                        "INSERT INTO portfolio_assets (symbol, type, allocatedPercentage, averageCost, quantity, aiScore, ceoScore, edgeScore, insiderScore, patentScore, lastStatus, pendingPercentage, pendingEntryPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [symbol, 'STOCK', 2, currentPrice || 0, qty || 1, parsed.sentimentPercent || 0, parsed.ceoScore || 0, parsed.edgeScore || 0, parsed.insiderScore || 0, parsed.patentScore || 0, 'ACTIVE', 3, entryTarget]
                     );
 
                     // Send Telegram Alert safely
