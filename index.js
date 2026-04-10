@@ -37,7 +37,7 @@ async function fetchNasdaqData() {
     let dbTickers = [];
     if (typeof db !== 'undefined' && db.all) {
         try {
-            const rows = await db.all("SELECT symbol FROM portfolio_assets WHERE allocatedPercentage > 0");
+            const rows = await db.all("SELECT symbol FROM portfolio_assets WHERE allocatedPercentage > 0 OR pendingPercentage > 0");
             if (rows) dbTickers = rows.map(r => r.symbol);
         } catch (e) {
             console.error("DB symbol fetch error inside fetchNasdaqData", e);
@@ -94,6 +94,43 @@ async function fetchNasdaqData() {
     if (updatedStocks.length > 0) {
         global.nasdaqCache.stocks = updatedStocks;
         console.log(`[Nasdaq] ${updatedStocks.length} Hisse senedi başarıyla güncellendi.`);
+        
+        // --- OTONOM LİMİT EMİR VE KADEMELİ ALIM KONTROLÜ ---
+        if (typeof db !== 'undefined' && db.all) {
+            try {
+                const pendingAssets = await db.all("SELECT * FROM portfolio_assets WHERE pendingPercentage > 0 AND pendingEntryPrice > 0");
+                for (const asset of pendingAssets) {
+                    const cacheHit = updatedStocks.find(s => s.symbol === asset.symbol);
+                    if (cacheHit && cacheHit.price > 0 && cacheHit.price <= asset.pendingEntryPrice) {
+                        // Limit Order Triggered!
+                        console.log(`[LIMIT ORDER TETIKLENDI] ${asset.symbol} fiyati hedefe dustu! Fiyat: $${cacheHit.price}, Hedef: $${asset.pendingEntryPrice}`);
+                        
+                        const currentInvested = (asset.averageCost || cacheHit.price) * (asset.allocatedPercentage || 0);
+                        const newInvested = cacheHit.price * asset.pendingPercentage;
+                        const newTotalPercentage = (asset.allocatedPercentage || 0) + asset.pendingPercentage;
+                        const newAvgCost = (currentInvested + newInvested) / newTotalPercentage;
+                        
+                        const baseCapital = 1000.00;
+                        const newQuantity = (baseCapital * (newTotalPercentage / 100)) / newAvgCost;
+
+                        await db.run(
+                            "UPDATE portfolio_assets SET allocatedPercentage = ?, averageCost = ?, quantity = ?, pendingPercentage = 0, pendingEntryPrice = 0 WHERE id = ?",
+                            [newTotalPercentage, newAvgCost, parseFloat(newQuantity.toFixed(2)), asset.id]
+                        );
+                        
+                        let telegramBot = null;
+                        if (process.env.TELEGRAM_BOT_TOKEN) {
+                           const TelegramBot = require('node-telegram-bot-api');
+                           telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+                           const msg = `🚨 *YAPAY ZEKA LIMIT EMRİ GERÇEKLEŞTİ!*\n\n[GİZLİ PREMIUM] ${asset.symbol} hissesi AI'ın belirlediği optimal alım bölgesine geriledi ($${cacheHit.price}).\n\nBekleyen *%${asset.pendingPercentage}* ana sermaye dilimi ateşlendi ve varlığın maliyeti başarıyla düşürüldü!\n\n_Daha düşük riskle maksimum kazanca ilerliyoruz._`;
+                           telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' }).catch(e=>console.log(e));
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Limit order check error", e);
+            }
+        }
     }
 }
 
