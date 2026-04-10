@@ -44,7 +44,7 @@ async function fetchNasdaqData() {
         }
     }
 
-    const baseTickers = ["NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "TSLA", "PLTR", "AVGO", "QQQ", "KTOS"];
+    const baseTickers = ["NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "TSLA", "PLTR", "AVGO", "XAR", "KTOS"];
     const nasdaqTickers = [...new Set([...baseTickers, ...dbTickers])];
     
     const updatedStocks = [];
@@ -1358,52 +1358,47 @@ app.post('/api/llm/analyze', async (req, res) => {
         }
 
         const promptTemplate = `
-Sen bir Wall Street Hedge Fund Quants Yöneticisisin. Görevin: Sana gönderilen hisse/kripto senedi hakkında duygu ve betimlemelerden uzak, sadece somut veri ve sektörel gerçeklere dayalı bir "Investment Thesis" (Yatırım Tezi) oluşturmak.
+Sen bir gelişmiş kurumsal yatırım danışmanısın (Hedge Fund Mimarisi).
 Analiz Edilecek Varlık: ${cleanSymbol}
 
 ${extraInstruction}
-🎯 ÇOK ÖNEMLİ KURALLAR (BUNLARA %100 UYACAKSIN):
+BİLGİ: Yatırım stratejisi (PeriskopAI) şu şekilde çalışır:
 
-1. RAPOR TARZI (Sade, Somut, Veri Odaklı):
-- Fazla betimleme, övgü ("muhteşem", "devrimci") veya yermek yasaktır. "Borçları düşük" deme; "Sektör ortalaması X iken, net borç Y seviyesinde" gibi somut kıyaslamalar yap.
-- Hazırlayacağın tüm metinleri KESİNLİKLE %100 TÜRKÇE yazacaksın.
+1. Güvenli Liman Kuralı:
+Herhangi bir hisseden satış tavsiyesi verdiğinde veya riski yüksek bulduğunda, sermayenin "XAR" (Savunma ETF'si) gibi güvenli limanlara park edilmesini öner. XAR, savunma harcamaları supercycle'ında istikrarlı büyüme potansiyeli taşır.
 
-2. ARAMA VE HİKAYE ODAĞI (Microcap & Darboğazlar):
-- Eğer hisse <2 Milyar USD piyasa değerindeyse: FDA/EMA onay süreçlerine, büyük ilaç firmalarınca satın alınma ihtimallerine veya pazardaki yıkıcı teknolojisine odaklan.
-- Niş bir pazarda sektörün yeni tekel veya "darboğaz" çözücü adayı olup olmadığını vurgula.
+2. Satış ve Elinde Tutma Tetikleyicileri (Zorunlu Kurallar):
+- Analist Downgrade'leri: 3+ güvenilir analist (Deutsche, Jefferies, Citi, Goldman, Barclays vb.) not kırarsa veya Hold/Neutral'a indirirse SATIŞ tavsiyesi verilir.
+- İçeriden Satışlar: CEO/EVP kazanç raporu öncesi büyük miktarda hisse (Örn: $18M+) satarsa risk artar.
+- Ana Gelir Modeli Riski: Şirketin core business'inde ciddi zorlanma (Pazar liderliği kaybı, düşük marj).
+- Dava/Sınıf Davası Riski: Beklenen tazminat/settlement, şirketin EPS'sini vuracak düzeydeyse SAT.
+- Beklenen Getiri Hesabı: 12 aylık risksiz getiri eşiğinin altındaysa SAT. Güçlü Bull Case varsa 2-3 çeyrek BEKLE ve düşük fiyattan Re-entry (Yeniden Giriş) planı yap.
 
-3. HEDEF FİYAT VE GERÇEKÇİLİK KURALI (KTOS Kuralı):
-- Alım için hedef fiyat verirken GAYET GERÇEKÇİ seviyeler belirle. Borsa, çok büyük bir ekonomik kriz olmadıkça kaliteli hisselerde %80 çökmez. Mevcut fiyatın %15-%30 altında mantıklı ve gerçekçi bir düzeltme/alım (Entry) noktası ver. Tutarsız destek rakamları uydurma.
-
-4. ÇIKTI FORMATI:
-Yanıtını KESİNLİKLE AŞAĞIDAKİ JSON FORMATINDA, başka hiçbir metin olmadan ver:
-
+3. ÇIKTI FORMATI:
+Yanıtını KESİNLİKLE AŞAĞIDAKİ JSON FORMATINDA ver. Asla JSON dışında düz metin ekleme.
 {
-    "ceoScore": [0-100 arası sayı],
-    "edgeScore": [0-100 arası sayı],
-    "earningsScore": [0-100 arası sayı],
-    "insiderScore": [0-100 arası sayı],
-    "patentScore": [0-100 arası sayı],
-    "sentimentPercent": [0-100 arası sayı],
-    "summary": "Veri odaklı maksimum 120 karakterlik özet",
-    "detailedReport": "Aşağıdaki 5 başlığı aynen kullanarak yazılmış en az 500 kelimelik rapor."
+    "ceoScore": [0-100],
+    "edgeScore": [0-100],
+    "earningsScore": [0-100],
+    "insiderScore": [0-100],
+    "patentScore": [0-100],
+    "sentimentPercent": [0-100],
+    "summary": "120 karakterlik veri odaklı özet ve nihai SAT/TUT/BEKLE kararı",
+    "detailedReport": "Aşağıdaki Örnek Analiz Şablonunu aynen kullanarak oluşturulmuş kapsamlı rapor."
 }
 
-*** JSON İÇİNDEKİ detailedReport ALANI İÇİN ZORUNLU MARKDOWN BAŞLIK YAPISI ***
-### 1. Hacim, Pazar Payı ve Rekabet (Darboğaz Analizi)
-(Şirketin hangi darboğazı çözdüğünü veya biyoteknoloji onay süreçlerini değerlendir.)
+*** JSON İÇİNDEKİ detailedReport ALANI İÇİN ZORUNLU MARKDOWN SATIR YAPISI ***
+### Şirket: ${cleanSymbol}
+**Orijinal Tez ve Finansal Durum:** [Kısa tez özeti, Bilanço ve Teknoloji Gücü]
 
-### 2. Teknolojik Keskinlik ve Bilanço Kıyaslaması
-(Zorunlu olarak İleri F/K, PEG, ve Borç oranlarına dair [Tahmini/Bilinen] Markdown tablosu oluştur: | Metrik | Değer | Sektör Ortalaması | )
+**Kırılma Nedenleri ve Riskler:**
+- **Analist Kesmeleri/Hedefleri:** [Kurumsal analist görüşleri ve güncel beklentiler]
+- **İçeriden Satış ve Liderlik:** [CEO işlemleri, yönetimsel riskler, davalar]
+- **Model ve Rekabet Riski:** [Derin pazardaki rakipler ve darboğaz durumu]
+- **EV Hesabı:** [Beklenen return ve olasılık tahmini]
 
-### 3. Liderlik, CEO Açıklamaları ve Insider Hareketleri
-(İsim vererek rasyonel demeçleri ve EDGAR/SEC Insider alım/satımlarını değerlendir.)
-
-### 4. Wall Street Hedefleri ve Kurumsal Beklentiler
-(Sadece güncel çeyrek bilançosuna dayalı olan J.P. Morgan vb. kurumsal hedeflerden bahset.)
-
-### 5. Antigravity (AI) Nihai Kararı, Hedef ve İşlem Tezi
-(Hisse fon portföyünde yoksa mantıklı (%15-30 düzeltmeli) bir Alım NOKTASI ver. 3-5 maddelik kısa bir yatırım tezi ekle.)
+### Karar: SAT / BEKLE / TUT
+**Re-entry (Yeniden Alım Koşulu):** [Potansiyel alım bölgesi veya geri çekilme koşulu]
 `;
 
         const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
@@ -1496,8 +1491,8 @@ app.post('/api/portfolio/rebalance', async (req, res) => {
 app.post('/api/portfolio/liquidate', async (req, res) => {
     try {
         const { symbol } = req.body;
-        if (!symbol || symbol === 'QQQ') {
-            return res.status(400).json({ error: "Geçersiz sembol veya QQQ doğrudan likide edilemez." });
+        if (!symbol || symbol === 'XAR') {
+            return res.status(400).json({ error: "Geçersiz sembol veya XAR doğrudan likide edilemez." });
         }
 
         const assetToSell = await db.get("SELECT allocatedPercentage FROM portfolio_assets WHERE symbol = ?", [symbol]);
@@ -1508,9 +1503,9 @@ app.post('/api/portfolio/liquidate', async (req, res) => {
         const sellAmount = assetToSell.allocatedPercentage;
         
         await db.run("UPDATE portfolio_assets SET allocatedPercentage = 0 WHERE symbol = ?", [symbol]);
-        await db.run("UPDATE portfolio_assets SET allocatedPercentage = allocatedPercentage + ? WHERE symbol = 'QQQ'", [sellAmount]);
+        await db.run("UPDATE portfolio_assets SET allocatedPercentage = allocatedPercentage + ? WHERE symbol = 'XAR'", [sellAmount]);
         
-        res.json({ success: true, message: `${symbol} başarıyla satıldı ve fonlar QQQ ETF'ine aktarıldı.` });
+        res.json({ success: true, message: `${symbol} başarıyla satıldı ve fonlar XAR ETF'ine aktarıldı.` });
     } catch(e) {
         res.status(500).json({ error: e.message });
     }
