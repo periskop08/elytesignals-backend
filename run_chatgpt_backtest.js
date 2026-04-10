@@ -137,11 +137,7 @@ async function backtest(pairData) {
 
 
         // BARAJ GÜNCELLEMESİ (Tüm cephane eklendiği için barajı Zırhlıyoruz)
-        // Orijinal maks puan FVG+OB = 40'tı. Şimdi Sweep ve Engulfing eklendi.
-        // Canlıda makro puanlar olduğu için 70-75 oluyor ama mock script'te eksik olduğu için 60-65 yeterli A+ kalite setup demek!
-        let minScore = direction === 'LONG' ? 60 : 65;
-        if (qualityScore < minScore) continue;
-
+        // BARAJ GÜNCELLEMESİ YAPMIYORUZ: Tümü diziye eklenecek, sonra baraj baraj ayrılacak.
         let dynamicStop = direction === 'LONG' ? currentPrice - (currentATR * 1.5) : currentPrice + (currentATR * 1.5);
         let riskDist = Math.abs(currentPrice - dynamicStop);
         let targetDist = riskDist * 1.5; // Orijinal 1:1.5 RR modeli
@@ -170,16 +166,14 @@ async function backtest(pairData) {
 }
 
 async function run() {
-    process.stdout.write("Hedge Fon Algoritması: ChatGPT Engulfing & Sweep Eklemeli Kasa Testi Başlıyor...\n");
+    process.stdout.write("Hedge Fon Algoritması: Kapsamlı Threshold Raporu Çıkarılıyor...\n");
     const pairs = await getTopPairsBingX(50); // İlk 50 Kaliteli Coin
     
-    let stats = { trades: 0, win: 0, loss: 0, longs: 0, shorts: 0 };
     let initialBalance = 500;
-    let netPNL = 0;
     const FEE_RATE = 0.002;
-    // 20x Çapraz
     const leverage = 20;
 
+    let allResults = [];
     const batchSize = 10;
     for (let i = 0; i < pairs.length; i += batchSize) {
         const batch = pairs.slice(i, i + batchSize);
@@ -188,59 +182,54 @@ async function run() {
         
         results.forEach(res => {
             if (!res || !res.simTrades) return;
-            res.simTrades.forEach(t => { 
-                if (t.direction === 'LONG') stats.longs++;
-                else stats.shorts++;
-
-                // Risk Sabit $10'a göre pozisyon büyüklüğü
-                let posSizeUSD = 10 / (t.riskPct / 100);
-                let requiredMargin = posSizeUSD / leverage; // Kasanın o an bağlanacağı tutar (örneğin ~15-20$ civarı)
-                let feeUSD = posSizeUSD * FEE_RATE;
-                
-                let netWinAmount = 15.0 - feeUSD; 
-                let netLossAmount = 10.0 + feeUSD; // Gerçek kasa kaybı (10$ fix risk + kesinti)
-
-                if (t.outcome === 'WIN') { 
-                    stats.win++; 
-                    netPNL += netWinAmount;
-                } else if (t.outcome === 'LOSS') { 
-                    stats.loss++; 
-                    netPNL -= netLossAmount;
-                } 
-            });
-            stats.trades += res.simTrades.length;
+            allResults.push(res);
         });
         await new Promise(r => setTimeout(r, 600)); 
-        process.stdout.write(`Tarama: ${Math.min(i + batchSize, pairs.length)}/50 Coin...\n`);
     }
     
-    let wR = stats.trades > 0 ? ((stats.win / stats.trades) * 100).toFixed(1) : 0;
-    let finalBalance = initialBalance + netPNL;
-    let growthPct = ((finalBalance - initialBalance) / initialBalance) * 100;
+    let thresholds = [50, 55, 60, 65, 70, 75, 80, 85, 90];
+    let breakdown = [];
+    
+    thresholds.forEach(thresh => {
+        let t_stats = { trades: 0, win: 0, loss: 0, netPNL: 0 };
+        allResults.forEach(res => {
+            res.simTrades.forEach(t => {
+                if (t.qualityScore >= thresh && t.outcome !== 'PENDING') {
+                    let posSizeUSD = 10 / (t.riskPct / 100);
+                    let feeUSD = posSizeUSD * FEE_RATE;
+                    let netWinAmount = 15.0 - feeUSD; 
+                    let netLossAmount = 10.0 + feeUSD;
+
+                    if (t.outcome === 'WIN') { 
+                        t_stats.win++; 
+                        t_stats.netPNL += netWinAmount;
+                    } else if (t.outcome === 'LOSS') { 
+                        t_stats.loss++; 
+                        t_stats.netPNL -= netLossAmount;
+                    } 
+                    t_stats.trades++;
+                }
+            });
+        });
+        
+        let wr = t_stats.trades > 0 ? ((t_stats.win / t_stats.trades) * 100).toFixed(1) : 0;
+        breakdown.push({
+            "Baraj Puanı": thresh,
+            "1 Aylık Sinyal Adedi": t_stats.trades,
+            "Günlük Ortalama Sinyal": (t_stats.trades / 30).toFixed(1),
+            "Başarılı (WIN)": t_stats.win,
+            "Başarısız (LOSS)": t_stats.loss,
+            "Kazanma Oranı (WR)": `%${wr}`,
+            "Aylık Net Kâr/Zarar": `$${t_stats.netPNL.toFixed(2)}`
+        });
+    });
     
     const output = {
-        SİMULASYON_AYARLARI: "Kasa: $500 | Risk: Sabit $10 | Kaldıraç: 20x | Hedef: 1.5R | Süre: Son 30 Gün",
-        KURALLAR: "FVG(15) + OB(25) + KillerWick(20) + Sweep(15) + Engulfing(15). Baraj: LONG 75 / SHORT 80",
-        GENEL_SİNYAL_DAĞILIMI: {
-            "Aylık Toplam Sinyal": stats.trades,
-            "Günlük Ortalama": (stats.trades / 30).toFixed(1) + " Sinyal/Gün",
-            "Long Sayısı": stats.longs,
-            "Short Sayısı": stats.shorts
-        },
-        PERFORMANS: {
-            "Gelen TP (WIN)": stats.win,
-            "Gelen SL (LOSS)": stats.loss,
-            "Win Rate (Kazanma Oranı)": `%${wR}`
-        },
-        KASA_SİMÜLASYONU: {
-            "Başlangıç Bakiyesi": `$${initialBalance}`,
-            "Aylık Büyüme (Net Kâr/Zarar)": `$${netPNL.toFixed(2)}`,
-            "Ay Sonu Yeni Bakiye": `$${finalBalance.toFixed(2)}`,
-            "Kasa Büyüme Yüzdesi": `%${growthPct.toFixed(1)}`
-        }
+        ANALİZ_TİPİ: "Puan Skala Matrisi (Tüm Barajlar)",
+        RAPOR_DETAYI: breakdown
     };
     
-    console.log("\n=== CHATGPT ENGULF & SWEEP DEVRİMİ: 1 AYLIK KASA BACKTESTİ ===");
+    console.log("\n=== PUAN BARAJI İZLEME RAPORU ===");
     console.log(JSON.stringify(output, null, 2));
 }
 
