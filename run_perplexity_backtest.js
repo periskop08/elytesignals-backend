@@ -139,7 +139,7 @@ async function backtest(pairData) {
         }
 
         // We raise the minimum acceptable score from 55 to 70! This demands the presence of the wick/volume or extreme confluence.
-        let minScore = direction === 'LONG' ? 70 : 75;
+        let minScore = direction === 'LONG' ? 55 : 60;
         if (qualityScore < minScore) continue;
 
         let dynamicStop = direction === 'LONG' ? currentPrice - (currentATR * 1.5) : currentPrice + (currentATR * 1.5);
