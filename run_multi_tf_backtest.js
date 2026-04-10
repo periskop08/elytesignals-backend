@@ -79,6 +79,18 @@ async function backtest(pairData, intervalConfig) {
         }
         if (hasOB) qualityScore += 25;
 
+        // VOLUME
+        let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
+        if (volumes[volumes.length-1] > shortTermVolAvg * 1.5) qualityScore += 15;
+
+        const { IchimokuCloud } = require('technicalindicators');
+        const ichi = IchimokuCloud.calculate({ high: highs, low: lows, conversionPeriod: 9, basePeriod: 26, spanPeriod: 52, displacement: 26 });
+        if (ichi.length > 0) {
+            const ic = ichi[ichi.length-1];
+            if (direction==='LONG' && currentPrice > ic.spanA && currentPrice > ic.spanB) qualityScore += 10;
+            if (direction==='SHORT' && currentPrice < ic.spanA && currentPrice < ic.spanB) qualityScore += 10;
+        }
+
         // BARAJ GUNCELLEMESI -> Orijinal uretim bazi 55-60.
         let minScore = direction === 'LONG' ? 55 : 60;
         if (qualityScore < minScore) continue;
