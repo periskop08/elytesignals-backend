@@ -1268,8 +1268,11 @@ async function analyzeCoin(symbolInfo) {
         // Genel RR filtresi (Safety Check)
         if (finalRR < requiredRR) return null; 
 
-        // --- PERPLEXITY ELITE FILTER (v2.0) ---
-        // 1. Killer Wick (Katil Fitil) Puanlaması
+        // --- PERPLEXITY ELITE FILTER (v2.0) + CHATGPT SWEEP/ENGULFING ---
+        let currentJ = closes.length - 1;
+
+        // BÖLÜM A: TETİKLEME (Kurşun) Slotu -> Maksimum +20 Puan (Wick veya Engulfing)
+        // 1. Killer Wick (Katil Fitil) Kontrolü
         let hasKillerWick = false;
         for (let j = closes.length - 3; j <= closes.length - 1; j++) {
             if (j >= 0) {
@@ -1291,22 +1294,70 @@ async function analyzeCoin(symbolInfo) {
                 }
             }
         }
-        if (hasKillerWick) {
-            qualityScore += 20;
-            warnings.push('Killer Wick Onayı (+20)');
+
+        // 2. Engulfing (Yutan Mum) Kontrolü
+        let hasEngulfing = false;
+        if (currentJ >= 1) {
+            let pOpen = opens[currentJ-1]; let pClose = closes[currentJ-1];
+            let cOpen = opens[currentJ]; let cClose = closes[currentJ];
+            if (direction === 'LONG') {
+                if (pClose < pOpen && cClose > cOpen && cClose >= pOpen && cOpen <= pClose) {
+                    hasEngulfing = true;
+                }
+            } else {
+                if (pClose > pOpen && cClose < cOpen && cClose <= pOpen && cOpen >= pClose) {
+                    hasEngulfing = true;
+                }
+            }
         }
 
-        // 2. Volume Shelter (Hacim Sığınağı)
-        let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
-        let lastVol = volumes[volumes.length-1];
-        if (direction === 'LONG' && lastVol < shortTermVolAvg * 0.9 && closes[closes.length-1] < opens[closes.length-1]) {
-            qualityScore += 12;
-            warnings.push('Volume Shelter (Düşük Hacimli Düşüş) (+12)');
-        } else if (direction === 'SHORT' && lastVol < shortTermVolAvg * 0.9 && closes[closes.length-1] > opens[closes.length-1]) {
-            qualityScore += 12;
-            warnings.push('Volume Shelter (Zayıf Alım) (+12)');
+        // Tetik Slotu Kararı (İkisi de 20 puandır, toplanmaz)
+        if (hasKillerWick || hasEngulfing) {
+            qualityScore += 20;
+            if (hasKillerWick && hasEngulfing) {
+                warnings.push('Tetikleyici: Wick + Engulfing Confluence (+20)');
+            } else if (hasKillerWick) {
+                warnings.push('Tetikleyici: Killer Wick (+20)');
+            } else {
+                warnings.push('Tetikleyici: Kurumsal Engulfing (+20)');
+            }
         }
-        // --- END PERPLEXITY FILTER ---
+
+        // BÖLÜM B: TUZAK (Context) Slotu -> Hacim ve Likidite
+        // 3. Liquidity Sweep (Stop Patlatma Mıknatısı) -> +15 Puan
+        let hasSweep = false;
+        if (currentJ >= 10) {
+            let past10Lows = lows.slice(currentJ-10, currentJ);
+            let past10Highs = highs.slice(currentJ-10, currentJ);
+            let min10Low = Math.min(...past10Lows);
+            let max10High = Math.max(...past10Highs);
+            
+            if (direction === 'LONG') {
+                if (lows[currentJ] < min10Low && closes[currentJ] > opens[currentJ] && closes[currentJ] > ((highs[currentJ]+lows[currentJ])/2)) {
+                    hasSweep = true;
+                }
+            } else {
+                if (highs[currentJ] > max10High && closes[currentJ] < opens[currentJ] && closes[currentJ] < ((highs[currentJ]+lows[currentJ])/2)) {
+                    hasSweep = true;
+                }
+            }
+        }
+        if (hasSweep) {
+            qualityScore += 15;
+            warnings.push('Tuzak: Liquidity Sweep (Stop Temizliği) (+15)');
+        }
+
+        // 4. Volume Shelter (Hacim Sığınağı) -> +12 Puan
+        let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
+        let lastVol = volumes[currentJ];
+        if (direction === 'LONG' && lastVol < shortTermVolAvg * 0.9 && closes[currentJ] < opens[currentJ]) {
+            qualityScore += 12;
+            warnings.push('Tuzak: Volume Shelter (Zayıf Satış) (+12)');
+        } else if (direction === 'SHORT' && lastVol < shortTermVolAvg * 0.9 && closes[currentJ] > opens[currentJ]) {
+            qualityScore += 12;
+            warnings.push('Tuzak: Volume Shelter (Zayıf Alış) (+12)');
+        }
+        // --- END PERPLEXITY & CHATGPT FILTER ---
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
         // Eski Sınırlar: LONG 55 | SHORT CONFIG.minScore (55)
