@@ -1484,7 +1484,7 @@ async function runScan() {
                 }
 
                 // --- AUTO TRADING BLOCK START ---
-                if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID) {
+                if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
                         const activeCountRes = await db.get("SELECT COUNT(*) as count FROM user_trades WHERE status = 'ACTIVE'");
                         const activeCount = activeCountRes ? activeCountRes.count : 0;
