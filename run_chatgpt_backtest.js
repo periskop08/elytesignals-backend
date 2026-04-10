@@ -138,8 +138,8 @@ async function backtest(pairData) {
 
         // BARAJ GÜNCELLEMESİ (Tüm cephane eklendiği için barajı Zırhlıyoruz)
         // Orijinal maks puan FVG+OB = 40'tı. Şimdi Sweep ve Engulfing eklendi.
-        // Barajı L:75 S:75 yapalım. (Veya daha katı L:80)
-        let minScore = direction === 'LONG' ? 75 : 80;
+        // Canlıda makro puanlar olduğu için 70-75 oluyor ama mock script'te eksik olduğu için 60-65 yeterli A+ kalite setup demek!
+        let minScore = direction === 'LONG' ? 60 : 65;
         if (qualityScore < minScore) continue;
 
         let dynamicStop = direction === 'LONG' ? currentPrice - (currentATR * 1.5) : currentPrice + (currentATR * 1.5);
