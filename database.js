@@ -86,15 +86,21 @@ const db = new sqlite3.Database(dbPath, (err) => {
             patentScore REAL DEFAULT 0,
             lastStatus TEXT DEFAULT 'ACTIVE',
             drawdown REAL DEFAULT 0,
+            pendingPercentage REAL DEFAULT 0,
+            pendingEntryPrice REAL DEFAULT 0,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )`, (err) => {
-            if(err) console.error("portfolio_assets table error:", err);
-            else {
+            if(err) {
+                console.error("portfolio_assets table error:", err);
+            } else {
+                db.run("ALTER TABLE portfolio_assets ADD COLUMN aiScore REAL DEFAULT 0", () => {});
                 db.run("ALTER TABLE portfolio_assets ADD COLUMN ceoScore REAL DEFAULT 0", () => {});
                 db.run("ALTER TABLE portfolio_assets ADD COLUMN edgeScore REAL DEFAULT 0", () => {});
                 db.run("ALTER TABLE portfolio_assets ADD COLUMN insiderScore REAL DEFAULT 0", () => {});
                 db.run("ALTER TABLE portfolio_assets ADD COLUMN patentScore REAL DEFAULT 0", () => {});
+                db.run("ALTER TABLE portfolio_assets ADD COLUMN pendingPercentage REAL DEFAULT 0", () => {});
+                db.run("ALTER TABLE portfolio_assets ADD COLUMN pendingEntryPrice REAL DEFAULT 0", () => {});
             }
 
             // MOCK DATA for Demo
