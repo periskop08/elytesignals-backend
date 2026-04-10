@@ -1,6 +1,11 @@
 # ELYTE TRADING SYSTEM MANIFESTO & CHANGELOG
 
-Bu belge, Elyte Kurumsal Yatırım Fonu Terminali'nin çekirdek analiz modelini (Periskop AI Motoru), güvenlik ve risk yönetimi algoritmalarını ve sisteme yapılan günlük/haftalık güncellemeleri kayıt altına almak için oluşturulmuştur. 
+## 👑 ANA KURALLAR VE MARKA KİMLİĞİ
+1. **Marka Adı:** Elyte Signal
+2. **Model Adı:** PeriskopAI
+3. **Kimlik Çerçevesi:** Bu sistem bir Kripto Para Sinyal platformudur, Varlık Yönetimi kısmı ise hisse senedi ticareti içindir. Sisteme "Hedge Fon", "Zodyak", "Wall Street Botu" gibi saçma sapan ve gereksiz gizemli isimler verilmeyecek; markanın kurumsal ciddiyeti ve asıl odağı olan **Kripto Sinyalleri** temel alınacaktır.
+
+Bu belge, Elyte Signal Terminali'nin çekirdek analiz modelini (PeriskopAI Motoru), güvenlik ve risk yönetimi algoritmalarını ve sisteme yapılan günlük/haftalık güncellemeleri kayıt altına almak için oluşturulmuştur. 
 
 Sistem donmaları veya platform geçişleri yaşansa dahi, bu belge Antigravity ve Kurucu Ortak arasındaki "kutsal anayasa ve hafıza" olarak kullanılacaktır.
 
@@ -71,32 +76,32 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 
 ### Tarih: 9 Nisan 2026 - Kurumsal Hafıza Ajanı ve LLM Prompt Revizyonu
 **(Sürüm: v2.8.6)**
-*   **(AI Core) Hedge Fund (KTOS) Kuralları Entegrasyonu:** LLM `analyze` motoru tamamen Wall Street Hedge Fund Quants konseptine güncellendi. "KTOS Kuralı" devrede: Hisse senetleri (Assets) için fiyatlarda mantıksız %80'lik çöküş beklentileriyle Alım (Entry) seviyeleri belirlenmesi yasaklandı. Fiyatlarda %15-30 arası gerçekçi düzeltme şartı koşuldu. Açıklamalar "Darboğaz" analizlerine, FDA onaylarına ve somut bilanço tablolarına odaklandı.
+*   **(AI Core) PeriskopAI (KTOS) Kuralları Entegrasyonu:** LLM `analyze` motoru tamamen PeriskopAI Kurumsal Sinyal konseptine güncellendi. "KTOS Kuralı" devrede: Hisse senetleri (Assets) için fiyatlarda mantıksız %80'lik çöküş beklentileriyle Alım (Entry) seviyeleri belirlenmesi yasaklandı. Fiyatlarda %15-30 arası gerçekçi düzeltme şartı koşuldu. Açıklamalar "Darboğaz" analizlerine, FDA onaylarına ve somut bilanço tablolarına odaklandı.
 *   **(Terminal Güvenliği) Veritabanı (DB) Kalkanı Sızdırmazlığı:** `rsync` ile AWS'ye deploy yapılırken kazara yaşanan üretim veritabanının ezilmesine/silinmesine karşın "Red Line" güvencesi oluşturuldu. Kod güncellemeleri `deploy.sh` kilidine bağlandı, `*.db` ve `*.sqlite` dosyaları sonsuza dek dokunulmaz kılındı.
 *   **(Otonom Hafıza) Memory Agent:** AI'ın (Antigravity Motoru) CTO ile yaptığı tüm konuşma geçmişlerini saatlik periyotta masaüstündeki yedek klasörüne senkronize eden ve Manifesto güncellendiğinde GitHub'a otomatik yedek atan Otonom Hafıza Ajanı kurgulandı.
 *   **(Otopilot Güvenliği) Gün İçi Sinyal Tekrarı (Duplicate) Engeli:** Aynı paritede (Örn: NXPCUSDT) gün içerisinde alınan Stop-Loss'lar sonrası bakiyeyi eritmemek için, `scanner.js` içerisindeki Duplicate sorgusu `user_trades` yerine `signals` (Tüm Sinyaller) tablosuna bağlandı. Gün içinde 2. veya 3. kez gelen sinyaller **kesinlikle otopilot tarafından açılmaz**, sadece Dashboard'da pasif sergilenir.
 *   **(Manuel Kontrol) Favori Eşleşmesi:** Dashboard üzerinden Admin tarafından "Favori (Yıldız)" butonuna basılarak manuel işleme alınan pasif sinyaller, aynı saniye `user_trades` içerisine (Otopilot Döngüsüne) kayıt edilir. Manuel kararlar da sistemin Kâr Al (NATIVE_TP) ve Başa-Baş Stop (Trailing Guard) zekasından tam faydalanır.
-*   **(TradFi Filtresi) Akıllı Mesai (Institutional Hours):** Geleneksel Varlık (TradFi - S&P500, NASDAQ, Emtia) taramaları Asya/Gece manipülasyonlarından korunmak ve salt "Wall Street Cash Session" kurumsal hacmine odaklanmak için özel bir zaman dilimi kilidine (Europe/Istanbul kullanılarak) bağlandı. TradFi sinyalleri yalnızca **Hafta İçi, Türkiye Saatiyle 15:30 - 23:00** arasında üretilir. Geceleri TradFi uyku moduna geçerken Kriptolar 7/24 otonom olarak işlem görmeye devam eder.
+*   **(TradFi Filtresi) Akıllı Mesai (Institutional Hours):** Geleneksel Varlık (Hisse Senedi, NASDAQ, Emtia) taramaları Asya/Gece manipülasyonlarından korunmak ve salt "Amerikan Hisse Piyasası" hacmine odaklanmak için özel bir zaman dilimi kilidine (Europe/Istanbul kullanılarak) bağlandı. TradFi sinyalleri yalnızca **Hafta İçi, Türkiye Saatiyle 15:30 - 23:00** arasında üretilir. Geceleri TradFi uyku moduna geçerken Kriptolar 7/24 otonom olarak işlem görmeye devam eder.
 
 ### Tarih: 10 Nisan 2026 - Periskop Elite Filter & Kâr/Hacim Optimizasyonu
 **(Sürüm: v2.8.8)**
-*   **(Finansal Strateji & Fon Modeli İş Akışı):** Elyte robotunun günlük çok sayıda sinyal atarak (Günde 22 sinyal) "Başa-baş Kapanış / Win Rate %46" barajına sığmasının kasa büyümesini durdurduğu tespit edildi. Matematiksel verilerle fonun kasasını güvenle aylık %10+ büyümesi için sinyal sayısının düşürülmesine ve Win Rate'in zodyak seviyelere (%57+) çıkartılmasına karar verildi. "Kalite Tespit Barajı" artırılarak Kripto havuzunun çöpleri temizlendi.
+*   **(Finansal Strateji & Fon Modeli İş Akışı):** Elyte robotunun günlük çok sayıda sinyal atarak (Günde 22 sinyal) "Başa-baş Kapanış / Win Rate %46" barajına sığmasının kasa büyümesini durdurduğu tespit edildi. Matematiksel verilerle fonun kasasını güvenle aylık %10+ büyümesi için sinyal sayısının düşürülmesine ve Win Rate'in en elit seviyelere (%57+) çıkartılmasına karar verildi. "Kalite Tespit Barajı" artırılarak Kripto havuzunun çöpleri temizlendi.
 *   **(AI Çekirdeği) Otonom Puan Barajının Yükseltilmesi:** Eskiden zayıf sinyalleri yakalamak için asimetrik tutulan Kalite Barajları `LONG için 55 -> 70`, `SHORT için 55 -> 75` barajlarına uçurularak sadece kusursuz emarelere odaklanan **Keskin Nişancı** moduna geçiş yapıldı.
 *   **(Test ve Geri Alma - Revert Policy):** Algoritmada önceki orijinal baraj limitleri, eski işleyişe hızlı geri dönüş ihtimaline (Rollback) özel bir rezerve edilmiş yorum satırı (//) olarak muhafaza edilmektedir. Sistemdeki kod onayı alınana kadar "Elite Filter Test Modunda" sayılacaktır.
 
 ### Tarih: 10 Nisan 2026 - ChatGPT (Kurumsal Çekirdek) Engulfing & Sweep Devrimi
-**(Sürüm: v2.9.0 - Zodyak Sürümü)**
+**(Sürüm: v2.9.0 - PeriskopAI Sürümü)**
 *   **(Yapay Zeka Mimarisi Uyumlanması):** ChatGPT'den alınan "15 Yıllık Kurumsal Price Action" dökümü algoritma ile kodlara döküldü. Sistemin puanlamasının şişip çökmesini (Overfitting) engellemek adına Özel Kategori Slot (Bölge + Tetik + Tuzak) sistemine geçildi.
 *   **(Tetik Slotu):** `Killer Wick (Fitil)` veya `Engulfing (Yutan Mum)`. İkisi de piyasa dönüşünü haber verir. İşlemde birinden biri yakalanırsa **+20 Puan** alınır. Aynı andalarsa puan katlanmaz.
 *   **(Tuzak Slotu):** `Liquidity Sweep (Stop Patlatma)`. İşlem onayı almadan hemen önce Eşit Dipler veya Eşit Tepeler (Equal Lows/Highs) temizlenmiş ve onaylı bir kapanış gelmişse ekstra **+15 Puan** verilir.
 ### Tarih: 10 Nisan 2026 - R:R (Risk/Reward) Bonusu İptali & Saf PA Modelinin Devreye Alınması
 **(Sürüm: v2.9.1)**
-*   **(Değişiklik Gerekçesi):** Yüksek R:R (1:2 ve üzeri) oranlarına verilen `+25` puanlık ödülün, zayıf Price Action yapısına sahip "çöp" sinyalleri sadece "stopu ucuz" diye puanla şişirip sisteme soktuğu tespit edildi. Bu durum Zodyak sisteminin kalitesinde enflasyon yarattığı için **R:R Bonusları tamamen kaldırıldı.**
+*   **(Değişiklik Gerekçesi):** Yüksek R:R (1:2 ve üzeri) oranlarına verilen `+25` puanlık ödülün, zayıf Price Action yapısına sahip "çöp" sinyalleri sadece "stopu ucuz" diye puanla şişirip sisteme soktuğu tespit edildi. Bu durum PeriskopAI sisteminin kalitesinde enflasyon yarattığı için **R:R Bonusları tamamen kaldırıldı.**
 *   **(Yeni Baraj Ayarı):** R:R hormonunun sistemden atılmasıyla birlikte "Saf Price Action" motoruna geçilmiş ve barajlar her iki yön (LONG/SHORT) için de **65** puana sabitlenmiştir. 65 puan; içerisinde Order Block, FVG, Katil Fitil, Engulfing veya Stop Patlatma barındırmayan hiçbir düz mumun geçemeyeceği kadar katı bir bariyerdir. 
 
 ---
 
-## 🔬 Standart Backtest Protokolü (Zodyak Kodu)
+## 🔬 Standart Backtest Protokolü (PeriskopAI Protokolü)
 Yönetici (User) sisteme "Backtest yap" komutu verdiğinde AI (Antigravity) tarafından aksi belirtilmedikçe her seferinde geçerli olacak standart veri çekme ve analiz protokolü aşağıdadır:
 1.  **Veri Kaynağı:** BingX borsası üzerinden **geçmiş 1 aylık** mum verileri (Klines) çekilir.
 2.  **Uygulanacak Metot:** Mevcut `scanner.js` ve manifesto içerisindeki o anki aktif Price Action analiz kurgusuna (Tetikleme, Bölge, Tuzak) ek olarak, yöneticinin o anki özel isteği eklenip/çıkarılarak laboratuvar simülasyonuna alınır.
