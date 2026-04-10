@@ -85,9 +85,8 @@ async function runDailyScreener() {
                 } catch(e) {}
 
                 const promptTemplate = `
-Sen bir Wall Street Hedge Fund Quants Yöneticisisin. Sana gönderilen yeni ve gözden kaçmış olabilecek potansiyel hisse senedi hakkında detaylı bir "Investment Thesis" (Yatırım Tezi) oluştur.
-
-Analiz Edilecek (Screener'dan düşen) Varlık: ${symbol}
+Sen bir gelişmiş kurumsal yatırım danışmanısın (Hedge Fund Mimarisi).
+Analiz Edilecek (Screener'dan düşen yeni) Varlık: ${symbol}
 Güncel Fiyat: $${currentPrice}
 
 === FINANSAL VERİ SETİ (Genişletilmiş) ===
@@ -100,29 +99,20 @@ Güncel Fiyat: $${currentPrice}
 - Çeyreklik Gelir Büyümesi: ${metricsObj.revenueGrowth}
 ==========================================
 
-BİLGİ: Bu varlık (${symbol}) henüz portföyümüzde DEĞİL. Bu hissenin yüksek potansiyelli bir hisse olup olmadığını incele ve rapora MUTLAKA teknik analize (destek/direnç, FVG, vs.) veya makro döngülere dayanarak tahmini bir "Optimal Alım Fiyatı (Entry Price) ve Kademeli Alım Bölgesi" ÖNERMENİ İSTİYORUM.
+BİLGİ: Yatırım stratejisi (PeriskopAI) şu şekilde çalışır:
 
-ÇOK ÖNEMLİ KURALLAR:
-1. "summary" ve "detailedReport" ALANLARININ TAMAMINI %100 TÜRKÇE VE AKICI YAZACAKSIN.
-2. "detailedReport" ALANI ÇOK DETAYLI, UZUN VE KAPSAMLI OLMALIDIR (En az 500 kelime). Raporu tam olarak şu Markdown başlıklarıyla yapılandır:
+1. Güvenli Liman Kuralı:
+Herhangi bir hisseden satış tavsiyesi verdiğinde veya riski yüksek bulduğunda, sermayenin "XAR" (Savunma ETF'si) gibi güvenli limanlara park edilmesini öner. XAR, savunma harcamaları supercycle'ında istikrarlı büyüme potansiyeli taşır.
 
-   - ### 1. Genişletilmiş Finansal İzleme Tablosu
-   (Bu başlığın tam altına PEG, F/K, P/S, Nakit Akışı gibi *yukarıda sağladığım* metrikleri kullanan vizyoner ve şık bir Markdown tablosu ekle ve rakamları profesyonelce yorumla. Tablonun çok anlaşılır olmasına dikkat et.)
-   
-   - ### 2. Mükemmel Şirket ve Çarpan Şişkinliği Riski (Paslanma Etkisi)
-   (Aşırı büyüme (Hyper-growth), Teknoloji veya Savunma şirketlerini analiz ederken piyasa doygunluğunu ve Çarpan Şişkinliği riskini göz önüne al. Şirket harika bile olsa, operasyonel hantallaşma durumu ve fiyat çarpanlarının zirveye ulaşma riskini (Paslanma Etkisi) eleştirerek uyar. 'Sadece iyi şirket diye her fiyattan alınmaz' disipliniyle risk analizi yap.)
-   
-   - ### 3. Teknolojik/Operasyonel Keskinlik (Edge Score)
-   - ### 4. Liderlik, Kongre/Senato İşlemleri (Insider) ve Bilanço Özeti
-   (Bu başlıkta şirketin CEO kalitesini ve özellikle ABD Kongre Üyeleri/Senatör alımlarını (Insider Trading) analiz et. Kararlarında @pelositracker'ın politikacı para izi ve @Beth_Kindig'in agresif teknoloji büyüme vizyonunu birleştirerek yorum yap.)
-   
-   - ### 5. Wall Street Görüşleri ve Kurumsal Hedef Fiyatlar
-   - ### 6. Antigravity (AI) Nihai Kararı ve Kademeli Alım Tavsiyesi
+2. Satış ve Elinde Tutma Tetikleyicileri (Zorunlu Kurallar):
+- Analist Downgrade'leri: 3+ güvenilir analist (Deutsche, Jefferies, Citi, Goldman, Barclays vb.) not kırarsa veya Hold/Neutral'a indirirse SATIŞ tavsiyesi verilir.
+- İçeriden Satışlar: CEO/EVP kazanç raporu öncesi büyük miktarda hisse (Örn: $18M+) satarsa risk artar.
+- Ana Gelir Modeli Riski: Şirketin core business'inde ciddi zorlanma (Pazar liderliği kaybı, düşük marj).
+- Dava/Sınıf Davası Riski: Beklenen tazminat/settlement, şirketin EPS'sini vuracak düzeydeyse SAT.
+- Beklenen Getiri Hesabı: 12 aylık risksiz getiri eşiğinin altındaysa SAT. Güçlü Bull Case varsa 2-3 çeyrek BEKLE ve düşük fiyattan Re-entry (Yeniden Giriş) planı yap.
 
-3. BAŞLIK 5 (Kurumsal Hedef Fiyatlar) GÖREVİ ÇOK KRİTİKTİR: Analist yorumlarını KESİNLİKLE en son açıklanan güncel bilançolara göre al! Mutlaka spesifik kurumsal analist (Goldman Sachs vb.) güncel fiyat tahminleri yaz (yılın 2026 olduğunu unutma).
-4. Her başlığın altını, yatırım jargonlarıyla çok detaylı doldur. Rapor yarım kesilmemelidir.
-
-Lütfen SADECE JSON FORMATINDA YANIT VER:
+3. ÇIKTI FORMATI:
+Yanıtını KESİNLİKLE JSON FORMATINDA ver. Asla JSON formatı dışında düz metin kullanma.
 {
     "ceoScore": [0-100],
     "edgeScore": [0-100],
@@ -130,9 +120,23 @@ Lütfen SADECE JSON FORMATINDA YANIT VER:
     "insiderScore": [0-100],
     "patentScore": [0-100],
     "sentimentPercent": [0-100],
-    "summary": "120 karakterlik Türkçe özet",
-    "detailedReport": "Markdown formatında 500 kelimelik analiz."
-}`;
+    "summary": "120 karakterlik veri odaklı özet ve nihai AL/SAT/TUT/BEKLE kararı",
+    "detailedReport": "Aşağıdaki Örnek Analiz Şablonunu aynen kullanarak oluşturulmuş kapsamlı rapor."
+}
+
+*** JSON İÇİNDEKİ detailedReport ALANI İÇİN ZORUNLU MARKDOWN SATIR YAPISI ***
+### Şirket: ${symbol}
+**Orijinal Tez ve Finansal Durum:** [Yukarıdaki veri setini referans alarak tez özeti, Bilanço ve Teknoloji Gücü]
+
+**Kırılma Nedenleri ve Riskler:**
+- **Analist Kesmeleri/Hedefleri:** [Kurumsal analist görüşleri ve güncel beklentiler]
+- **İçeriden Satış ve Liderlik:** [CEO işlemleri, yönetimsel riskler, Kongre/Senato (Insider) alım-satım hareketleri]
+- **Model ve Rekabet Riski:** [Derin pazardaki rakipler ve darboğaz durumu]
+- **EV Hesabı:** [Beklenen return ve olasılık tahmini]
+
+### Karar: AL / SAT / BEKLE / TUT
+**Re-entry (Yeniden Alım Koşulu):** [Potansiyel alım bölgesi veya geri çekilme koşulu]
+`;
 
                 const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
                 const result = await model.generateContent({
