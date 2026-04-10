@@ -81,7 +81,7 @@ async function backtest(pairData) {
         }
         if (hasOB) { qualityScore += 25; reasons.push("OrderBlock"); }
 
-        // --- 2. Perplexity Kuralları ---
+        // --- 2. Perplexity Kuralları + CHATGPT YENİLİKLERİ (Kategori Modeli) ---
         let hasKillerWick = false;
         let candleSizeBase = highs[j] - lows[j] || 1;
         if (direction === 'LONG') {
@@ -91,8 +91,37 @@ async function backtest(pairData) {
             let wickRatio = (highs[j] - Math.max(opens[j], closes[j])) / candleSizeBase;
             if (wickRatio > 0.40 && closes[j] < ((highs[j] + lows[j])/2)) hasKillerWick = true;
         }
-        if (hasKillerWick) { qualityScore += 20; reasons.push("KillerWick"); }
         
+        let hasEngulfing = false;
+        let pOpen = opens[j-1]; let pClose = closes[j-1];
+        let cOpen = opens[j]; let cClose = closes[j];
+        if (direction === 'LONG') {
+            if (pClose < pOpen && cClose > cOpen && cClose >= pOpen && cOpen <= pClose) hasEngulfing = true;
+        } else {
+            if (pClose > pOpen && cClose < cOpen && cClose <= pOpen && cOpen >= pClose) hasEngulfing = true;
+        }
+        
+        // Tetik Slotu Kararı (İkisi de 20 puandır, toplanmaz)
+        if (hasKillerWick || hasEngulfing) { 
+            qualityScore += 20; 
+            reasons.push(hasKillerWick ? "KillerWick" : "Engulfing"); 
+        }
+        
+        // B) Likidite Temizliği (Liquidity Sweep) -> +15 Puan
+        let hasSweep = false;
+        const past10Lows = lows.slice(j-10, j);
+        const past10Highs = highs.slice(j-10, j);
+        let min10Low = Math.min(...past10Lows);
+        let max10High = Math.max(...past10Highs);
+        
+        if (direction === 'LONG') {
+            if (lows[j] < min10Low && closes[j] > opens[j] && closes[j] > ((highs[j]+lows[j])/2)) hasSweep = true;
+        } else {
+            if (highs[j] > max10High && closes[j] < opens[j] && closes[j] < ((highs[j]+lows[j])/2)) hasSweep = true;
+        }
+        if (hasSweep) { qualityScore += 15; reasons.push("LiqSweep"); }
+
+        // C) Volume Shelter -> +12 Puan
         let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
         let lastVol = volumes[j];
         if (direction === 'LONG' && lastVol < shortTermVolAvg * 0.9 && closes[j] < opens[j]) {
@@ -101,42 +130,6 @@ async function backtest(pairData) {
             qualityScore += 12; reasons.push("VolShelter");
         }
 
-        // --- 3. CHATGPT DEV YENİLİKLERİ ---
-        // A) Likidite Temizliği (Liquidity Sweep) -> +15 Puan
-        let hasSweep = false;
-        const past10Lows = lows.slice(j-10, j);
-        const past10Highs = highs.slice(j-10, j);
-        let min10Low = Math.min(...past10Lows);
-        let max10High = Math.max(...past10Highs);
-        
-        if (direction === 'LONG') {
-            if (lows[j] < min10Low && closes[j] > opens[j] && closes[j] > ((highs[j]+lows[j])/2)) {
-                hasSweep = true;
-            }
-        } else {
-            if (highs[j] > max10High && closes[j] < opens[j] && closes[j] < ((highs[j]+lows[j])/2)) {
-                hasSweep = true;
-            }
-        }
-        if (hasSweep) { qualityScore += 15; reasons.push("LiqSweep"); }
-
-        // B) Yutan Mum (Engulfing) -> +15 Puan
-        let hasEngulfing = false;
-        let pOpen = opens[j-1]; let pClose = closes[j-1];
-        let cOpen = opens[j]; let cClose = closes[j];
-        if (direction === 'LONG') {
-            if (pClose < pOpen && cClose > cOpen && cClose >= pOpen && cOpen <= pClose) {
-                hasEngulfing = true;
-            }
-        } else {
-            if (pClose > pOpen && cClose < cOpen && cClose <= pOpen && cOpen >= pClose) {
-                hasEngulfing = true;
-            }
-        }
-        if (hasEngulfing) { qualityScore += 15; reasons.push("Engulfing"); }
-
-
-        // BARAJ GÜNCELLEMESİ (Tüm cephane eklendiği için barajı Zırhlıyoruz)
         // BARAJ GÜNCELLEMESİ YAPMIYORUZ: Tümü diziye eklenecek, sonra baraj baraj ayrılacak.
         let dynamicStop = direction === 'LONG' ? currentPrice - (currentATR * 1.5) : currentPrice + (currentATR * 1.5);
         let riskDist = Math.abs(currentPrice - dynamicStop);
@@ -159,7 +152,9 @@ async function backtest(pairData) {
         }
 
         simTrades.push({ outcome, direction, riskPct, qualityScore, reasons });
-        i += 6;
+        if (qualityScore >= 50 && outcome !== 'PENDING') {
+            i += 6; // Sadece mantıklı bir sinyal ürettiyse 6 saat bekle
+        }
     }
     
     return { symbol, simTrades };
