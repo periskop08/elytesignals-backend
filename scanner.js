@@ -1268,13 +1268,56 @@ async function analyzeCoin(symbolInfo) {
         // Genel RR filtresi (Safety Check)
         if (finalRR < requiredRR) return null; 
 
+        // --- PERPLEXITY ELITE FILTER (v2.0) ---
+        // 1. Killer Wick (Katil Fitil) Puanlaması
+        let hasKillerWick = false;
+        for (let j = closes.length - 3; j <= closes.length - 1; j++) {
+            if (j >= 0) {
+                let candleSize = highs[j] - lows[j] || 1;
+                if (direction === 'LONG') {
+                    let minCloseOpen = Math.min(opens[j], closes[j]);
+                    let lowerWick = minCloseOpen - lows[j];
+                    let wickRatio = lowerWick / candleSize;
+                    if (wickRatio > 0.40 && closes[j] > ((highs[j] + lows[j])/2)) {
+                        hasKillerWick = true; break;
+                    }
+                } else {
+                    let maxCloseOpen = Math.max(opens[j], closes[j]);
+                    let upperWick = highs[j] - maxCloseOpen;
+                    let wickRatio = upperWick / candleSize;
+                    if (wickRatio > 0.40 && closes[j] < ((highs[j] + lows[j])/2)) {
+                        hasKillerWick = true; break;
+                    }
+                }
+            }
+        }
+        if (hasKillerWick) {
+            qualityScore += 20;
+            warnings.push('Killer Wick Onayı (+20)');
+        }
+
+        // 2. Volume Shelter (Hacim Sığınağı)
+        let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
+        let lastVol = volumes[volumes.length-1];
+        if (direction === 'LONG' && lastVol < shortTermVolAvg * 0.9 && closes[closes.length-1] < opens[closes.length-1]) {
+            qualityScore += 12;
+            warnings.push('Volume Shelter (Düşük Hacimli Düşüş) (+12)');
+        } else if (direction === 'SHORT' && lastVol < shortTermVolAvg * 0.9 && closes[closes.length-1] > opens[closes.length-1]) {
+            qualityScore += 12;
+            warnings.push('Volume Shelter (Zayıf Alım) (+12)');
+        }
+        // --- END PERPLEXITY FILTER ---
+
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
-        if (direction === 'LONG' && qualityScore < 55) {
-            // Asimetrik Skor Barajı: Long işlemlerde başarı çok düştüğü için 55 barajı uygulandı
+        // Eski Sınırlar: LONG 55 | SHORT CONFIG.minScore (55)
+        // if (direction === 'LONG' && qualityScore < 55) return null;
+        // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
+
+        // V2.8 (Perplexity Elite) Yeni Acımasız Barajlar
+        if (direction === 'LONG' && qualityScore < 70) {
             return null;
         }
-        if (direction === 'SHORT' && qualityScore < CONFIG.minScore) {
-            // Short işlemler genelde 1:3 R:R ve 4M+ hacim ile çok karlı, baraj Altın Oran 55 yapıldı
+        if (direction === 'SHORT' && qualityScore < 75) {
             return null;
         }
 
