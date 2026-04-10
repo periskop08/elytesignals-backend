@@ -1255,15 +1255,7 @@ async function analyzeCoin(symbolInfo) {
         let finalRR = risk > 0 ? (reward / risk) : 0;
         breakdown.rr = parseFloat(finalRR.toFixed(2));
 
-        // Puanlamalar GEÇİCİ TEST İÇİN eski haline (SUNİ/UZATILMIŞ) RR üzerinden yapılıyor
-        if (finalRR >= 2.0) {
-            qualityScore += 25; // Base 15 + R:R Bonus 10
-            warnings.push('High R:R Bonus (+25)');
-        }
-        else if (finalRR >= 1.5) {
-            qualityScore += 5;
-            warnings.push('Good R:R Bonus (+5)');
-        }
+        // R:R Bonusu Kaldırıldı (Saf PA Kalitesi İçin)
 
         // Genel RR filtresi (Safety Check)
         if (finalRR < requiredRR) return null; 
@@ -1364,11 +1356,11 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // V2.8 (Perplexity Elite) Yeni Acımasız Barajlar
-        if (direction === 'LONG' && qualityScore < 70) {
+        // V2.9 (Zodyak Elite) Yeni Acımasız Barajlar (RR Hariç Saf PA Barajı 65 Seçildi)
+        if (direction === 'LONG' && qualityScore < 65) {
             return null;
         }
-        if (direction === 'SHORT' && qualityScore < 75) {
+        if (direction === 'SHORT' && qualityScore < 65) {
             return null;
         }
 

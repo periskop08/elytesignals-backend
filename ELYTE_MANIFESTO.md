@@ -89,4 +89,20 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 *   **(Yapay Zeka Mimarisi Uyumlanması):** ChatGPT'den alınan "15 Yıllık Kurumsal Price Action" dökümü algoritma ile kodlara döküldü. Sistemin puanlamasının şişip çökmesini (Overfitting) engellemek adına Özel Kategori Slot (Bölge + Tetik + Tuzak) sistemine geçildi.
 *   **(Tetik Slotu):** `Killer Wick (Fitil)` veya `Engulfing (Yutan Mum)`. İkisi de piyasa dönüşünü haber verir. İşlemde birinden biri yakalanırsa **+20 Puan** alınır. Aynı andalarsa puan katlanmaz.
 *   **(Tuzak Slotu):** `Liquidity Sweep (Stop Patlatma)`. İşlem onayı almadan hemen önce Eşit Dipler veya Eşit Tepeler (Equal Lows/Highs) temizlenmiş ve onaylı bir kapanış gelmişse ekstra **+15 Puan** verilir.
-*   **(Fon Sonucu):** Test laboratuvarlarında (Canlı Rüzgar hariç), bu konseptlerle Saf PA Eşik Puanı `60` tutulduğunda; %61.5 Win Rate ve %15 PnL artışı belgelenmiştir. Bu durum Amazon'daki Canlı Motor barajı olan `70` puan ile pürüzsüz örtüşmektedir. Günlük ortalama 5-7 Elit Sinyal kapasitesine tamamen stabil erişilmiştir.
+### Tarih: 10 Nisan 2026 - R:R (Risk/Reward) Bonusu İptali & Saf PA Modelinin Devreye Alınması
+**(Sürüm: v2.9.1)**
+*   **(Değişiklik Gerekçesi):** Yüksek R:R (1:2 ve üzeri) oranlarına verilen `+25` puanlık ödülün, zayıf Price Action yapısına sahip "çöp" sinyalleri sadece "stopu ucuz" diye puanla şişirip sisteme soktuğu tespit edildi. Bu durum Zodyak sisteminin kalitesinde enflasyon yarattığı için **R:R Bonusları tamamen kaldırıldı.**
+*   **(Yeni Baraj Ayarı):** R:R hormonunun sistemden atılmasıyla birlikte "Saf Price Action" motoruna geçilmiş ve barajlar her iki yön (LONG/SHORT) için de **65** puana sabitlenmiştir. 65 puan; içerisinde Order Block, FVG, Katil Fitil, Engulfing veya Stop Patlatma barındırmayan hiçbir düz mumun geçemeyeceği kadar katı bir bariyerdir. 
+
+---
+
+## 🔬 Standart Backtest Protokolü (Zodyak Kodu)
+Yönetici (User) sisteme "Backtest yap" komutu verdiğinde AI (Antigravity) tarafından aksi belirtilmedikçe her seferinde geçerli olacak standart veri çekme ve analiz protokolü aşağıdadır:
+1.  **Veri Kaynağı:** BingX borsası üzerinden **geçmiş 1 aylık** mum verileri (Klines) çekilir.
+2.  **Uygulanacak Metot:** Mevcut `scanner.js` ve manifesto içerisindeki o anki aktif Price Action analiz kurgusuna (Tetikleme, Bölge, Tuzak) ek olarak, yöneticinin o anki özel isteği eklenip/çıkarılarak laboratuvar simülasyonuna alınır.
+3.  **Standart Raporlama Zorunluluğu:** Test sonucunda AI; talep edilen **her bir puan barajı** (Threshold) için ayrı ayrı olmak üzere şu verileri teslim etmek zorundadır:
+    - 1 aylık toplam sinyal sayısı (ve günlük ortalama)
+    - İşlemlerin kaçı LONG, kaçı SHORT
+    - Kaçı TP (Hedef), Kaçı SL (Zarar Kes) oldu
+    - Win Rate (Kazanma Oranı) yüzdesi
+    - **Kasa Simülasyonu:** 500$ başlangıç kasası, R:R=1.5 kuralları, Çapraz Mod 20X kaldıraç mantığına göre 1 ayın sonundaki *Net Kâr/Zarar (USD)* durumu tablolandırılır.
