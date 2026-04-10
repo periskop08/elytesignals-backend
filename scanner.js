@@ -736,7 +736,7 @@ async function analyzeCoin(symbolInfo) {
             if (globalMarketState.btcDomTrend === 'BEAR' || globalMarketState.btcDomTrend === 'STRONG_BEAR') {
                 macroScore += 15; // Altseason!
             } else if (globalMarketState.btcDomTrend === 'BULL' || globalMarketState.btcDomTrend === 'STRONG_BULL') {
-                macroScore -= 15;
+                macroScore -= 10;
             }
 
             // USDT Dominans (DXY YERİNE!)
