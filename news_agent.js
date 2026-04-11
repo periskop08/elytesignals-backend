@@ -78,12 +78,13 @@ async function fetchAndProcessNews() {
             
             // Eğer yoksa işle
             console.log(`[News Agent] Yeni haber bulundu: ${article.title}`);
-            const textContent = article.content ? article.content.replace(/<[^>]+>/g, ' ').substring(0, 1500) : article.title; 
+            const fullContent = article.content ? article.content.replace(/<[^>]+>/g, ' ').trim() : article.title; 
+            const promptContent = fullContent.substring(0, 3000); // Sadece AI'ın okuyacağı kısmı kısalt (Maliyet/Hız için)
             
             const prompt = `${extractAssetsRules}
 ---
 HABER BAŞLIĞI: ${article.title}
-HABER İÇERİĞİ: ${textContent}
+HABER İÇERİĞİ: ${promptContent}
 ---
 `;
             
@@ -104,10 +105,10 @@ HABER İÇERİĞİ: ${textContent}
                 }
 
                 if (parsed.relevant && parsed.relevant === true) {
-                    // Veritabanına kaydet
+                    // Veritabanına DAHA UZUN / TAM haberi kaydet
                     await db.run(
                         `INSERT INTO stock_news (kantanId, title, slug, content, summary, relatedSymbols, sentimentScore) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                        [article.id, article.title, article.slug, textContent, parsed.summary, parsed.relatedSymbols || "", parsed.sentimentScore || 50]
+                        [article.id, article.title, article.slug, fullContent, parsed.summary, parsed.relatedSymbols || "", parsed.sentimentScore || 50]
                     );
                     console.log(`[News Agent] KAYDEDİLDİ: ${parsed.relatedSymbols} -> ${parsed.summary}`);
                     addedCount++;
@@ -115,7 +116,7 @@ HABER İÇERİĞİ: ${textContent}
                     // Kaydet ama gereksiz olarak (böylece bir sonraki turda tekrar işlemeyelim)
                     await db.run(
                         `INSERT INTO stock_news (kantanId, title, slug, content, summary, relatedSymbols, sentimentScore) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                        [article.id, article.title, article.slug, textContent, "[REJECTED/IRRELEVANT]", "", 50]
+                        [article.id, article.title, article.slug, fullContent, "[REJECTED/IRRELEVANT]", "", 50]
                     );
                     console.log(`[News Agent] REDDEDİLDİ (Piyasayla İlgisiz): ${article.title}`);
                 }
