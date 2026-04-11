@@ -155,8 +155,7 @@ async function backtest(assetInfo) {
         if (direction==='SHORT') qualityScore += (sellVol > buyVol) ? 8 : -8;
         
         // LONG BARAJI 55, SHORT BARAJI 40
-        if (direction === 'LONG' && qualityScore < 55) continue;
-        if (direction === 'SHORT' && qualityScore < 40) continue; 
+        // removed so we can see all brackets
         
         let dynamicStop = direction === 'LONG' ? currentPrice - (currentATR * 1.5) : currentPrice + (currentATR * 1.5);
         let risk = Math.abs(currentPrice - dynamicStop);
@@ -188,7 +187,15 @@ async function run() {
     process.stdout.write("Fetching top BingX pairs for 1 month MACRO/MICRO 300 Candles EMA backtest...\n");
     const pairs = await getTopPairsBingX(500); 
     
-    let stats = { totalTrades: 0, longs: 0, shorts: 0, tp: 0, sl: 0, tpLong: 0, slLong: 0, tpShort: 0, slShort: 0, pending: 0 };
+    let stats = {
+        total: 0,
+        buckets: {
+            "Under 40": { count: 0, win: 0, loss: 0 },
+            "40 to 54": { count: 0, win: 0, loss: 0 },
+            "55 to 69": { count: 0, win: 0, loss: 0 },
+            "70 and Over": { count: 0, win: 0, loss: 0 }
+        }
+    };
     
     const batchSize = 10;
     for (let i = 0; i < pairs.length; i += batchSize) {
@@ -199,51 +206,40 @@ async function run() {
         results.forEach(res => {
             if (!res) return;
             res.trades40.forEach(t => { 
-                stats.totalTrades++;
-                if(t.direction === 'LONG') stats.longs++;
-                if(t.direction === 'SHORT') stats.shorts++;
+                stats.total++;
                 
+                let b = "";
+                if (t.score < 40) b = "Under 40";
+                else if (t.score >= 40 && t.score <= 54) b = "40 to 54";
+                else if (t.score >= 55 && t.score <= 69) b = "55 to 69";
+                else b = "70 and Over";
+
                 if(t.outcome === 'WIN') {
-                    stats.tp++;
-                    if(t.direction==='LONG') stats.tpLong++; else stats.tpShort++;
+                    stats.buckets[b].win++;
+                    stats.buckets[b].count++;
                 }
                 else if(t.outcome === 'LOSS') {
-                    stats.sl++;
-                    if(t.direction==='LONG') stats.slLong++; else stats.slShort++;
+                    stats.buckets[b].loss++;
+                    stats.buckets[b].count++;
                 }
-                else stats.pending++;
             });
         });
         process.stdout.write(`Processed ${Math.min(i + batchSize, pairs.length)}/${pairs.length} coins...\n`);
     }
     
-    const winRate = stats.tp + stats.sl > 0 ? ((stats.tp / (stats.tp + stats.sl)) * 100).toFixed(2) : 0;
-    const riskPerTrade = 10; 
-    const moneyWon = stats.tp * (riskPerTrade * 2.5);
-    const moneyLost = stats.sl * riskPerTrade;
-    const netProfit = moneyWon - moneyLost;
-    
-    const output = {
-        Strategy: "Perplexity's MACRO/MICRO + 200 EMA",
-        Period: "1 Month (300 Macro / 100 Micro)",
-        QualityThreshold: "Long >= 55, Short >= 40",
-        TestedPairsCount: pairs.length,
-        TotalSignals: stats.totalTrades,
-        Breakdown: {
-            Longs: { count: stats.longs, wins: stats.tpLong, losses: stats.slLong },
-            Shorts: { count: stats.shorts, wins: stats.tpShort, losses: stats.slShort }
-        },
-        Outcomes: {
-            TakeProfit_Wins: stats.tp,
-            StopLoss_Losses: stats.sl,
-            Pending: stats.pending
-        },
-        WinRate: `%${winRate}`,
-        Projected_10R_Profit: `$${netProfit.toFixed(2)} (Assuming 1:2.5 avg RR)`
-    };
-    
-    console.log("\n=== MACRO/MICRO 300 CANDLES EMA BACKTEST RAPORU ===");
-    console.log(JSON.stringify(output, null, 2));
+    let outputStr = "=== SCORE BRACKET MACRO/MICRO BACKTEST RAPORU ===\n";
+    outputStr += `Total Signals Processed: ${stats.total}\n\n`;
+
+    for (const [bracket, data] of Object.entries(stats.buckets)) {
+        const winRate = data.count > 0 ? ((data.win / data.count) * 100).toFixed(2) : 0;
+        const profit = (data.win * 25) - (data.loss * 10);
+        outputStr += `[Puan Aralığı: ${bracket}]\n`;
+        outputStr += `- Sinyal Sayısı: ${data.count}\n`;
+        outputStr += `- Win: ${data.win} | Loss: ${data.loss}\n`;
+        outputStr += `- Win Rate: %${winRate}\n`;
+        outputStr += `- Projected PnL: $${profit.toFixed(2)}\n\n`;
+    }
+    console.log(outputStr);
 }
 
 run();
