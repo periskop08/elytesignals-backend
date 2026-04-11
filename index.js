@@ -1634,9 +1634,16 @@ Analizin sonucuna göre Raporun TEPE NOKTASINA şu seçeneklerden birini ekle:
 🔴 NEGATİF ETKİ
 ⚪ NÖTR/KARIŞIK
 
-3. BÖLÜM — DETAYLI ANALİZ RAPORU YAZMA
+3. BÖLÜM — ETKİ PUANI SİSTEMİ (0-100 SKALASI)
+Haberin etkisini 0 ile 100 arasında bir puanla rakamsal olarak ifade et.
+- NEGATİF BÖLGE (0-39): 0-10 (Felaket), 11-25 (Ciddi zarar), 26-39 (Ilımlı olumsuz)
+- NÖTR BÖLGE (40-60): 40-45 (Hafif olumsuz nötr), 46-54 (Tam nötr), 55-60 (Hafif olumlu nötr)
+- POZİTİF BÖLGE (61-100): 61-74 (Ilımlı olumlu), 75-89 (Güçlü kazanım), 90-100 (Sektör değiştiren muazzam kazanım)
+*Puan verirken: Pazar gücü yüksekse/Tekelse negatif haberi yukarı çek. Somut veri yoksa uç değerlere gitme. Analiz neyse puan da o olmalı (zıtlık yasak).*
+
+4. BÖLÜM — DETAYLI ANALİZ RAPORU YAZMA
 Özetin ALTINDA, şu şablonla detaylı rapor yaz:
-📊 ETKİ PUANI: [ -5 ile +5 arası ] — [Etiket adı]
+📊 ETKİ PUANI: [0-100 Arası Puan] — [Etiket adı]
 ✅ OLUMLU YÖNLER
 - (1-2 cümlelik kanıtlı madde)
 ⚠️ RİSKLER / OLUMSUZ YÖNLER
