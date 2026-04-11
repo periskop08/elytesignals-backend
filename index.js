@@ -947,17 +947,63 @@ NEW SETUP TEMPLATE (Only use if requested a new trade):
 `;
         } 
         
-        // --- SPOT ---
+        // --- ASSET / STOCK (TRADFI) ---
+        else if (isAssetData) {
+             const intervals = ['1M', '1w', '1d', '4h', '1h'];
+             const promises = intervals.map(inv => fetchAssetIntervalData(querySymbol, inv));
+             results = await Promise.all(promises);
+             
+             finalPromptTemplate = `Sen **Investment Agent AI (Hamdi Bey)**'sin – teknoloji, yapay zeka, savunma ve yarı iletken (semiconductor) piyasalarında uzmanlaşmış bir Hedge Fon Yöneticisisin. 
+Kullanıcının diline göre (TR/EN) cevap ver. Türkçe ise ona sıcak ama profesyonelce hitap et.
+Kullanıcının Sorusu: "${prompt}"
+
+Analiz Edilecek Hisse/Varlık: ${baseSymbol}
+
+Aşağıda bu hisseye ait anlık teknik veriler listelenmiştir:
+`;
+            results.forEach(res => {
+                finalPromptTemplate += `[ ${res.interval.toUpperCase()} CHART: Fiyat ${res.currentPrice.toLocaleString('en-US',{maximumFractionDigits:4})}$ ]
+- AVWAP: ${res.avwap.toLocaleString('en-US',{maximumFractionDigits:4})}$
+- Range: Alt ${res.rangeLow.toLocaleString('en-US',{maximumFractionDigits:4})}$ / Üst ${res.rangeHigh.toLocaleString('en-US',{maximumFractionDigits:4})}$
+- Süpürme (Deviation): Alt ${res.dipDeviation ? 'EVET' : 'HAYIR'}
+-----------------------
+`;
+            });
+
+            finalPromptTemplate += `GÖREV VE KURALLAR:
+Sen sadece bir teknik analist değilsin. Kararlarını şu "Hamdi Bey Risk Çerçevesi" üzerinden şekillendir:
+1. **Moat ve AI Yıkım Riski**: Şirketin teknolojisi güçlü mü? OpenAI veya yeni yapay zeka girişimleri bu şirketin ürününü gereksiz (obsolete) kılabilir mi?
+2. **Katalizör ve Ekosistem Ağı**: Eğer biliyorsan şirketin son 1-2 yıldaki M&A, Microsoft/Nvidia vs ortaklıklarını hesaba kat.
+3. **Değerleme (Ucuz/Pahalı) ve Rakip Kıyası**: Rakiplerine (muadillerine) kıyasla pahalı mı kaldı? 
+4. **Teknik Fırsat**: Sana yukarıda verilen teknik verileri (AVWAP, Range, Deviation) okuyarak bir "Upside Breakout" mu yoksa "Destek Alımı" mı yapmalı belirle.
+
+ÇIKTI FORMATI:
+JSON KULLANMA. Kullanıcı ile doğal, kendinden emin bir fon yöneticisi gibi konuş. Eğer kullanıcı yeni bir analiz/kurulum istiyorsa cevabının en altına şu tabloyu Markdown olarak ekle:
+
+🔥 ${baseSymbol} Hamdi Bey Fon Analizi 🔥
+Varlık Tipi: [Hisse/ETF]
+Moat Durumu: [Güçlü/Zayıf/Yıkım Riski Var]
+Değerleme: [Ucuz/Adil/Pahalı]
+
+💰 Optimal Giriş (Destek/Breakout): {Fiyat}$
+🎯 Uzun Vadeli Hedef (1-3 Yıl): {Fiyat}$
+🛑 Çıkış / Stop Şartı: {Fiyat}$
+
+📌 Karar Özeti: (Kısa neden belirterek AL/SAT veya BEKLE de)
+`;
+        }
+
+        // --- SPOT (CRYPTO) ---
         else {
              const intervals = ['1M', '1w', '1d', '4h', '1h'];
-             const promises = intervals.map(inv => isAssetData ? fetchAssetIntervalData(querySymbol, inv) : fetchIntervalData(querySymbol, inv));
+             const promises = intervals.map(inv => fetchIntervalData(querySymbol, inv));
              results = await Promise.all(promises);
              
              finalPromptTemplate = `You are "PeriskopAI", the official Analyst AI for Crypto and Assets. If the user's prompt is in Turkish, address them as "Dostum" in a friendly, warm tone. If it is in English, address them as "mate". DO NOT mix languages. Apply the specific rules of the Periskop Modeli. Do NOT use the term SMC.
 User's Intent / Question: "${prompt}"
 
 Below is the synchronous technical data for ${baseSymbol} from High Timeframe (1w, 1d) down to Low (4h, 1h). Apply the strict "Periskop Modeli" constraints (Volume check, SMA200 alignment, order blocks) as you would for Futures, but adapt for Spot holding.
-${isAssetData ? 'CRITICAL TRADFI RULE: Since this is a traditional Asset/Equity, DO NOT view overbought RSI (>75) or major resistance hits as direct sell/dump signals! Instead, interpret technical "overbought" stages as a "Valuation Shift" and structural growth due to earnings/contracts. View old resistance as new concrete support, predicting consolidation instead of reversal.' : 'Do not tolerate R:R below 1.0.'}
+CRITICAL RULE: Do not tolerate R:R below 1.0.
 
 
 `;
