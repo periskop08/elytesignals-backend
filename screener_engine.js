@@ -107,41 +107,43 @@ Güncel Fiyat: $${currentPrice}
    - 4 faktör incele: Teknoloji (patentler), Marka (pazar payı), Ölçek (üretim kapasitesi), Regülasyon (bariyerler).
    - "Moat" (hendek) sağlamsa al/tut, kırılgan veya emtiaya dönüşmüşse SAT veya rotasyon yap.
 
-2. **Ekosistem, Stratejik Anlaşmalar ve Katalizör Avcılığı**:
-   - Analiz edilen şirketin son 12-24 ay içindeki ciddi anlaşmalarını (M&A, yatırım, ortaklık) listele. (Örn: CEG'in Microsoft ile Nükleer anlaşması, NVIDIA'nın Marvell/Intel operasyonları).
-   - Her anlaşmanın veya ortaklığın hisse fiyatına ve rakiplerine olan etkisini Katalizör olarak hesapla (Gelir artar mı? TSMC baskı kurar mı?).
-   - Sadece hedef şirketi değil, ekosistemi düşün: Yapılan anlaşma diğer şirketleri nasıl vurur? Tahminleri AI eğitimi, çip talebi ve tedarik zincirine bağla.
+2. **Şirket-Agnostik Muadil Karşılaştırması ve Katı Değerleme Mimarisi**:
+   - Hangi şirket verilirse otomatik olarak 3-4 rakibini (muadilini) tespit et (Örn. NVIDIA için AMD, TSMC. Savunma için NOC, RTX).
+   - **Büyüme Şartı**: Verilen şirketin (veya rakiplerin) büyümesi YoY >%15 ise = "Güçlü", %5-15 arası ise = "Orta", <%5 ise ="Yavaş".
+   - **Çarpan Kuralı**: Şirketin P/E, PEG veya P/S çarpanı, belirlediğin muadil ortalamasından %20+ düşükse = "Ucuz", %20+ yüksekse = "Pahalı", arasındaysa = "Adil" olarak etiketle. Yorum yapma, sadece matematiğe uy.
 
-3. **Sektörel Risk & Fırsat Dinamikleri**:
-   - **HBM/Emtia Bellek**: Çin rekabeti fiyat kırarsa SAT.
-   - **AI Altyapı**: Talep ve pazar payı gücü varsa AL/TUT.
-   - **Nükleer/Enerji**: AI hyperscaler talebi güçlü etki ise AL, regülatör/tavan fiyat baskını varsa SAT.
-
-4. **Karar Alma (Aksiyon)**:
-   - Verileri finansal süzgeçten geçirip etkiyi puanla (sentimentPercent = Karar Gücü %0-100).
-   - Uzun vadeli fiyat hedefi (1-3 yıl) belirleyerek Bull/Bear senaryoları yarat.
+3. **Ekosistem, Stratejik Anlaşmalar ve Katalizör Avcılığı**:
+   - Analiz edilen şirketin son 12 ay içindeki şirketler arası ciddi anlaşmalarını (yatırım, ortaklık) tespit et.
+   - Her anlaşmanın hisse fiyatına ve rakiplere olan katalizör etkisini değerlendir. (Örn: Meta-AMD anlaşmasının NVDA pazar payına veya çip tedarik zincirine etkisi).
+   
+4. **Teknik Seviyeler ve Karar Alma**:
+   - Uzun vadeli Bull/Bear fiyat hedefleri belirle.
+   - Verileri ve Moat analizini süzgeçten geçirip etkiyi puanla (sentimentPercent = Karar Gücü %0-100).
 
 ZORUNLU ÇIKTI FORMATI:
-Yanıtını KESİNLİKLE AŞAĞIDAKİ JSON FORMATINDA ver. Asla JSON dışında düz metin kullanma.
+Yanıtını KESİNLİKLE JSON FORMATINDA ver.
 {
     "ceoScore": [0-100 Liderlik Kalitesi],
-    "edgeScore": [0-100 Moat ve Rekabet Gücü Puanı],
-    "earningsScore": [0-100 Kârlılık ve Bilanço Puanı],
-    "insiderScore": [0-100 Şirket içi güvenlik/risk puanı],
-    "patentScore": [0-100 Teknoloji/Patent/Üretim Moat Puanı],
-    "sentimentPercent": [0-100 Karar Gücü Puanı. 85+ ise kesin PORTFÖYE EKLENİR (AL), altı ise ELENİR],
-    "entryPriceTarget": [0.00 şeklinde optimal alım (re-entry) hedef noktası. Yoksa 0 yaz],
-    "summary": "Maksimum 120 karakterlik Moat/Anlaşma odaklı hızlı özet ve nihai AL/SAT kararı",
-    "detailedReport": "Aşağıdaki kurala uygun kapsamlı metin (JSON yapısını bozmadan kaçış karakterleriyle)"
+    "edgeScore": [0-100 Moat ve Rekabet Puanı],
+    "earningsScore": [0-100 Bilanço, %15 Büyüme ve Ucuzluk Puanı],
+    "insiderScore": [0-100 Güvenlik puanı],
+    "patentScore": [0-100 Eko-Sistem/Patent Puanı],
+    "sentimentPercent": [0-100 Karar Gücü Puanı. 85+ ise kesin PORTFÖYE EKLENİR (AL)],
+    "entryPriceTarget": [0.00 şeklinde Optimal Alım (Destek veya Breakout) Fiyat Tahmini],
+    "summary": "120 karakterlik (Ucuz/Adil/Pahalı) durum özeti ve nihai AL/SAT kararı",
+    "detailedReport": "Aşağıdaki kurala uygun kapsamlı metin (JSON yapısını bozmadan)"
 }
 
-*** JSON İÇİNDEKİ detailedReport ALANI İÇİN KAPSAMLI ŞABLON (Markdown olarak hazırla) ***
-### Varlık Analizi: ${symbol}
-1. **Haber, Moat ve Ekosistem Analizi**: [Teknoloji, Marka, Ölçek rekabet gücü ve son 1-2 yıldaki stratejik anlaşmaların ekosisteme etkisi]
-2. **Katalizörler ve Fiyat Tezi**: [Anlaşmaların rakiplere etkisi, Çin/Regülasyon riski ve 1-3 yıllık Bull/Bear tahmini]
-3. **Aksiyonlar & Stratejik Özet Tablosu**: 
-| Anlaşma / Katalizör | Tahmini Tarih | Etkisi | Fiyat/Pazar Etkisi | Uzun Vadeli Potansiyel |
-|---------------------|---------------|--------|---------------------|--------------------------|
+*** JSON İÇİNDEKİ detailedReport ALANI İÇİN KAPSAMLI ŞABLON (Markdown olarak) ***
+### Varlık Analizi ve Moat Tezi: ${symbol}
+1. **Finansal Metrikler ve Muadil Karşılaştırması**: [Büyüme durumu (>%15 kuralı), P/E ve PEG üzerinden tespit edilen (3-4 rakip) muadillerle kıyaslama. Nihai kararın (Ucuz/Adil/Pahalı) belirtilmesi.]
+2. **Katalizörler ve Ekosistem Ağı**: [Stratejik anlaşmaların pazar payına ve rakiplere etkisi.]
+3. **Optimal Alım Fiyatı ve Teknik Strateji**:
+   - **Destek Alımı**: [Tahmini MA destek seviyesi veya optimal giriş.]
+   - **Upside Breakout**: [Hangi kritik direnç kırılırsa fiyata ivme katılır ve R:R(Risk/Ödül) nasıl değişir?]
+4. **Aksiyonlar & Stratejik Özet Tablosu**:
+| Anlaşma / Katalizör | Tahmini Tarih | Rakiplere Etkisi | Fiyat/Pazar Etkisi | Uzun Vadeli Potansiyel |
+|---------------------|---------------|------------------|---------------------|--------------------------|
 | [Veri] | [Veri] | [Veri] | [Veri] | [Veri] |
 `;
 
