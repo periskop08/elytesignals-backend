@@ -103,9 +103,11 @@ Güncel Fiyat: $${currentPrice}
 
 **Hamdi Bey Taktik Kuralları & Şablonları (Her Analizde Uygula):**
 
-1. **Moat Analizi (Rekabet Avantajı Değerlendirmesi)**:
+1. **Moat Analizi ve AI Yıkım (Kanibalizasyon) Riski**:
    - 4 faktör incele: Teknoloji (patentler), Marka (pazar payı), Ölçek (üretim kapasitesi), Regülasyon (bariyerler).
    - "Moat" (hendek) sağlamsa al/tut, kırılgan veya emtiaya dönüşmüşse SAT veya rotasyon yap.
+   - **Doğrudan Yer Değiştirme (Replacement) Riski**: Ana ürün, Genel Yapay Zeka (LLM/ChatGPT/Claude vb.) tarafından basit bir "özellik" haline getirilebiliyorsa (örn: çeviri veya metin özetleme yazılımı), şirketin kârına bakılmaksızın "KRİTİK AI RİSKİ" ver ve ELİMİNE ET.
+   - **Defensive Capex (Çaresizlik Harcaması)**: Şirket kâr marjını uçurmak için değil, sadece hayatta kalmak veya AI trenine binmek için aşırı sermaye yakıyorsa bunu cezalandır. Açıklamalardaki "AI kullanıyoruz" illüzyonlarına inanma, şüpheci ol.
 
 2. **Şirket-Agnostik Muadil Karşılaştırması ve Katı Değerleme Mimarisi**:
    - Hangi şirket verilirse otomatik olarak 3-4 rakibini (muadilini) tespit et (Örn. NVIDIA için AMD, TSMC. Savunma için NOC, RTX).
