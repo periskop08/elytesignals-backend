@@ -603,12 +603,12 @@ async function backfillTrades() {
 async function analyzeCoin(symbolInfo) {
     try {
         const sym = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
-        const klinesFull = await fetchCandles(symbolInfo, 60, 250);
-        if (!klinesFull || klinesFull.length < 205) return null;
+        const klinesFull = await fetchCandles(symbolInfo, 60, 300);
+        if (!klinesFull || klinesFull.length < 250) return null;
 
         const closesFull = klinesFull.map(k => k.close);
-        const sma200Values = SMA.calculate({ period: 200, values: closesFull });
-        const curSma200 = sma200Values[sma200Values.length - 1];
+        const ema200Values = EMA.calculate({ period: 200, values: closesFull });
+        const curEma200 = ema200Values[ema200Values.length - 1];
 
         // Orijinal indikatör uyumu için son 100 işlem mumunu kesiyoruz
         const klines = klinesFull.slice(-100);
@@ -711,14 +711,14 @@ async function analyzeCoin(symbolInfo) {
         let qualityScore = 0;
         let warnings = [];
 
-        // --- 200 SMA SOFT FİLTRESİ ---
-        if (direction === 'LONG' && currentPrice < curSma200) {
+        // --- MACRO 200 EMA FİLTRESİ ---
+        if (direction === 'LONG' && currentPrice < curEma200) {
             qualityScore -= 15;
-            warnings.push('Bearish 200 SMA (-15)');
+            warnings.push('Bearish 200 EMA (-15)');
         }
-        if (direction === 'SHORT' && currentPrice > curSma200) {
+        if (direction === 'SHORT' && currentPrice > curEma200) {
             qualityScore -= 15;
-            warnings.push('Bullish 200 SMA (-15)');
+            warnings.push('Bullish 200 EMA (-15)');
         }
 
         if (eurusdDailyPenalty > 0) {
