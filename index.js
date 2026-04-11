@@ -14,7 +14,13 @@ const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
 const cron = require('node-cron');
 const { runDailyScreener } = require('./screener_engine');
+const { fetchAndProcessNews } = require('./news_agent');
 
+// Her 30 dakikada bir Kantan.news istihbaratını çalıştır
+cron.schedule('*/30 * * * *', () => {
+    console.log("[CRON] Kantan News Agent İstihbarat Taraması Başlıyor...");
+    fetchAndProcessNews();
+});
 global.nasdaqCache = {
     appetite: "Risk On (Güçlü Boğa)", 
     stocks: [

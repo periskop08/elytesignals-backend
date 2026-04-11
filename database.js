@@ -177,6 +177,19 @@ const db = new sqlite3.Database(dbPath, (err) => {
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             closedAt DATETIME
         )`);
+
+        // Create stock_news table for Kantan Reporter Agent
+        db.run(`CREATE TABLE IF NOT EXISTS stock_news (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            kantanId INTEGER UNIQUE,
+            title TEXT NOT NULL,
+            slug TEXT UNIQUE,
+            content TEXT,
+            summary TEXT,
+            relatedSymbols TEXT,
+            sentimentScore INTEGER DEFAULT 0,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
     }
 });
 
