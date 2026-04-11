@@ -1644,6 +1644,21 @@ Analizin sonucuna göre Raporun TEPE NOKTASINA şu seçeneklerden birini ekle:
 🔍 ANALİST YORUMU
 (2-3 cümle dengeli, gerçekçi yorum)
 
+4. BÖLÜM — İLGİLİ HİSSE ÇIKARIMI KURALI (SECOND-ORDER EFFECT)
+Raporun EN SONUNA, haberden NET VE AÇIK biçimde etkilenecek diğer gizli şirketleri ekle.
+Kriterler (TAMAMI KARŞILANMALI, emin değilsen %90 boş bırak):
+- ETKİ NET OLMALI: Zincirleme dolaylı çıkarım yapma (Çin nükleer denizaltı -> HII, GD, BWXT doğrudan savunma hissesidir = DOĞRU. Denizaltı -> Yakıt artar -> XOM = YANLIŞ).
+- ABD BORSASI: Sadece NYSE/NASDAQ.
+- SEKTÖR OYUNCUSU: Doğrudan iş yapanlar eklenir, genel holdingler değil.
+- YÖN NET OLMALI: Pozitif veya Negatif olduğu tartışmasız olmalı.
+(Savunma: HII, GD, BWXT, LMT vb.) | (Çip: NVDA, TSM, ASML vb.) | (Yapay Zeka: MSFT, GOOGL, ORCL)
+
+Format (Kriter uyan bulursan):
+📌 HABERİN ETKİLEYEBİLECEĞİ DİĞER HİSSELER
+[Şirket Adı — Ticker] → [POZİTİF / NEGATİF]
+Gerekçe: (Tek cümle)
+*(Eğer kriterleri karşılayan hisse çıkmazsa bu bölümü HİÇ YAZMA, metne ekleme)*
+
 Tüm çıktıyı Markdown formatında şık ve bold kısımlarla güçlendirerek ver.`;
 
         const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
