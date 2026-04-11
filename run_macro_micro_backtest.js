@@ -190,10 +190,19 @@ async function run() {
     let stats = {
         total: 0,
         buckets: {
-            "Under 40": { count: 0, win: 0, loss: 0 },
-            "40 to 54": { count: 0, win: 0, loss: 0 },
-            "55 to 69": { count: 0, win: 0, loss: 0 },
-            "70 and Over": { count: 0, win: 0, loss: 0 }
+            "<40": {count:0, win:0, loss:0},
+            "40-44": {count:0, win:0, loss:0},
+            "45-49": {count:0, win:0, loss:0},
+            "50-54": {count:0, win:0, loss:0},
+            "55-59": {count:0, win:0, loss:0},
+            "60-64": {count:0, win:0, loss:0},
+            "65-69": {count:0, win:0, loss:0},
+            "70-74": {count:0, win:0, loss:0},
+            "75-79": {count:0, win:0, loss:0},
+            "80-84": {count:0, win:0, loss:0},
+            "85-89": {count:0, win:0, loss:0},
+            "90-94": {count:0, win:0, loss:0},
+            "95-100": {count:0, win:0, loss:0}
         }
     };
     
@@ -209,10 +218,19 @@ async function run() {
                 stats.total++;
                 
                 let b = "";
-                if (t.score < 40) b = "Under 40";
-                else if (t.score >= 40 && t.score <= 54) b = "40 to 54";
-                else if (t.score >= 55 && t.score <= 69) b = "55 to 69";
-                else b = "70 and Over";
+                if (t.score < 40) b = "<40";
+                else if (t.score < 45) b = "40-44";
+                else if (t.score < 50) b = "45-49";
+                else if (t.score < 55) b = "50-54";
+                else if (t.score < 60) b = "55-59";
+                else if (t.score < 65) b = "60-64";
+                else if (t.score < 70) b = "65-69";
+                else if (t.score < 75) b = "70-74";
+                else if (t.score < 80) b = "75-79";
+                else if (t.score < 85) b = "80-84";
+                else if (t.score < 90) b = "85-89";
+                else if (t.score < 95) b = "90-94";
+                else b = "95-100";
 
                 if(t.outcome === 'WIN') {
                     stats.buckets[b].win++;
@@ -227,19 +245,19 @@ async function run() {
         process.stdout.write(`Processed ${Math.min(i + batchSize, pairs.length)}/${pairs.length} coins...\n`);
     }
     
-    let outputStr = "=== SCORE BRACKET MACRO/MICRO BACKTEST RAPORU ===\n";
+    let outputStr = "=== DETAYLI SCORE BRACKET MACRO/MICRO BACKTEST RAPORU ===\n";
     outputStr += `Total Signals Processed: ${stats.total}\n\n`;
 
     for (const [bracket, data] of Object.entries(stats.buckets)) {
+        if (data.count === 0) continue;
         const winRate = data.count > 0 ? ((data.win / data.count) * 100).toFixed(2) : 0;
         const profit = (data.win * 25) - (data.loss * 10);
         outputStr += `[Puan Aralığı: ${bracket}]\n`;
-        outputStr += `- Sinyal Sayısı: ${data.count}\n`;
-        outputStr += `- Win: ${data.win} | Loss: ${data.loss}\n`;
-        outputStr += `- Win Rate: %${winRate}\n`;
-        outputStr += `- Projected PnL: $${profit.toFixed(2)}\n\n`;
+        outputStr += `- Sinyal Sayısı: ${data.count} | Win: ${data.win} | Loss: ${data.loss}\n`;
+        outputStr += `- Win Rate: %${winRate} | Projected PnL: $${profit.toFixed(2)}\n\n`;
     }
     console.log(outputStr);
+
 }
 
 run();
