@@ -8,6 +8,10 @@ const { appendToSheet } = require('./google-api');
 const { placeOrder, getPosition, updateStopLoss } = require('./bingx-trade');
 const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
+require('dotenv').config();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ model: "gemini-3.1-pro" });
 
 // Otopilot İçin Canlı Tercüman Haritası
 global.BINGX_SYMBOL_MAP = {};
@@ -1442,6 +1446,60 @@ async function runScan() {
                 }
                 const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? `${formattedVol} (${signal.breakdown.rvol}x)` : formattedVol;
                 
+                // +--- SHADOW BLOCK CHECK (AI MEMORY) ---+
+                let isBlocked = false;
+                let blockReason = "";
+                let blockLessonId = null;
+
+                try {
+                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 15");
+                    
+                    if (activeLessons && activeLessons.length > 0) {
+                        const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] - ${l.lessonText}`).join('\n');
+                        const prompt = `Sen PeriskopAI Otonom Fon Yöneticisisin. Sana geçmişteki zararlarımızdan çıkardığımız "KARA LİSTE" dersleri ve şu an girmeyi planladığımız GÜNCEL BİR SİNYAL gönderiyorum.
+                        
+AKTİF DERSLER (Hafıza):
+${lessonsText}
+
+GÜNCEL SİNYAL GİRİŞ HARİTASI:
+Varlık: ${signal.symbol}
+Yön: ${signal.type}
+Toplam Kalite Skoru: ${signal.qualityScore}
+Grafik Bileşenleri (Uyarılar): ${signal.warnings}
+
+Soru: Yeni oluşan bu sinyal, Aktif Derslerdeki bir hataya/tuzağa çok benziyor mu?
+Eğer bu işlemi RİSKLİ/HATALI buluyorsan ve engellemek istiyorsan sadece "ENGEL: [Hangi Ders ID'si nedeniyle engellediğini ve 1 kısa Cümle Sebebini Yaz]" formatında cevap ver.
+Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
+
+                        const blockRes = await aiModel.generateContent(prompt);
+                        const blockText = blockRes.response.text();
+                        
+                        if (blockText.includes("ENGEL:")) {
+                            isBlocked = true;
+                            blockReason = blockText.split("ENGEL:")[1].trim();
+                            const match = blockText.match(/Ders ID:?\s*(\d+)/i) || blockText.match(/Ders.(\d+)/i);
+                            if (match) blockLessonId = parseInt(match[1]);
+                        }
+                    }
+                } catch (err) {
+                    console.error("[SHADOW] Error checking AI memory:", err.message);
+                }
+
+                if (isBlocked) {
+                    console.log(`[SHADOW BLOCK] Sinyal Engellendi: ${signal.symbol} -> ${blockReason}`);
+                    await db.run(
+                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore]
+                    );
+
+                    // Telegram Admin'e Uyarı Gönder
+                    if (bot && CONFIG.telegramAdminId) {
+                        bot.sendMessage(CONFIG.telegramAdminId, `🤖 *Otonom Ajan Sinyali Reddetti (Shadow Mode)* 🤖\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Sebep:* ${blockReason}\n\nBu sinyal veritabanına ve gruba düşmedi. Sadece gölge modunda arka planda PnL takibine alındı.`, { parse_mode: 'Markdown' });
+                    }
+                    continue; // Skip DB insertion and everything else
+                }
+                // +--- END SHADOW BLOCK ---+
+
                 const insertResult = await db.run(
                     "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
