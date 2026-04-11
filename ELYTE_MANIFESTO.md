@@ -124,6 +124,11 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 *   **(Delta-Hedge Yığılma Koruması):** Otopilot kasasındaki "kârda süren Lider Coin (BTC/ETH)" yönüne bağlı olarak Trend tarafına **maksimum 5**, tersi olan Sigorta/Hedge tarafına ise **maksimum 3** ve belirsizlikte **maksimum 2** aktif emir sınırlandırması getirildi. 
 *   **(Operasyonel Esneklik - 60 Puan Barajı):** Yukarıdaki "Shadow Yapay Zeka Kara Listesi" ve "Maksimum Portföy Sınırları (Delta-Hedge)" sistemleri zırh gibi sağlam çalıştığı için, giriş baraj limiti Otopilot'ta **65'ten 60 Puan'a** gevşetildi. Amaç, 50-64 baremindeki devasa Fakeout sinyallerinden geriye kalan %28'lik tertemiz Ralli coinlerini, Gemini Gölge filtrelerinin ve Portföy Limitlerinin eleğinden geçirerek saf kazanca (Volüm artışına) dönüştürmektir. Miktar artırılırken Kalite zırhı yapay zekaya emanet edildi.
 
+### Tarih: 11 Nisan 2026 - Yarı-Geçirgen Kantan.News İstihbarat Ağı
+**(Sürüm: v3.3.0 - Bloomberg Terminal Modu)**
+*   **(Kantan İstihbarat Ajanı):** `kantan.news` API ucuna sızan yepyeni bir otonom Muhabir Ajan (`news_agent.js`) yazıldı. API'den akan tüm ham haberler önce Gemini tarafından okunur, gereksiz ve magazinel teknoloji haberleri çöpe atılırken sadece finansal/hisse senedi etkisi (Katalizör) yaratacak gelişmeler "Son Dakika İstihbaratı" (2 cümlelik net özetlerle) olarak veri tabanına işlenir.
+*   **(Hamdi Bey'in Zihnine Enjeksiyon):** Gece otonom yapılan `screener_engine.js` (Borsa Taraması) ve Chat üzerinden yapılan "Hamdi Bey" soru-cevaplarında yepyeni bir Zihin Süzgeci açıldı. Artık Hamdi Bey doğrudan TSLA fiyatına bakıp konuşmuyor; önce veri tabanında "TSLA ile ilgili son 48 saatte ne olmuş" diye haberleri tarıyor ve bu bilgiyi analizine (Katalizör/Risk olarak) katıyor.
+*   **(Glassmorphism Terminal):** Dashboard'da sağ tarafa şık ve akıcı bir Varlık Yönetimi Haber Panosu eklendi. Gelen haberlerin yapay zeka duygu puanına (Sentiment) göre Kırmızı/Sarı/Yeşil renkli radarlarla frontend arayüzünden anlık takibi sağlandı. Her şey Vercel'a otomatik deployment (Git Push) mantığına bağlandı.
 ---
 
 ## 🔬 Standart Backtest Protokolü (PeriskopAI Protokolü)
