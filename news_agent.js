@@ -31,14 +31,28 @@ Haberi olumsuz analiz edip pozitif etiketleme, olumlu analiz edip negatif etiket
 - Dramatik ve duygusal kelimeler ("intihar stratejisi", "devrim", "çöküş", "tehdit", "kıyamet") kullanmak
 - Somut veri olmadan spekülatif senaryo/kehanet üretmek
 
+6. İLGİLİ HİSSE ÇIKARIMI KURALI (SECOND-ORDER EFFECT)
+Haberde doğrudan adı geçmeyen ancak haberden NET VE AÇIK biçimde etkileneceği anlaşılan şirketleri çıkar ve JSON'daki "relatedSymbols" alanına (virgülle ayırarak) EKLE.
+Çıkarım Yapma Kriterleri (TAMAMI KARŞILANMALI):
+- ETKİ NET VE AÇIK OLMALI: Dolaylı, spekülatif veya zincir çıkarım yapma. ("Çin nükleer denizaltı üretiyor -> HII, GD, BWXT" DOĞRU. "Denizaltı -> Enerji -> XOM" YANLIŞ.)
+- ŞİRKET ABD'DE HALKA AÇIK OLMALI: Sadece ABD borsası (NYSE/NASDAQ) ticker'ları.
+- SEKTÖRÜN BİLİNEN OYUNCUSU OLMALI: Sektörde doğrudan iş yapanları yaz. Konglomeratları ekleme.
+- ETKİ YÖNÜ NET OLMALI: Yön belirsizse boş bırak. Yüzde 90 eminsen ekle.
+
+Sektör - Hisse Eşleştirme Rehberi (Örnekler):
+- Savunma/Donanma/Nükleer Denizaltı -> HII, GD, BWXT, LMT, RTX, NOC
+- Çip Fabrikası/Kapasite -> NVDA, AMD, TSM, INTC, ASML, AMAT, LRCX
+- Yapay Zeka/Bulut/Veri Merkezi -> MSFT, GOOGL, AMZN, META, ORCL, CRM
+- Nükleer Enerji/Reaktör -> CEG, VST, NRG, OKLO, SMR, CCJ
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ÇIKTI (JSON FORMATI - ZORUNLU SİSTEM ALTYAPISI):
 Tüm analizi yaptıktan sonra AŞAĞIDAKİ JSON ŞABLONU İLE yanıt ver (Başka hiçbir metin yazma!):
 {
   "relevant": true/false, // Haber borsayı/hisseleri direkt vurmuyorsa magazin ise false yap.
-  "relatedSymbols": "TSMC, GOOGL", // Etkilenen şirket/ETF kodlarını (yoksa boş bırak).
+  "relatedSymbols": "TSMC, GOOGL, HII", // Haberde adı geçenler VE '6. KURAL'dan çıkardığın 2.derece hisselerin hepsini aralarına virgül koyarak birleştir.
   "sentimentScore": 50, // Puanı çevir: (+4/+5 Güçlü Olumlu) = 80-100, (+2/+3 Ilımlı Olumlu) = 60-75, (-1/0/+1 Nötr/Karışık) = 45-55, (-2/-3 Ilımlı Olumsuz) = 25-40, (-4/-5 Güçlü Olumsuz) = 0-20.
-  "summary": "[ETKİ ETİKETİ]\nBuraya analize göre ✅ POZİTİF ETKİ (veya 🔴 NEGATİF ETKİ, veya ⚪ NÖTR/KARIŞIK) yaz.\n\n📌 KISA HABER ÖZETİ:\n(Buraya kurallara uygun yorumsuz 5 cümlelik özet)\n\n🔍 DETAYLI ANALİZ RAPORU:\n✅ Olumlu Yönler:\n- (1-2 cümlelik somut kanıtlanmış çıkarım)\n⚠️ Riskler & Olumsuz Yönler:\n- (Sadece gerçekçi riskler, sıfır spekülasyon)\n💡 Analist Yorumu:\n(2-3 cümlelik dengeli, mantıklı, asla intihar/çöküş demeyen Wall Street yorumu.)"
+  "summary": "[ETKİ ETİKETİ]\nBuraya analize göre ✅ POZİTİF ETKİ (veya 🔴 NEGATİF ETKİ, veya ⚪ NÖTR/KARIŞIK) yaz.\n\n📌 KISA HABER ÖZETİ:\n(Buraya kurallara uygun yorumsuz 5 cümlelik özet)\n\n🔍 DETAYLI ANALİZ RAPORU:\n✅ Olumlu Yönler:\n- (1-2 cümlelik somut kanıtlanmış çıkarım)\n⚠️ Riskler & Olumsuz Yönler:\n- (Sadece gerçekçi riskler, sıfır spekülasyon)\n💡 Analist Yorumu:\n(2-3 cümlelik dengeli, mantıklı, asla intihar/çöküş demeyen Wall Street yorumu.)\n\n📌 HABERİN ETKİLEYEBİLECEĞİ DİĞER HİSSELER\n[Şirket Adı - Ticker] -> [POZİTİF / NEGATİF]\nGerekçe: (Tek cümle. Neden etkileneceğini açıkla. Eğer 6. kurula uyan hisse yoksa bu bölümü HİÇ EKLEME, direkt atla.)"
 }
 `;
 
