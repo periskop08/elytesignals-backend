@@ -154,6 +154,81 @@ async function backtest(assetInfo) {
         if (direction==='LONG') qualityScore += (buyVol > sellVol) ? 8 : -8;
         if (direction==='SHORT') qualityScore += (sellVol > buyVol) ? 8 : -8;
         
+        let currentJ = closes.length - 1;
+
+        // 1. Killer Wick (Katil Fitil) Kontrolü
+        let hasKillerWick = false;
+        for (let j = closes.length - 3; j <= closes.length - 1; j++) {
+            if (j >= 0) {
+                let candleSize = highs[j] - lows[j] || 1;
+                if (direction === 'LONG') {
+                    let minCloseOpen = Math.min(opens[j], closes[j]);
+                    let lowerWick = minCloseOpen - lows[j];
+                    let wickRatio = lowerWick / candleSize;
+                    if (wickRatio > 0.40 && closes[j] > ((highs[j] + lows[j])/2)) {
+                        hasKillerWick = true; break;
+                    }
+                } else {
+                    let maxCloseOpen = Math.max(opens[j], closes[j]);
+                    let upperWick = highs[j] - maxCloseOpen;
+                    let wickRatio = upperWick / candleSize;
+                    if (wickRatio > 0.40 && closes[j] < ((highs[j] + lows[j])/2)) {
+                        hasKillerWick = true; break;
+                    }
+                }
+            }
+        }
+
+        // 2. Engulfing (Yutan Mum) Kontrolü
+        let hasEngulfing = false;
+        if (currentJ >= 1) {
+            let pOpen = opens[currentJ-1]; let pClose = closes[currentJ-1];
+            let cOpen = opens[currentJ]; let cClose = closes[currentJ];
+            if (direction === 'LONG') {
+                if (pClose < pOpen && cClose > cOpen && cClose >= pOpen && cOpen <= pClose) {
+                    hasEngulfing = true;
+                }
+            } else {
+                if (pClose > pOpen && cClose < cOpen && cClose <= pOpen && cOpen >= pClose) {
+                    hasEngulfing = true;
+                }
+            }
+        }
+
+        if (hasKillerWick || hasEngulfing) {
+            qualityScore += 20;
+        }
+
+        // 3. TUZAK -> Likidite
+        let hasSweep = false;
+        if (currentJ >= 10) {
+            let past10Lows = lows.slice(currentJ-10, currentJ);
+            let past10Highs = highs.slice(currentJ-10, currentJ);
+            let min10Low = Math.min(...past10Lows);
+            let max10High = Math.max(...past10Highs);
+            
+            if (direction === 'LONG') {
+                if (lows[currentJ] < min10Low && closes[currentJ] > opens[currentJ] && closes[currentJ] > ((highs[currentJ]+lows[currentJ])/2)) {
+                    hasSweep = true;
+                }
+            } else {
+                if (highs[currentJ] > max10High && closes[currentJ] < opens[currentJ] && closes[currentJ] < ((highs[currentJ]+lows[currentJ])/2)) {
+                    hasSweep = true;
+                }
+            }
+        }
+        if (hasSweep) {
+            qualityScore += 15;
+        }
+
+        let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
+        let lastVol = volumes[currentJ];
+        if (direction === 'LONG' && lastVol < shortTermVolAvg * 0.9 && closes[currentJ] < opens[currentJ]) {
+            qualityScore += 12;
+        } else if (direction === 'SHORT' && lastVol < shortTermVolAvg * 0.9 && closes[currentJ] > opens[currentJ]) {
+            qualityScore += 12;
+        }
+        
         // LONG BARAJI 55, SHORT BARAJI 40
         // removed so we can see all brackets
         
