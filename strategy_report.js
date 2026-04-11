@@ -1,0 +1,108 @@
+require('dotenv').config();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const axios = require('axios');
+
+const dbPath = path.resolve(__dirname, 'signals.db');
+const db = new sqlite3.Database(dbPath);
+
+const { GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, PERISKOP_TELEGRAM_ID } = process.env;
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro" });
+
+function runQuery(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
+
+async function sendTelegramMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || !PERISKOP_TELEGRAM_ID) return;
+    try {
+        const chunks = text.match(/[\s\S]{1,4000}/g) || [];
+        for (const chunk of chunks) {
+            await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                chat_id: PERISKOP_TELEGRAM_ID,
+                text: chunk,
+                parse_mode: 'Markdown'
+            });
+        }
+    } catch(e) {
+        console.error("Telegram gönderme hatası:", e.message);
+    }
+}
+
+async function generateStrategyReport() {
+    console.log("=== Baş Stratejist (CRO) Gemini Ajanı Başlatıldı ===");
+
+    const sqlWins = `
+        SELECT ut.symbol, ut.type, ut.pnl, s.qualityScore, s.warnings 
+        FROM user_trades ut 
+        JOIN signals s ON ut.signalId = s.id 
+        WHERE ut.status = 'CLOSED_WIN' 
+        ORDER BY ut.closedAt DESC LIMIT 30`;
+
+    const sqlLosses = `
+        SELECT ut.symbol, ut.type, ut.pnl, s.qualityScore, s.warnings 
+        FROM user_trades ut 
+        JOIN signals s ON ut.signalId = s.id 
+        WHERE ut.status = 'CLOSED_LOSS' 
+        ORDER BY ut.closedAt DESC LIMIT 30`;
+
+    try {
+        const wins = await runQuery(sqlWins);
+        const losses = await runQuery(sqlLosses);
+
+        if (wins.length === 0 && losses.length === 0) {
+            console.log("Analiz edilecek geçmiş veri bulunamadı.");
+            process.exit(0);
+        }
+
+        let contextData = "--- KAZANAN (WIN) İŞLEMLER BİLANÇOSU ---\n";
+        wins.forEach((w, i) => {
+            contextData += `${i+1}. ${w.symbol} (${w.type}) | Skor: ${w.qualityScore} | Uyarılar: ${w.warnings}\n`;
+        });
+
+        contextData += "\n--- KAYBEDEN (LOSS) İŞLEMLER BİLANÇOSU ---\n";
+        losses.forEach((l, i) => {
+            contextData += `${i+1}. ${l.symbol} (${l.type}) | Skor: ${l.qualityScore} | Uyarılar: ${l.warnings}\n`;
+        });
+
+        console.log("Veriler toplandı, Gemini (CRO) yapay zekasına Analiz Emri veriliyor...");
+
+        const prompt = `Sen PeriskopAI nicel (quant) hedge fonunun Baş Stratejisti ve Risk Yöneticisisin (CRO).
+        Aşağıda, algoritmamızın (Otopilot) son zamanlarda açıp KAZANDIĞI ve KAYBETTİĞİ (Stop olduğu) işlemlerin bir dökümünü sana veriyorum.
+        Bu işlemlerin "Uyarılar (warnings)" kısmı, o işlemin teknik tetikleyicilerini (Örn: Katil Fitil, FVG, ADX Regime vs) gösterir.
+
+        ${contextData}
+
+        GÖREVİN: Bu verilere dayanarak detaylı bir durum değerlendirme ve strateji optimizasyonu raporu hazırlamak.
+        Lütfen raporunu aşağıdaki 3 ana başlıkta oluştur:
+
+        1. GİZLİ KAZANÇ PATERNİ: Kazanan işlemlerin ortak özellikleri nelerdir? Hangi uyarı/rejim kombinasyonlarında paramızı katlıyoruz?
+        2. KRONİK ZAAFİYETLER: Kaybeden işlemlerin (Zarar) asıl kanayan yarası nedir? Hangi formasyon/tuzak ya da rejimde durmadan stop oluyoruz? Asıl sorun nerede?
+        3. EYLEM PLANI (3 AKSİYON): Bir yazılım/quant geliştirici ekibine hitaben, otopilot kodlarındaki puanlama barajlarına (Örn: "Şu duruma -10 ceza verelim, bu duruma +15 bonus verelim") yönelik matematiksel 3 adet net tavsiye yaz.
+
+        Not: Resmi, analitik ve nokta atışı tespitler yap.`;
+
+        const result = await model.generateContent(prompt);
+        let response = result.response.text();
+
+        console.log("\n=== GEMINI STRATEJİ RAPORU ===\n");
+        console.log(response);
+
+        // Send to Telegram
+        await sendTelegramMessage(`📊 *PeriskopAI CRO Baş Stratejist Raporu*\n\n${response}`);
+        console.log("\nTelegram raporu iletildi. Görev tamam.");
+        process.exit(0);
+    } catch(e) {
+        console.error("Raporlama hatası:", e);
+        process.exit(1);
+    }
+}
+
+generateStrategyReport();
