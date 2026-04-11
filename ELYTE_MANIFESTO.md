@@ -48,6 +48,7 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
     *   Eğer bir işlemin Stop Loss oranı **%2.5'ten yüksekse** (agresif risk taşıyorsa), bu işlemden en az `1:2.0` R:R beklenmektedir. Beklentiyi karşılamazsa reddedilir.
 4.  **Skor Barajı:** Kriptolar ve Hisselerde sinyal havuzuna düşmek için *Long ve Short* yön fark etmeksizin Kalite Skorunun minimum **55** olması gereklidir (13 başarısızlık konseptinin 10'unu eler).
 5.  **Trailing Stop Guard:** İşlem %1 hedefine (1 Risk oranına) ulaştığı anda Stop Loss noktası giriş noktasına (Maliyet) çekilerek Risk Sıfırlanır (Koruma Kalkanı).
+6.  **Otonom Backtest Parçalama Kuralı:** Sistem algoritmaları veya skor barajları backtest edilirken (örneğin: `run_macro_micro_backtest.js`), başarı sonuçları dümdüz verilmez. Raporlarda veriler *Overfitting'i engellemek adına* **zorunlu olarak her 5 puanlık Kalite Skoru aralığına göre (Örn: 40-44, 45-49, 50-54... 95-100)** kırılarak ayrı ayrı istatistiklendirilir.
 
 ---
 
