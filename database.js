@@ -146,6 +146,32 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 });
             }
         });
+
+        // Create ai_lessons table for Post-Mortem Agent
+        db.run(`CREATE TABLE IF NOT EXISTS ai_lessons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            tradeId INTEGER,
+            lessonText TEXT NOT NULL,
+            status TEXT DEFAULT 'ACTIVE',
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Create shadow_trades table for Shadow Tracker
+        db.run(`CREATE TABLE IF NOT EXISTS shadow_trades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            type TEXT NOT NULL,
+            entryPrice REAL NOT NULL,
+            targetPrice REAL NOT NULL,
+            stopPrice REAL NOT NULL,
+            lessonId INTEGER,
+            status TEXT DEFAULT 'PENDING',
+            pnl REAL DEFAULT 0,
+            qualityScore INTEGER DEFAULT 0,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            closedAt DATETIME
+        )`);
     }
 });
 
