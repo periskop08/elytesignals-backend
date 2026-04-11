@@ -1023,13 +1023,13 @@ async function analyzeCoin(symbolInfo) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
-                    qualityScore -= 30; warnings.push('StochRSI Overbought (-30)');
+                    qualityScore -= 15; warnings.push('StochRSI Overbought (-15)');
                 }
             } else if (direction === 'SHORT' && lastStoch.k < 20) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
-                    qualityScore -= 30; warnings.push('StochRSI Oversold (-30)');
+                    qualityScore -= 15; warnings.push('StochRSI Oversold (-15)');
                 }
             }
         }
@@ -1411,8 +1411,8 @@ async function analyzeCoin(symbolInfo) {
         let hasStochConflict = warnings.some(w => w.includes('StochRSI Overbought') || w.includes('StochRSI Oversold'));
         let isChoppy = currentADX < 20;
         if (checkKillerWick && (isChoppy || hasStochConflict)) {
-            qualityScore -= 15;
-            warnings.push('Sinyal Çatışması Cezası (-15)');
+            qualityScore -= 10;
+            warnings.push('Sinyal Çatışması Cezası (-10)');
         }
         
         // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
@@ -1752,8 +1752,11 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                         const hasFlag = Array.isArray(signal.warnings) ? signal.warnings.some(w => w.includes('Flag')) : (signal.warnings && signal.warnings.includes('Flag'));
                         const flagPart = hasFlag ? `🔥 Formasyon: Bayrak/Flama Modeli Tespit Edildi, +10 Kalite Puanı eklendi.\n\n` : `\n`;
                         const categoryTag = signal.isAsset ? '[VARLIKLAR (FX/Emtia)]' : '[KRİPTO]';
+                        
+                        let tierTag = signal.qualityScore >= 65 ? '💎 Elit Kurumsal Sinyal' : '⚠️ Standart PA Sinyali';
+                        
                         const msg = `🚨 *Elyte Sinyal Uygulaması Üzerinde '${categoryTag}' Kategorisinde Yeni Bir Sinyal Düştü!*\n\n` +
-                            `⭐ Kalite Skoru: *${signal.qualityScore}*\n` +
+                            `⭐ Kalite Derecesi: *${tierTag}* (Skor: ${signal.qualityScore})\n` +
                             `🎯 Yön: *${signal.type}*\n\n` + flagPart +
                             (telegramLimitWarning ? telegramLimitWarning + `\n\n` : ``) +
                             `_Detaylar ve seviyeler için Elyte aplikasyonuna girebilirsiniz..._ 🔭\n\n` +
