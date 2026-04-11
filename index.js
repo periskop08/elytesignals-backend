@@ -959,12 +959,22 @@ NEW SETUP TEMPLATE (Only use if requested a new trade):
              const promises = intervals.map(inv => fetchAssetIntervalData(querySymbol, inv));
              results = await Promise.all(promises);
              
+             // Kantan Haber İstihbaratını DB'den çek
+             let newsContextTexts = [];
+             try {
+                 const recentNews = await db.all("SELECT title, summary, relatedSymbols, sentimentScore FROM stock_news WHERE relatedSymbols LIKE ? ORDER BY createdAt DESC LIMIT 5", ['%' + baseSymbol + '%']);
+                 if (recentNews && recentNews.length > 0) {
+                     newsContextTexts = recentNews.map(n => `- ${n.title}: ${n.summary} (Duygu Skoru: ${n.sentimentScore}/100)`);
+                 }
+             } catch(e) { console.error("Haber verisi çekilemedi", e); }
+             
              finalPromptTemplate = `Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist (Forensic Analyst) ve Şüpheci (Bearish Eğilimli) Stratejik Risk Uzmanısın. Şirketlerin pazarlama bültenlerine inanmaz, sahte kârları bulur ve aşırı fiyatlanmış balonları (hype) seversin.
 Kullanıcının diline göre (TR/EN) cevap ver. Türkçe ise ona sıcak ama profesyonelce hitap et.
 Kullanıcının Sorusu: "${prompt}"
 
 Analiz Edilecek Hisse/Varlık: ${baseSymbol}
 
+${newsContextTexts.length > 0 ? `=== KANTAN.NEWS İSTİHBARAT RAPORU (SON 48 SAAT) ===\n${newsContextTexts.join('\n')}\n====================\n\n` : ''}
 Aşağıda bu hisseye ait anlık teknik veriler listelenmiştir:
 `;
             results.forEach(res => {
@@ -1573,6 +1583,15 @@ app.get('/api/sentiments', async (req, res) => {
     try {
         const sentiments = await db.all("SELECT * FROM ai_sentiments ORDER BY createdAt DESC");
         res.json(sentiments);
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/news', async (req, res) => {
+    try {
+        const news = await db.all("SELECT * FROM stock_news ORDER BY createdAt DESC LIMIT 30");
+        res.json(news);
     } catch(e) {
         res.status(500).json({ error: e.message });
     }

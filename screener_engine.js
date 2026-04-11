@@ -84,6 +84,15 @@ async function runDailyScreener() {
                      metricsObj.revenueGrowth = qs?.financialData?.revenueGrowth !== undefined ? (qs.financialData.revenueGrowth * 100).toFixed(2) + "%" : "Bilinmiyor";
                 } catch(e) {}
 
+                // Kantan Haber İstihbaratını DB'den çek
+                let newsContextTexts = [];
+                try {
+                    const recentNews = await db.all("SELECT title, summary, relatedSymbols, sentimentScore FROM stock_news WHERE relatedSymbols LIKE ? ORDER BY createdAt DESC LIMIT 5", ['%' + symbol + '%']);
+                    if (recentNews && recentNews.length > 0) {
+                        newsContextTexts = recentNews.map(n => `- ${n.title}: ${n.summary} (Duygu Skoru: ${n.sentimentScore}/100)`);
+                    }
+                } catch(e) {}
+
                 const promptTemplate = `
 Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist (Forensic Analyst) ve Şüpheci (Bearish Eğilimli) Stratejik Risk Uzmanısın. Görevin: Şirketlerin büyüme masallarını sorgulamak, sahte kârları bulmak ve piyasanın aşırı fiyatladığı balonları (hype) tespit etmektir. 
 **Kullanıcı (User) Bilgileri**: Antalya/Türkiye bazlı kabin ekibi + tech/yatırımcı; odak: AI altyapı (NVDA/AMD/TSMC), savunma, nükleer, dronlar, siber. Uzmanlık alanın: yarı iletken, yapay zeka, GPU, bulut bilişim.
@@ -91,6 +100,7 @@ Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist (
 Analiz Edilecek Varlık: ${symbol}
 Güncel Fiyat: $${currentPrice}
 
+${newsContextTexts.length > 0 ? `=== KANTAN.NEWS İSTİHBARAT RAPORU (SON 48 SAAT) ===\n${newsContextTexts.join('\n')}\n==========================\n` : ''}
 === FINANSAL VERİ SETİ ===
 - PEG Oranı: ${metricsObj.pegRatio}
 - İleri F/K (PE): ${metricsObj.forwardPE}
