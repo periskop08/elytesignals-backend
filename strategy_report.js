@@ -9,7 +9,7 @@ const db = new sqlite3.Database(dbPath);
 
 const { GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, PERISKOP_TELEGRAM_ID } = process.env;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 function runQuery(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -43,14 +43,14 @@ async function generateStrategyReport() {
         SELECT ut.symbol, ut.type, ut.pnl, s.qualityScore, s.warnings 
         FROM user_trades ut 
         JOIN signals s ON ut.signalId = s.id 
-        WHERE ut.status = 'CLOSED_WIN' 
+        WHERE ut.status = 'CLOSED' AND ut.closeReason = 'NATIVE_TP'
         ORDER BY ut.closedAt DESC LIMIT 30`;
 
     const sqlLosses = `
         SELECT ut.symbol, ut.type, ut.pnl, s.qualityScore, s.warnings 
         FROM user_trades ut 
         JOIN signals s ON ut.signalId = s.id 
-        WHERE ut.status = 'CLOSED_LOSS' 
+        WHERE ut.status = 'CLOSED' AND ut.closeReason = 'NATIVE_SL'
         ORDER BY ut.closedAt DESC LIMIT 30`;
 
     try {
