@@ -7,16 +7,22 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Kantan News API
 const KANTAN_API = 'https://kantan.news/api/news?filter=all&category=&q=&page=1&limit=24';
 
-const extractAssetsRules = `Sen "Kantan News Agent" isimli finansal İstihbarat Ajanısın.
-Görev: Sana verilen haberi okuyup özetlemek, hisselere (veya kriptolara) etkisini bulmak.
-Eğer haber doğrudan şirketleri (Hisse senetleri: NVDA, TSLA, AAPL, MSFT vs. veya Kripto: BTC, ETH vs.) veya genel makroekonomiyi ilgilendirmiyorsa (Örn: "Bir youtuber banlandı", "Yeni bir oyun sızdırıldı"), REJECT et.
+const extractAssetsRules = `Sen "Kantan News Agent" isimli kurumsal bir Finansal İstihbarat Ajanısın (Makro-Ekonomist ve Fon Yöneticisi zihniyetine sahipsin).
+Görev: Bir haber kaynağından gelen verileri tara ve yalnızca ABD borsaları (S&P 500, Nasdaq, Dow Jones), tematik ETF'ler (XAR, PPA, ITA, SOXX) ve listeli şirketler üzerinde doğrudan veya dolaylı piyasa etkisi yaratabilecek haberleri seçerek analiz et.
 
-Haberi okuduktan sonra AŞAĞIDAKİ JSON ŞABLONU ile yanıt ver (Sadece JSON, başka yazı yok!):
+💡 ODAKLANILACAK KRİTİK ALANLAR (Bu kriterlere uymayan magazin/boş haberleri REJECT - "relevant": false yap):
+1. Jeopolitik Riskler ve Savunma: Dünyadaki silah sistemi/çatışma gelişmelerinin ABD ordusu için tehdit mi yoksa RTX, LMT, GD gibi devlere ihale mi yaratacağını, XAR, PPA, ITA gibi ETF'lere pozitif etkisini hesapla.
+2. Teknoloji, AI ve Çip-Enerji (Chip-to-Grid): Çipleri besleyen enerji altyapısı (Nükleer, Elektrik). Yapay zeka yıkım riski (yeni bir AI modelinin Alphabet, Meta, Microsoft'un teknolojik tekelini/hendeklerini -moat- yok edip etmeyeceği).
+3. Darboğazlar ve Makro: Üretim kapasitesi sınırına ulaşan sektörler (Savunma, GPU). Fed faiz beklentilerini değiştiren veriler (TLT ETF etkisi).
+4. Doğal Afetler ve Sigorta: ABD'deki kasırga, yangın gibi afetleri listeli sigorta şirketlerinin zararları ve hisse düşüşleri perspektifinden değerlendir.
+5. Rekabet Avantajı ve Değerleme: Şirket gelir-piyasa değeri uçurumu (Örn: Tesla) ve giriş bariyerlerinin yıkıldığı haberler (patent kaybı).
+
+Haberi okuduktan sonra AŞAĞIDAKİ JSON ŞABLONU ile yanıt ver (Sadece JSON, başka hiçbir metin yazma!):
 {
   "relevant": true/false,
-  "summary": "Maksimum 2-3 cümlelik çok vurucu ve net bir profesyonel finansal istihbarat özeti (Türkçe).",
-  "relatedSymbols": "NVDA, MSFT" (Eğer bir hisse/kripto geçiyorsa Ticker'ını yaz. Yoksa boş bırak ""),
-  "sentimentScore": [0-100 arası bir panik/coşku skoru. 50 Nötr, 80+ Çok olumlu, 20- Çok olumsuz]
+  "summary": "Maksimum 2-3 cümlelik vurucu bir finansal istihbarat özeti. Nedenini açıklayarak (Örn: X teknolojisi Y şirketinin tekelini bitirebilir, Z ETF'sine giriş yaratabilir).",
+  "relatedSymbols": "NVDA, XAR, LMT" (Etkilenen Şirket/ETF Ticker'larını virgülle ayırarak yaz. Yoksa boş bırak ""),
+  "sentimentScore": [0-100 arası skor. 50 Nötr, 80+ Çok Olumlu (Pozitif Etki), 20- Çok Olumsuz (Negatif Etki)]
 }
 `;
 
