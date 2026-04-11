@@ -1386,11 +1386,11 @@ async function analyzeCoin(symbolInfo) {
         let isCounterTrend = false;
         if (warnings.some(w => w.includes('200 EMA (-25)') || w.includes('Counter-trend 4H'))) isCounterTrend = true;
         
-        let hasKillerWick = warnings.some(w => w.includes('Killer Wick'));
-        let hasFVG = warnings.some(w => w.includes('FVG'));
+        let checkKillerWick = warnings.some(w => w.includes('Killer Wick'));
+        let checkFVG = warnings.some(w => w.includes('FVG'));
         let hasVolSpike = warnings.some(w => w.includes('Order Flow Aggressive'));
         
-        if (isCounterTrend && !hasKillerWick && !hasFVG && !hasVolSpike) {
+        if (isCounterTrend && !checkKillerWick && !checkFVG && !hasVolSpike) {
             qualityScore -= 15;
             warnings.push('Trend Karşıtı Teyitsizlik Cezası (-15)');
         }
@@ -1398,7 +1398,7 @@ async function analyzeCoin(symbolInfo) {
         // 2. Altın Üçgen Bonusu (Sinerji)
         let hasOrderBlock = warnings.some(w => w.includes('Order Block'));
         let isStrongTrend = currentADX >= 25;
-        if (hasOrderBlock && hasFVG && isStrongTrend) {
+        if (hasOrderBlock && checkFVG && isStrongTrend) {
             qualityScore += 10;
             warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
         }
@@ -1406,7 +1406,7 @@ async function analyzeCoin(symbolInfo) {
         // 3. Çatışma Cezası (Güçlü sinyale rağmen momentum veya trend bitikse)
         let hasStochConflict = warnings.some(w => w.includes('StochRSI Overbought') || w.includes('StochRSI Oversold'));
         let isChoppy = currentADX < 20;
-        if (hasKillerWick && (isChoppy || hasStochConflict)) {
+        if (checkKillerWick && (isChoppy || hasStochConflict)) {
             qualityScore -= 15;
             warnings.push('Sinyal Çatışması Cezası (-15)');
         }
