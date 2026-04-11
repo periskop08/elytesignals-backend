@@ -1509,6 +1509,7 @@ async function runScan() {
                 let isBlocked = false;
                 let blockReason = "";
                 let blockLessonId = null;
+                let telegramLimitWarning = "";
 
                 try {
                     const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 15");
@@ -1640,6 +1641,7 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                         }
 
                         if (currentDirectionCount >= maxAllowedInThisDirection) {
+                            telegramLimitWarning = `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda maksimum limite ulaştığımız için (${currentDirectionCount} adet aktif ${signal.type} işlem), bu elit sinyal borsa hesabınızda otomatik olarak AÇILMADI. Riski yönetmek kaydıyla isterseniz işlemi kendiniz manuel olarak açabilirsiniz.`;
                             console.log(`[AUTO-TRADE] Limit (${currentDirectionCount}/${maxAllowedInThisDirection}) dolu! Sinyal Yönü: ${signal.type}. Sinyal havuza eklendi (Macro limit kısıtlaması).`);
                             if (bot && CONFIG.telegramAdminId) {
                                 bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
@@ -1729,7 +1731,8 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                         const categoryTag = signal.isAsset ? '[VARLIKLAR (FX/Emtia)]' : '[KRİPTO]';
                         const msg = `🚨 *Elyte Sinyal Uygulaması Üzerinde '${categoryTag}' Kategorisinde Yeni Bir Sinyal Düştü!*\n\n` +
                             `⭐ Kalite Skoru: *${signal.qualityScore}*\n` +
-                            `🎯 Yön: *${signal.type}*\n` + flagPart +
+                            `🎯 Yön: *${signal.type}*\n\n` + flagPart +
+                            (telegramLimitWarning ? telegramLimitWarning + `\n\n` : ``) +
                             `_Detaylar ve seviyeler için Elyte aplikasyonuna girebilirsiniz..._ 🔭\n\n` +
                             `🔗 Web Platformu:\nhttps://www.elytesignals.com/dashboard`;
                         telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
