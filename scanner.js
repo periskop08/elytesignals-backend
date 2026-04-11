@@ -892,17 +892,29 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('High Volume Spike (+15)');
         }
 
-        // 4. ADX REJİMİ
+        // 4. MARKET REGIME (ADX + ATR)
         const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
         breakdown.adx = Math.round(currentADX);
-        if (currentADX > 25) {
-            qualityScore += 10;
-            warnings.push('Strong Trend (ADX > 25) (+10)');
+
+        // ATR daha önce hesaplanmıştı (currentATR ve avgATR üzerinden volatilite)
+        const isVolatileExpanding = currentATR > (avgATR * 1.1); // %10'dan fazla genişleme
+        let regime = 'CHOPPY/NORMAL';
+
+        if (currentADX >= 25 && isVolatileExpanding) {
+            regime = 'TRENDING_VOLATILE';
+            qualityScore += 5; // Eskiden sadece 25 üste 10 veriyorduk, şimdi daha dengeli ama agresif bir bonus var (Trend kırılımı)
+            warnings.push('Market Regime: Trending & Volatile (+5)');
+        } else if (currentADX >= 25 && !isVolatileExpanding) {
+            regime = 'TRENDING';
+            qualityScore += 5;
+            warnings.push('Market Regime: Trending (+5)');
         } else if (currentADX < 20) {
-            qualityScore -= 10;
-            warnings.push('Choppy Market Limit (ADX < 20) (-10)');
+            regime = 'RANGING';
+            qualityScore -= 5; // Yatay piyasalarda yanlış kırılım (fakeout) cezası
+            warnings.push('Market Regime: Ranging Limit (-5)');
         }
+        breakdown.regime = regime;
 
         // 4.5 VWAP KONTROLÜ (SADECE HİSSELER)
         if (sym === 'AAPL' || sym === 'TSLA' || sym === 'NASDAQ') {

@@ -106,7 +106,7 @@ async function setLeverage(symbol, positionSide, leverage) {
 }
 
 // 2. Place Order mapping
-async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPrice) {
+async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPrice, riskMultiplier = 1.0) {
     // rawSymbol: 'BTCUSDT' -> Format to BingX 'BTC-USDT' or 'NCCOXAG2USD-USDT' for assets
     const symbol = resolveBingxSymbol(rawSymbol);
     
@@ -114,9 +114,8 @@ async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPri
     if (!info) throw new Error("Instrument info not found for " + symbol);
 
     // --- SABİT RİSK (R) HESAPLAMASI ---
-    // Perplexity'nin bahsettiği mantığın matematiksel olarak en kusursuz ve gerçek borsa hali:
     // Formül: Miktar (Quantity) = Riske Edilen Para ($) / (Giriş Fiyatı - Stop Fiyatı)
-    const RISK_USD = parseFloat(process.env.BINGX_RISK_USD || 10); // Varsayılan $10 Risk
+    const RISK_USD = parseFloat(process.env.BINGX_RISK_USD || 10) * riskMultiplier;
     const coinBasinaZarar = Math.abs(entryPrice - stopPrice);
     
     // Risk başına alınması gereken coin miktarını direkt buluruz. 
