@@ -1108,19 +1108,34 @@ async function analyzeCoin(symbolInfo) {
             } catch (e) { } // Hata olursa es geç
         }
 
-        // --- YENİ V2.6: PORTFOLIO CORRELATION FILTER (-12 Puan Cezası) ---
+        // --- YENİ V3.2: PORTFOLIO MOMENTUM & HEDGING FILTER ---
         try {
-            const activeTrades = await db.all("SELECT symbol, type FROM user_trades WHERE status = 'ACTIVE'");
-            const cryptoMajors = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT'];
+            const activeCryptoTrades = await db.all("SELECT symbol, type, entryPrice FROM user_trades WHERE status = 'ACTIVE'");
+            let isBtcEthLongProfitable = false;
+            let isBtcEthShortProfitable = false;
 
-            if (cryptoMajors.includes(sym)) {
-                let sameGrpCount = activeTrades.filter(t => cryptoMajors.includes(t.symbol) && t.type === direction).length;
-                if (sameGrpCount >= 2) {
-                    qualityScore -= 12;
-                    warnings.push(`Diversity Penalty (Too many active ${direction} in Majors) (-12)`);
+            for (const t of activeCryptoTrades) {
+                if (t.symbol === 'BTCUSDT' || t.symbol === 'ETHUSDT') {
+                    try {
+                        const tick = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${t.symbol}`);
+                        if (tick.data && tick.data.data && tick.data.data.lastPrice) {
+                            const cp = parseFloat(tick.data.data.lastPrice);
+                            if (t.type === 'LONG' && cp > t.entryPrice) isBtcEthLongProfitable = true;
+                            if (t.type === 'SHORT' && cp < t.entryPrice) isBtcEthShortProfitable = true;
+                        }
+                    } catch(e) {}
                 }
             }
+
+            if (isBtcEthLongProfitable && direction === 'SHORT') {
+                qualityScore -= 15;
+                warnings.push('Macro Hedge Ceza (Liderler LONG iken SHORT açılıyor) (-15)');
+            } else if (isBtcEthShortProfitable && direction === 'LONG') {
+                qualityScore -= 15;
+                warnings.push('Macro Hedge Ceza (Liderler SHORT iken LONG açılıyor) (-15)');
+            }
         } catch (e) { }
+
 
         // --- OPTIONS GAMMA WALL & MAX PAIN (SADECE VARLIKLAR İÇİN) ---
         if (symbolInfo && symbolInfo.isAsset) { // Kriptolarda çalışmaz
