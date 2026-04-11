@@ -16,10 +16,10 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 }
 
 async function runDailyScreener() {
-    console.log("[AI SCREENER] Otomatik günluk borsa taramasi basliyor...");
+    console.log("[HAMDİ BEY - OTONOM YATIRIM AJANI] Günlük borsa tarayıcısı (Screener) masaya oturdu...");
 
     if (!ai) {
-        console.error("[AI SCREENER] Gemini API Key bulunamadi, tarama durduruldu.");
+        console.error("[HAMDİ BEY] Gemini API Key bulunamadı, tarayıcı durduruldu.");
         return;
     }
 
@@ -59,11 +59,12 @@ async function runDailyScreener() {
         const newCandidates = potentialSymbols.filter(s => !existingSet.has(s)).slice(0, 5); // Limit to top 5 fresh candidates per day to respect API limits
 
         if (newCandidates.length === 0) {
-            console.log("[AI SCREENER] Yeni hisse adayi bulunamadi.");
+        if (newCandidates.length === 0) {
+            console.log("[HAMDİ BEY] Kantarıma giren yeni bir hisse adayı bulamadım.");
             return;
         }
 
-        console.log(`[AI SCREENER] Gemini ${newCandidates.length} adayi inisellestiriyor:`, newCandidates);
+        console.log(`[HAMDİ BEY] ${newCandidates.length} adayı derin analize alıyorum:`, newCandidates);
 
         let addedAny = false;
 
@@ -83,13 +84,12 @@ async function runDailyScreener() {
                      metricsObj.debtToEbitda = (qs?.financialData?.totalDebt && qs?.financialData?.ebitda) ? (qs.financialData.totalDebt / qs.financialData.ebitda).toFixed(2) : "Bilinmiyor";
                      metricsObj.revenueGrowth = qs?.financialData?.revenueGrowth !== undefined ? (qs.financialData.revenueGrowth * 100).toFixed(2) + "%" : "Bilinmiyor";
                 } catch(e) {}
-
                 const promptTemplate = `
-Sen bir gelişmiş kurumsal yatırım danışmanısın (Hedge Fund Mimarisi).
+Sen benim varlık yönetimi kıdemli asistanım olan "Hamdi Bey"sin (Investment Agent AI) – sofistike bir finansal karar makinesisin.
 Analiz Edilecek (Screener'dan düşen yeni) Varlık: ${symbol}
 Güncel Fiyat: $${currentPrice}
 
-=== FINANSAL VERİ SETİ (Genişletilmiş) ===
+=== FİNANSAL VERİ SETİ ===
 - PEG Oranı: ${metricsObj.pegRatio}
 - İleri F/K (Forward PE): ${metricsObj.forwardPE}
 - Güncel F/K (Trailing PE): ${metricsObj.trailingPE}
@@ -97,46 +97,51 @@ Güncel Fiyat: $${currentPrice}
 - Serbest Nakit Akışı (FCF): ${metricsObj.fcf}
 - Borç / FAVÖK: ${metricsObj.debtToEbitda}
 - Çeyreklik Gelir Büyümesi: ${metricsObj.revenueGrowth}
-==========================================
+==========================
 
-BİLGİ: Yatırım stratejisi (PeriskopAI) şu şekilde çalışır:
+Yatırımcı Profilimiz (Sensörlerin buna göre çalışmalı!):
+Antalya/Türkiye merkezli, havacılık sektöründe (kabin ekibi) çalışan aktif bir yatırımcı.
+Özel Odak Alanlarımız: AI altyapısı (NVDA, AMD, TSMC), Savunma Sanayii, Nükleer/Enerji, Dronlar ve Siber Güvenlik.
+Türkiye gerçekleri: Döviz riski ve vergilendirmeler göz önüne alındığında "Kâr beklentisi yüksek, katı moat değerine sahip" sağlam şirketleri kovalıyoruz.
 
-1. Güvenli Liman Kuralı:
-Herhangi bir hisseden satış tavsiyesi verdiğinde veya riski yüksek bulduğunda, sermayenin "XAR" (Savunma ETF'si) gibi güvenli limanlara park edilmesini öner. XAR, savunma harcamaları supercycle'ında istikrarlı büyüme potansiyeli taşır.
+[GÖREV VE KALICI KURALLARIN - HAMDİ BEY MANTALİTESİ]
 
-2. Satış ve Elinde Tutma Tetikleyicileri (Zorunlu Kurallar):
-- Analist Downgrade'leri: 3+ güvenilir analist (Deutsche, Jefferies, Citi, Goldman, Barclays vb.) not kırarsa veya Hold/Neutral'a indirirse SATIŞ tavsiyesi verilir.
-- İçeriden Satışlar: CEO/EVP kazanç raporu öncesi büyük miktarda hisse (Örn: $18M+) satarsa risk artar.
-- Ana Gelir Modeli Riski: Şirketin core business'inde ciddi zorlanma (Pazar liderliği kaybı, düşük marj).
-- Dava/Sınıf Davası Riski: Beklenen tazminat/settlement, şirketin EPS'sini vuracak düzeydeyse SAT.
-- Beklenen Getiri Hesabı: 12 aylık risksiz getiri eşiğinin altındaysa SAT. Güçlü Bull Case varsa 2-3 çeyrek BEKLE ve düşük fiyattan Re-entry (Yeniden Giriş) planı yap.
+1. Moat Analizi (Rekabet Avantajı Değerlendirmesi):
+- Kantan bilgilerinle hisseyi 4 faktörde incele: Teknoloji (Patentler), Marka (Pazar payı), Ölçek (Üretim kapasitesi) ve Regülasyonlar.
+- Örnek: NVDA (Güçlü Moat - CUDA ekosistemi), AMD (Zayıf/Orta Moat - MI300 gecikmesi). AVAV (Güçlü - Switchblade DoD tekel kontratları). Coca-Cola (Zayıf Moat - Emtia/Süpermarket rekabeti -> Teknik dışı bir şirkete yatırım kötüdür).
 
-3. ÇIKTI FORMATI:
-Yanıtını KESİNLİKLE JSON FORMATINDA ver. Asla JSON formatı dışında düz metin kullanma.
+2. Sektörel Risk & Fırsat Dinamikleri:
+- HBM / Emtia Bellek (SK Hynix, Micron): Çin (CXMT) rekabeti fiyat çökertir. Süreç teknolojisi zayıfsa "SAT" veya Düşük Puan ver.
+- Nükleer / Enerji (CEG, TLN vb.): Regülatör tavan fiyat çekerse marj erir. Ama AI Hyperscaler (MSFT/META) kontratları varsa Alım Gücü yaratır.
+- Siber Güvenlik (CRWD, Rubrik): Yüksek AI exploit zaafiyetleri olan veya skandal yaşamış projeleri derhal Reddet.
+
+3. Sistem Çıktısı Beklentisi (Karar Motoru):
+Kuralları okudun. Şimdi karşına çıkan ${symbol} hissesi için Moat Testi yap, yukarıdaki finansal oranları (PE, FCF) kontrol et ve bana AL, SAT, TUT veya BEKLE argümanlı mükemmel bir JSON teslim et. Beklenen getirisi güdükse sentimentPercent'i acımasızca düşük tut.
+
+ÇIKTI FORMATI ZORUNLULUĞU:
+Sadece ve sadece aşağıdaki alanları içeren geçerli bir JSON objesi döndür! Markdown \`\`\`json veya başka bloklar GİRME, düz dize olarak JSON gönder.
 {
-    "ceoScore": [0-100],
-    "edgeScore": [0-100],
-    "earningsScore": [0-100],
-    "insiderScore": [0-100],
-    "patentScore": [0-100],
-    "sentimentPercent": [0-100],
+    "ceoScore": [0-100, şirket yönetimi kalitesi],
+    "edgeScore": [0-100, Moat ve Rekabet Gücü Puanı],
+    "earningsScore": [0-100, Finansal verilere dayanarak],
+    "insiderScore": [0-100, Pazar beklentisi/Duyumlar],
+    "patentScore": [0-100, Teknoloji/Inovasyon kapasitesi],
+    "sentimentPercent": [0-100, NİHAİ KARAR PUANIN (AI Skoru)],
     "entryPriceTarget": [0.00 şeklinde RAKAMSAL Optimal Alım Noktası],
-    "summary": "120 karakterlik veri odaklı özet ve nihai AL/SAT/TUT/BEKLE kararı",
-    "detailedReport": "Aşağıdaki Örnek Analiz Şablonunu aynen kullanarak oluşturulmuş kapsamlı rapor."
+    "summary": "120 karakterlik veri odaklı özet (AL/SAT/TUT/BEKLE tezi dahil)",
+    "detailedReport": "Hamdi Bey'in özel analiz şablonunu (Aşağıda gösterilen) kullanarak yazdığı kapsamlı tez."
 }
 
-*** JSON İÇİNDEKİ detailedReport ALANI İÇİN ZORUNLU MARKDOWN SATIR YAPISI ***
-### Şirket: ${symbol}
-**Orijinal Tez ve Finansal Durum:** [Yukarıdaki veri setini referans alarak tez özeti, Bilanço ve Teknoloji Gücü]
+*** JSON İÇİNDEKİ detailedReport ALANI İÇİN ŞABLON ***
+### Hamdi Bey 360° Analizi: ${symbol}
+**Tez ve Moat İncelemesi:** [Moat, Teknoloji, Pazar Payı incelemen. Neden AL veya SAT demeliyiz?]
+**Sektörel Konjonktür:** [Yukarıdaki kurallara göre AI/Savunma/Nükleer sektör konumlandırması ve Rakipler]
+**Finansal Röntgen:** [F/K ve Serbest Nakit analizleri]
+**Karar:** AL / SAT / BEKLE / TUT
+**Hedef Giriş (Re-entry) Mantığı:** [Eğer BEKLE isen hangi fiyata inerse toplanır?]
+`;
 
-**Kırılma Nedenleri ve Riskler:**
-- **Analist Kesmeleri/Hedefleri:** [Kurumsal analist görüşleri ve güncel beklentiler]
-- **İçeriden Satış ve Liderlik:** [CEO işlemleri, yönetimsel riskler, Kongre/Senato (Insider) alım-satım hareketleri]
-- **Model ve Rekabet Riski:** [Derin pazardaki rakipler ve darboğaz durumu]
-- **EV Hesabı:** [Beklenen return ve olasılık tahmini]
-
-### Karar: AL / SAT / BEKLE / TUT
-**Re-entry (Yeniden Alım Koşulu):** [Potansiyel alım bölgesi veya geri çekilme koşulu]
+                const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });�ulu):** [Potansiyel alım bölgesi veya geri çekilme koşulu]
 `;
 
                 const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
@@ -150,7 +155,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver. Asla JSON formatı dışında düz
 
                 // AI Approval Threshold check
                 if (parsed.sentimentPercent > 85) {
-                    console.log(`[AI SCREENER] ${symbol} basariyla incelendi ve skor: ${parsed.sentimentPercent}. Portfoye ekleniyor.`);
+                    console.log(`[HAMDİ BEY] ${symbol} analizini tamamladı ve skor: ${parsed.sentimentPercent}. Portföye öneriliyor.`);
                     
                     // Insert into AI Sentiments database
                     await db.run("DELETE FROM ai_sentiments WHERE symbol = ?", [symbol]);
@@ -170,16 +175,16 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver. Asla JSON formatı dışında düz
 
                     // Send Telegram Alert safely
                     if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-                        const msg = `🚀 *YAPAY ZEKA FIRSAT KEŞFİ!*\n\nAntigravity Screener, Amerikan borsasındaki taramalarda yüksek potansiyelli bir hisse tespit etti ve portföye  *%5 ağırlıkla* dahil etti!\n\n💎 *Hisse:* GİZLİ (Premium)\n🎯 *AI Skoru:* ${parsed.sentimentPercent}/100\n💼 *Sektör Teknoloji/Inovasyon:* ${parsed.edgeScore}/100\n\n📌 _Hissenin çok kapsamlı Gemini 3.1 Pro detaylı fon raporu an itibariyle Varlık Yöneticisi sekmesine yüklendi, hemen siteye göz atabilirsiniz._`;
+                        const msg = `🚀 *YAPAY ZEKA FIRSAT KEŞFİ!*\n\nABD Varlık Tarayıcımız *Hamdi Bey*, piyasa taramalarında yüksek potansiyelli bir hisse tespit etti ve portföye  *%5 ağırlıkla* dahil edilmesi için masaya sundu!\n\n💎 *Hisse:* GİZLİ (Premium)\n🎯 *Yatırım Cazibe Skoru:* ${parsed.sentimentPercent}/100\n💼 *Moat (Rekabet Gücü):* ${parsed.edgeScore}/100\n\n📌 _Hamdi Bey'in bu şirket için hazırladığı özel 360 Derece Yatırım Raporu Varlık Yöneticisi sayfasına yüklendi, detaylara siteden göz atabilirsiniz._`;
                         telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' }).catch(e => console.error("Telegram error:", e));
                     }
                     
                     addedAny = true;
                 } else {
-                    console.log(`[AI SCREENER] ${symbol} skoru dusuk kaldi (${parsed.sentimentPercent}). Elendi.`);
+                    console.log(`[HAMDİ BEY] ${symbol} şirketi vizyonsuz/zayıf Moat'a sahip. Eledim. (Skor: ${parsed.sentimentPercent})`);
                 }
             } catch (evalErr) {
-                console.error(`[AI SCREENER] ${symbol} analiz hatasi:`, evalErr.message);
+                console.error(`[HAMDİ BEY] ${symbol} analiz hatası (JSON Parsing vs):`, evalErr.message);
             }
             
             // Wait 5 seconds between evaluating candidates to avoid Rate Limiting
