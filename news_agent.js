@@ -46,13 +46,20 @@ Sektör - Hisse Eşleştirme Rehberi (Örnekler):
 - Nükleer Enerji/Reaktör -> CEG, VST, NRG, OKLO, SMR, CCJ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. ETKİ PUANI SİSTEMİ (0-100 SKALASI)
+Haberin etkisini 0 ile 100 arasında bir puanla ifade et.
+- NEGATİF BÖLGE (0-39): 0-10 (Felaket), 11-25 (Ciddi zarar), 26-39 (Ilımlı olumsuz)
+- NÖTR BÖLGE (40-60): 40-45 (Hafif olumsuz nötr), 46-54 (Tam nötr), 55-60 (Hafif olumlu nötr)
+- POZİTİF BÖLGE (61-100): 61-74 (Ilımlı olumlu), 75-89 (Güçlü kazanım), 90-100 (Sektör değiştiren muazzam kazanım)
+*Puanı belirlerken tekel/pazar gücünü hesaba kat, somut veri yoksa aralığın merkezinde kal.*
+
 ÇIKTI (JSON FORMATI - ZORUNLU SİSTEM ALTYAPISI):
 Tüm analizi yaptıktan sonra AŞAĞIDAKİ JSON ŞABLONU İLE yanıt ver (Başka hiçbir metin yazma!):
 {
   "relevant": true/false, // Haber borsayı/hisseleri direkt vurmuyorsa magazin ise false yap.
   "relatedSymbols": "TSMC, GOOGL, HII", // Haberde adı geçenler VE '6. KURAL'dan çıkardığın 2.derece hisselerin hepsini aralarına virgül koyarak birleştir.
-  "sentimentScore": 50, // Puanı çevir: (+4/+5 Güçlü Olumlu) = 80-100, (+2/+3 Ilımlı Olumlu) = 60-75, (-1/0/+1 Nötr/Karışık) = 45-55, (-2/-3 Ilımlı Olumsuz) = 25-40, (-4/-5 Güçlü Olumsuz) = 0-20.
-  "summary": "[ETKİ ETİKETİ]\nBuraya analize göre ✅ POZİTİF ETKİ (veya 🔴 NEGATİF ETKİ, veya ⚪ NÖTR/KARIŞIK) yaz.\n\n📌 KISA HABER ÖZETİ:\n(Buraya kurallara uygun yorumsuz 5 cümlelik özet)\n\n🔍 DETAYLI ANALİZ RAPORU:\n✅ Olumlu Yönler:\n- (1-2 cümlelik somut kanıtlanmış çıkarım)\n⚠️ Riskler & Olumsuz Yönler:\n- (Sadece gerçekçi riskler, sıfır spekülasyon)\n💡 Analist Yorumu:\n(2-3 cümlelik dengeli, mantıklı, asla intihar/çöküş demeyen Wall Street yorumu.)\n\n📌 HABERİN ETKİLEYEBİLECEĞİ DİĞER HİSSELER\n[Şirket Adı - Ticker] -> [POZİTİF / NEGATİF]\nGerekçe: (Tek cümle. Neden etkileneceğini açıkla. Eğer 6. kurula uyan hisse yoksa bu bölümü HİÇ EKLEME, direkt atla.)"
+  "sentimentScore": 72, // 0-100 SKALASINDA belirlediğin tam sayı puanı buraya yaz.
+  "summary": "[ETKİ ETİKETİ]\nBuraya analize göre ✅ POZİTİF ETKİ (veya 🔴 NEGATİF ETKİ, veya ⚪ NÖTR/KARIŞIK) yaz.\n\n📊 ETKİ PUANI: [Üstte belirlediğin 0-100 puan] — [Etiket adı]\n\n📌 KISA HABER ÖZETİ:\n(Buraya kurallara uygun yorumsuz 5 cümlelik özet)\n\n🔍 DETAYLI ANALİZ RAPORU:\n✅ Olumlu Yönler:\n- (1-2 cümlelik somut kanıtlanmış çıkarım)\n⚠️ Riskler & Olumsuz Yönler:\n- (Sadece gerçekçi riskler, sıfır spekülasyon)\n💡 Analist Yorumu:\n(2-3 cümlelik dengeli, mantıklı, asla intihar/çöküş demeyen Wall Street yorumu.)\n\n📌 HABERİN ETKİLEYEBİLECEĞİ DİĞER HİSSELER\n[Şirket Adı - Ticker] -> [POZİTİF / NEGATİF]\nGerekçe: (Tek cümle. Neden etkileneceğini açıkla. Eğer 6. kurula uyan hisse yoksa bu bölümü HİÇ EKLEME, direkt atla.)"
 }
 `;
 
