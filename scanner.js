@@ -717,12 +717,12 @@ async function analyzeCoin(symbolInfo) {
 
         // --- MACRO 200 EMA FİLTRESİ ---
         if (direction === 'LONG' && currentPrice < curEma200) {
-            qualityScore -= 15;
-            warnings.push('Bearish 200 EMA (-15)');
+            qualityScore -= 25;
+            warnings.push('Bearish 200 EMA (-25)');
         }
         if (direction === 'SHORT' && currentPrice > curEma200) {
-            qualityScore -= 15;
-            warnings.push('Bullish 200 EMA (-15)');
+            qualityScore -= 25;
+            warnings.push('Bullish 200 EMA (-25)');
         }
 
         if (eurusdDailyPenalty > 0) {
@@ -1023,13 +1023,13 @@ async function analyzeCoin(symbolInfo) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
-                    qualityScore -= 10; warnings.push('StochRSI Overbought (-10)');
+                    qualityScore -= 30; warnings.push('StochRSI Overbought (-30)');
                 }
             } else if (direction === 'SHORT' && lastStoch.k < 20) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
-                    qualityScore -= 10; warnings.push('StochRSI Oversold (-10)');
+                    qualityScore -= 30; warnings.push('StochRSI Oversold (-30)');
                 }
             }
         }
@@ -1380,6 +1380,38 @@ async function analyzeCoin(symbolInfo) {
             qualityScore += 12;
             warnings.push('Tuzak: Volume Shelter (Zayıf Alış) (+12)');
         }
+        // --- YENİ CRO STRATEJİ RAPORU KONTROLLERİ ---
+        
+        // 1. Ekstra Trend Karşıtı Ceza (Teyitsizlik Cezası)
+        let isCounterTrend = false;
+        if (warnings.some(w => w.includes('200 EMA (-25)') || w.includes('Counter-trend 4H'))) isCounterTrend = true;
+        
+        let hasKillerWick = warnings.some(w => w.includes('Killer Wick'));
+        let hasFVG = warnings.some(w => w.includes('FVG'));
+        let hasVolSpike = warnings.some(w => w.includes('Order Flow Aggressive'));
+        
+        if (isCounterTrend && !hasKillerWick && !hasFVG && !hasVolSpike) {
+            qualityScore -= 15;
+            warnings.push('Trend Karşıtı Teyitsizlik Cezası (-15)');
+        }
+
+        // 2. Altın Üçgen Bonusu (Sinerji)
+        let hasOrderBlock = warnings.some(w => w.includes('Order Block'));
+        let isStrongTrend = currentADX >= 25;
+        if (hasOrderBlock && hasFVG && isStrongTrend) {
+            qualityScore += 10;
+            warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
+        }
+
+        // 3. Çatışma Cezası (Güçlü sinyale rağmen momentum veya trend bitikse)
+        let hasStochConflict = warnings.some(w => w.includes('StochRSI Overbought') || w.includes('StochRSI Oversold'));
+        let isChoppy = currentADX < 20;
+        if (hasKillerWick && (isChoppy || hasStochConflict)) {
+            qualityScore -= 15;
+            warnings.push('Sinyal Çatışması Cezası (-15)');
+        }
+        
+        // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
         // --- END PERPLEXITY & CHATGPT FILTER ---
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
