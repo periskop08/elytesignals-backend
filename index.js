@@ -1597,6 +1597,33 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
+app.post('/api/news/analyze', async (req, res) => {
+    try {
+        const { newsId } = req.body;
+        if (!newsId) return res.status(400).json({ error: "Lütfen incelemek için bir haber ID'si gönderin." });
+
+        const newsItem = await db.get("SELECT title, content, relatedSymbols FROM stock_news WHERE id = ?", [newsId]);
+        if (!newsItem) return res.status(404).json({ error: "Haber istihbaratı arşivde bulunamadı." });
+
+        const prompt = `Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist ve Şüpheci (Bearish Eğilimli) Stratejik Risk Uzmanısın.
+Kullanıcı aşağıdaki makro ekonomik / teknoloji haberine tıklayarak derin bir adli analiz istedi. 
+Haber Başlığı: ${newsItem.title}
+İlgili Varlık/Şirketler: ${newsItem.relatedSymbols || "Genel Piyasa"}
+Haber Özeti/İçeriği: ${newsItem.content}
+
+GÖREV: Bu haberin hissedarlar veya şirket tahtası (ilgili hisselerin geleceği) üzerindeki muhtemel yankısını, rekabet dezavantajlarını ve risklerini sert, kendinden emin ve profesyonel bir adli analist dille 2 kısa paragrafta özetle. Şirket veya sektör için "hype" tuzağı varsa uyar. Tamamen "Markdown" olarak biçimlendir (Yalın ve okunabilir olsun).`;
+
+
+        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const result = await model.generateContent(prompt);
+        let deepDive = result.response.text();
+
+        res.json({ success: true, report: deepDive });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.post('/api/portfolio/rebalance', async (req, res) => {
     try {
         const result = await triggerRebalance();
