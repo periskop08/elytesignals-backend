@@ -1558,29 +1558,51 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                             );
 
                             // Şu anki sinyali havuza yeni attığımız için ilk sinyalin length'i 1 olur. 1'den büyükse 2. veya 3. kez geliyordur.
-                            if (existingSignalsToday.length <= 1) {
-                                console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol}`);
-                                try {
-                                    const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
-                                    if (orderId) {
-                                        await db.run(
-                                            "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
-                                            [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
-                                        );
-
-                                        // Ekranda favori yıldızı yanması için standart tabloya da yaz
-                                        const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
-                                        if (!checkFav) {
-                                            await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
+                                if (existingSignalsToday.length <= 1) {
+                                    
+                                    // +--- OTONOM GECİKME (SLIPPAGE/KAYMA) KONTROLÜ ---+
+                                    let currentLivePrice = signal.entryPrice;
+                                    let slippageExceeded = false;
+                                    try {
+                                        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${signal.symbol}`);
+                                        if (res.data && res.data.data && res.data.data.lastPrice) {
+                                            currentLivePrice = parseFloat(res.data.data.lastPrice);
+                                            const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
+                                            if (slippage > 0.003) {
+                                                slippageExceeded = true;
+                                            }
                                         }
-                                        console.log(`[AUTO-TRADE] Başarılı! Favorilere kayıt edildi.`);
+                                    } catch (err) {}
+
+                                    if (slippageExceeded) {
+                                        console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
+                                        if (bot && CONFIG.telegramAdminId) {
+                                            bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
+                                        }
+                                    } else {
+                                        console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol}`);
+                                        try {
+                                            const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
+                                            if (orderId) {
+                                                await db.run(
+                                                    "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
+                                                    [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
+                                                );
+
+                                                // Ekranda favori yıldızı yanması için standart tabloya da yaz
+                                                const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
+                                                if (!checkFav) {
+                                                    await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
+                                                }
+                                                console.log(`[AUTO-TRADE] Başarılı! Favorilere kayıt edildi.`);
+                                            }
+                                        } catch (e) {
+                                            console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
+                                        }
                                     }
-                                } catch (e) {
-                                    console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
+                                } else {
+                                    console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
                                 }
-                            } else {
-                                console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
-                            }
                         }
                     } catch (e) {
                         console.error("[AUTO-TRADE] Hata:", e.message);
