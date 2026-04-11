@@ -1423,11 +1423,11 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // V3.2 (Quant Fon Optimizasyonu) Yeni Baraj 60 (Arka Plandaki AI Kalkanı 50-60 aralığındaki çürükleri temizleyeceği için baraj gevşetildi)
-        if (direction === 'LONG' && qualityScore < 60) {
+        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 55 (Ticari Hacmi Koruma Refleksi)
+        if (direction === 'LONG' && qualityScore < 55) {
             return null;
         }
-        if (direction === 'SHORT' && qualityScore < 60) {
+        if (direction === 'SHORT' && qualityScore < 55) {
             return null;
         }
 
