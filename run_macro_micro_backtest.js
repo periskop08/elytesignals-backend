@@ -186,7 +186,7 @@ async function backtest(assetInfo) {
 
 async function run() {
     process.stdout.write("Fetching top BingX pairs for 1 month MACRO/MICRO 300 Candles EMA backtest...\n");
-    const pairs = await getTopPairsBingX(100); 
+    const pairs = await getTopPairsBingX(500); 
     
     let stats = { totalTrades: 0, longs: 0, shorts: 0, tp: 0, sl: 0, tpLong: 0, slLong: 0, tpShort: 0, slShort: 0, pending: 0 };
     
