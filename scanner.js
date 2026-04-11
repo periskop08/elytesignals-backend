@@ -1117,13 +1117,17 @@ async function analyzeCoin(symbolInfo) {
             for (const t of activeCryptoTrades) {
                 if (t.symbol === 'BTCUSDT' || t.symbol === 'ETHUSDT') {
                     try {
-                        const tick = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${t.symbol}`);
-                        if (tick.data && tick.data.data && tick.data.data.lastPrice) {
-                            const cp = parseFloat(tick.data.data.lastPrice);
+                        let cp = null;
+                        if (t.symbol === 'BTCUSDT') cp = globalBtcPrice;
+                        if (t.symbol === 'ETHUSDT') cp = globalEthPrice;
+                        
+                        if (cp) {
                             if (t.type === 'LONG' && cp > t.entryPrice) isBtcEthLongProfitable = true;
                             if (t.type === 'SHORT' && cp < t.entryPrice) isBtcEthShortProfitable = true;
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        console.error(`[SCANNER] Sessiz Hata (CryptoFilter): ${e.message}`);
+                    }
                 }
             }
 
@@ -1453,6 +1457,9 @@ async function analyzeCoin(symbolInfo) {
     }
     return null;
 }
+
+let globalBtcPrice = null;
+let globalEthPrice = null;
 let isScanning = false;
 
 async function runScan() {
@@ -1466,8 +1473,6 @@ async function runScan() {
         console.log('[SCANNER] Starting BingX pairs scan for new signals...');
 
         // 1. Hedging (Delta-Neutral) için Global Lider Fiyatlarını Önbelleğe Al
-        let globalBtcPrice = null;
-        let globalEthPrice = null;
         try {
             const [btcRes, ethRes] = await Promise.all([
                 axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=BTC-USDT`),
