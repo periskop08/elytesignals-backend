@@ -1387,11 +1387,11 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // V2.9 (Zodyak Elite) Yeni Acımasız Barajlar (RR Hariç Saf PA Barajı 65 Seçildi)
-        if (direction === 'LONG' && qualityScore < 65) {
+        // V3.2 (Quant Fon Optimizasyonu) Yeni Baraj 60 (Arka Plandaki AI Kalkanı 50-60 aralığındaki çürükleri temizleyeceği için baraj gevşetildi)
+        if (direction === 'LONG' && qualityScore < 60) {
             return null;
         }
-        if (direction === 'SHORT' && qualityScore < 65) {
+        if (direction === 'SHORT' && qualityScore < 60) {
             return null;
         }
 
