@@ -1465,6 +1465,20 @@ async function runScan() {
     try {
         console.log('[SCANNER] Starting BingX pairs scan for new signals...');
 
+        // 1. Hedging (Delta-Neutral) için Global Lider Fiyatlarını Önbelleğe Al
+        let globalBtcPrice = null;
+        let globalEthPrice = null;
+        try {
+            const [btcRes, ethRes] = await Promise.all([
+                axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=BTC-USDT`),
+                axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=ETH-USDT`)
+            ]);
+            if (btcRes.data && btcRes.data.data && btcRes.data.data.lastPrice) globalBtcPrice = parseFloat(btcRes.data.data.lastPrice);
+            if (ethRes.data && ethRes.data.data && ethRes.data.data.lastPrice) globalEthPrice = parseFloat(ethRes.data.data.lastPrice);
+        } catch (err) {
+            console.error("[SCANNER] Sessiz Hata (Hedge API): BTC/ETH anlık fiyat çekimi başarısız.", err.message);
+        }
+
         // 2. Yeni pariteleri tara (Kripto + TradFi Dynamic Engine)
         const { cryptoPairs, tradFiAssets } = await getUsdtPairsAndAssets();
         
@@ -1617,13 +1631,17 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                         for (const trade of activeTradesList) {
                             if (trade.symbol === 'BTCUSDT' || trade.symbol === 'ETHUSDT') {
                                 try {
-                                    const tick = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${trade.symbol}`);
-                                    if (tick.data && tick.data.data && tick.data.data.lastPrice) {
-                                        const cp = parseFloat(tick.data.data.lastPrice);
+                                    let cp = null;
+                                    if (trade.symbol === 'BTCUSDT') cp = globalBtcPrice;
+                                    if (trade.symbol === 'ETHUSDT') cp = globalEthPrice;
+                                    
+                                    if (cp) {
                                         if (trade.type === 'LONG' && cp > trade.entryPrice) btcEthProfitableLong = true;
                                         if (trade.type === 'SHORT' && cp < trade.entryPrice) btcEthProfitableShort = true;
                                     }
-                                } catch(e) {}
+                                } catch(e) {
+                                    console.error("[SCANNER] Sessiz Hata (Portfolio):", e.message);
+                                }
                             }
                         }
 

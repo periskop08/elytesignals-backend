@@ -8,6 +8,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
     } else {
         console.log('Connected to the SQLite database.');
         
+        // SQLite_BUSY kilitlenmelerini önlemek için WAL modunu aktif et
+        db.run('PRAGMA journal_mode = WAL;');
+        db.run('PRAGMA synchronous = NORMAL;');
+        db.run('PRAGMA busy_timeout = 5000;');
+
         // Create table if not exists
         db.run(`CREATE TABLE IF NOT EXISTS signals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
