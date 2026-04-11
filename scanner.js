@@ -11,7 +11,7 @@ const yahooFinance = new YahooFinanceClass();
 require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-3.1-pro" });
+const aiModel = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
 // Otopilot İçin Canlı Tercüman Haritası
 global.BINGX_SYMBOL_MAP = {};

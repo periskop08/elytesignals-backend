@@ -9,7 +9,7 @@ const db = new sqlite3.Database(dbPath);
 
 const { GEMINI_API_KEY } = process.env;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
 function runQuery(sql, params = []) {
     return new Promise((resolve, reject) => {
