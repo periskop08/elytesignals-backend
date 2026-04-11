@@ -1602,23 +1602,58 @@ app.post('/api/news/analyze', async (req, res) => {
         const { newsId } = req.body;
         if (!newsId) return res.status(400).json({ error: "Lütfen incelemek için bir haber ID'si gönderin." });
 
-        const newsItem = await db.get("SELECT title, content, relatedSymbols FROM stock_news WHERE id = ?", [newsId]);
+        const newsItem = await db.get("SELECT title, content, relatedSymbols, summary, aiReport FROM stock_news WHERE id = ?", [newsId]);
         if (!newsItem) return res.status(404).json({ error: "Haber istihbaratı arşivde bulunamadı." });
 
-        const prompt = `Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist ve Şüpheci (Bearish Eğilimli) Stratejik Risk Uzmanısın.
-Kullanıcı aşağıdaki makro ekonomik / teknoloji haberine tıklayarak derin bir adli analiz istedi. 
+        if (newsItem.aiReport) {
+            return res.json({ success: true, report: newsItem.aiReport, cached: true });
+        }
+
+        // Eğer news_agent.js zaten yeni şablonda bir 2-bölümlü detaylı özet çıkardıysa, onu direkt rapor olarak kullanabiliriz.
+        if (newsItem.summary && newsItem.summary.includes('DETAYLI ANALİZ RAPORU')) {
+            await db.run("UPDATE stock_news SET aiReport = ? WHERE id = ?", [newsItem.summary, newsId]);
+            return res.json({ success: true, report: newsItem.summary, cached: true });
+        }
+
+        const prompt = `Sen bir finansal haber analisti yapay zekasısın. Görevin; haber kaynaklarından çekilen haberi işleyerek kullanıcılara iki ayrı bölüm halinde (KISA HABER ÖZETİ ve DETAYLI ANALİZ RAPORU) sunum yapmaktır.
+
 Haber Başlığı: ${newsItem.title}
-İlgili Varlık/Şirketler: ${newsItem.relatedSymbols || "Genel Piyasa"}
-Haber Özeti/İçeriği: ${newsItem.content}
+Etkilenen Varlık/Şirketler: ${newsItem.relatedSymbols || "Genel Piyasa"}
+Haber İçeriği: ${newsItem.content}
 
-GÖREV: Bu haberin hissedarlar veya şirket tahtası (ilgili hisselerin geleceği) üzerindeki muhtemel yankısını, rekabet dezavantajlarını ve risklerini sert, kendinden emin ve profesyonel bir adli analist dille 2 kısa paragrafta özetle. Şirket veya sektör için "hype" tuzağı varsa uyar. Tamamen "Markdown" olarak biçimlendir (Yalın ve okunabilir olsun).`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. BÖLÜM — HABER ÖZETİ YAZMA KURALLARI
+- Maksimum 5 cümle yaz. 6. cümleye asla geçme.
+- Haberi kopyalama, kendi sade Türkçenle "Kim, ne yaptı, neden önemli" diye özetle.
+- Yorum yapma, sadece olayı aktar.
 
+2. BÖLÜM — ETKİ ETİKETİ ve RENK KURALLARI
+Şirketin tekel/pazar konumunu (Apple/Google vb.) ve bağımlılıklarını gözeterek karar ver.
+Analizin sonucuna göre Raporun TEPE NOKTASINA şu kutulardan birini ekle:
+✅ YEŞİL KUTU — POZİTİF ETKİ
+🔴 KIRMIZI KUTU — NEGATİF ETKİ
+⚪ GRİ KUTU — NÖTR/KARIŞIK
 
-        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+3. BÖLÜM — DETAYLI ANALİZ RAPORU YAZMA
+Özetin ALTINDA, şu şablonla detaylı rapor yaz:
+📊 ETKİ PUANI: [ -5 ile +5 arası ] — [Etiket adı]
+✅ OLUMLU YÖNLER
+- (1-2 cümlelik kanıtlı madde)
+⚠️ RİSKLER / OLUMSUZ YÖNLER
+- (Sıfır spekülasyon, sıfır "intihar" vb dramatik kelime)
+🔍 ANALİST YORUMU
+(2-3 cümle dengeli, gerçekçi yorum)
+
+Tüm çıktıyı Markdown formatında şık ve bold kısımlarla güçlendirerek ver.`;
+
+        const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
         const result = await model.generateContent(prompt);
         let deepDive = result.response.text();
 
-        res.json({ success: true, report: deepDive });
+        // Arşive kaydet
+        await db.run("UPDATE stock_news SET aiReport = ? WHERE id = ?", [deepDive, newsId]);
+
+        res.json({ success: true, report: deepDive, cached: false });
     } catch(e) {
         res.status(500).json({ error: e.message });
     }
