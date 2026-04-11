@@ -1571,11 +1571,50 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                 // --- AUTO TRADING BLOCK START ---
                 if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
-                        const activeCountRes = await db.get("SELECT COUNT(*) as count FROM user_trades WHERE status = 'ACTIVE'");
-                        const activeCount = activeCountRes ? activeCountRes.count : 0;
+                        // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS ---+
+                        let activeTradesList = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
+                        let activeCount = activeTradesList.length;
+                        
+                        let dominantDirection = null; // 'LONG' or 'SHORT'
+                        let maxAllowedInThisDirection = 2; // Default if choppy/no leaders
 
-                        if (activeCount >= CONFIG.maxActiveTrades) {
-                            console.log(`[AUTO-TRADE] Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal ${signal.symbol} havuza eklendi.`);
+                        let btcEthProfitableLong = false;
+                        let btcEthProfitableShort = false;
+
+                        for (const trade of activeTradesList) {
+                            if (trade.symbol === 'BTCUSDT' || trade.symbol === 'ETHUSDT') {
+                                try {
+                                    const tick = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${trade.symbol}`);
+                                    if (tick.data && tick.data.data && tick.data.data.lastPrice) {
+                                        const cp = parseFloat(tick.data.data.lastPrice);
+                                        if (trade.type === 'LONG' && cp > trade.entryPrice) btcEthProfitableLong = true;
+                                        if (trade.type === 'SHORT' && cp < trade.entryPrice) btcEthProfitableShort = true;
+                                    }
+                                } catch(e) {}
+                            }
+                        }
+
+                        if (btcEthProfitableLong) dominantDirection = 'LONG';
+                        else if (btcEthProfitableShort) dominantDirection = 'SHORT';
+
+                        let currentDirectionCount = activeTradesList.filter(t => t.type === signal.type).length;
+                        
+                        if (dominantDirection) {
+                            if (signal.type === dominantDirection) {
+                                maxAllowedInThisDirection = 5; // Trend Riding
+                            } else {
+                                maxAllowedInThisDirection = 3; // Hedging (Sigorta)
+                            }
+                        }
+
+                        if (currentDirectionCount >= maxAllowedInThisDirection) {
+                            console.log(`[AUTO-TRADE] Limit (${currentDirectionCount}/${maxAllowedInThisDirection}) dolu! Sinyal Yönü: ${signal.type}. Sinyal havuza eklendi (Macro limit kısıtlaması).`);
+                            if (bot && CONFIG.telegramAdminId) {
+                                bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
+                            }
+                        } else if (activeCount >= CONFIG.maxActiveTrades) {
+                            // Genel borsa API patlaması olmasın diye global üst limit de 15 vs olarak korunabilir, ama şimdilik limitleri biz ayarladık.
+                            console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal havuza eklendi.`);
                         } else {
                             // Aynı gün içinde aynı coine girildi mi? (Sinyal 2. veya 3. kez mi düşüyor?)
                             const todayStr = new Date().toISOString().split('T')[0];
@@ -1584,32 +1623,46 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                 [signal.symbol, todayStr]
                             );
 
-                            // Şu anki sinyali havuza yeni attığımız için ilk sinyalin length'i 1 olur. 1'den büyükse 2. veya 3. kez geliyordur.
-                                if (existingSignalsToday.length <= 1) {
-                                    
-                                    // +--- OTONOM GECİKME (SLIPPAGE/KAYMA) KONTROLÜ ---+
-                                    let currentLivePrice = signal.entryPrice;
-                                    let slippageExceeded = false;
+                            if (existingSignalsToday.length <= 1) {
+                                
+                                // +--- OTONOM GECİKME (SLIPPAGE/KAYMA) KONTROLÜ ---+
+                                let currentLivePrice = signal.entryPrice;
+                                let slippageExceeded = false;
+                                try {
+                                    const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${signal.symbol}`);
+                                    if (res.data && res.data.data && res.data.data.lastPrice) {
+                                        currentLivePrice = parseFloat(res.data.data.lastPrice);
+                                        const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
+                                        if (slippage > 0.003) {
+                                            slippageExceeded = true;
+                                        }
+                                    }
+                                } catch (err) {}
+
+                                if (slippageExceeded) {
+                                    console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
+                                    if (bot && CONFIG.telegramAdminId) {
+                                        bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
+                                    }
+                                } else {
+                                    // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI) ---+
+                                    let riskMultiplier = 1.0;
                                     try {
-                                        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${signal.symbol}`);
-                                        if (res.data && res.data.data && res.data.data.lastPrice) {
-                                            currentLivePrice = parseFloat(res.data.data.lastPrice);
-                                            const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
-                                            if (slippage > 0.003) {
-                                                slippageExceeded = true;
+                                        const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 3");
+                                        if (history && history.length >= 2) {
+                                            if (history[0].status === 'CLOSED_LOSS' && history[1].status === 'CLOSED_LOSS') {
+                                                riskMultiplier = 0.5; // Loss streak - Defans!
+                                                console.log("[DYNAMIC SIZING] Son 2 işlem zarar! Risk %50 azaltıldı.");
+                                            } else if (history.length >= 2 && history[0].status === 'CLOSED_WIN' && history[1].status === 'CLOSED_WIN') {
+                                                riskMultiplier = 1.5; // Win streak - Ofans!
+                                                console.log("[DYNAMIC SIZING] Son 2 işlem kâr! Risk %50 artırıldı.");
                                             }
                                         }
-                                    } catch (err) {}
+                                    } catch(e) {}
 
-                                    if (slippageExceeded) {
-                                        console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
-                                        if (bot && CONFIG.telegramAdminId) {
-                                            bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
-                                        }
-                                    } else {
-                                        console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol}`);
-                                        try {
-                                            const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice);
+                                    console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${riskMultiplier})`);
+                                    try {
+                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
                                             if (orderId) {
                                                 await db.run(
                                                     "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
