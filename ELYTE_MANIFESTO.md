@@ -111,6 +111,12 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 *   **(Değişiklik Gerekçesi):** Yüksek R:R (1:2 ve üzeri) oranlarına verilen `+25` puanlık ödülün, zayıf Price Action yapısına sahip "çöp" sinyalleri sadece "stopu ucuz" diye puanla şişirip sisteme soktuğu tespit edildi. Bu durum PeriskopAI sisteminin kalitesinde enflasyon yarattığı için **R:R Bonusları tamamen kaldırıldı.**
 *   **(Yeni Baraj Ayarı):** R:R hormonunun sistemden atılmasıyla birlikte "Saf Price Action" motoruna geçilmiş ve barajlar her iki yön (LONG/SHORT) için de **65** puana sabitlenmiştir. 65 puan; içerisinde Order Block, FVG, Katil Fitil, Engulfing veya Stop Patlatma barındırmayan hiçbir düz mumun geçemeyeceği kadar katı bir bariyerdir. 
 
+### Tarih: 11 Nisan 2026 - PeriskopAI Self-Reflective Learning (Öz-Bilinç/Hafıza) & FOK (Fill Or Kill) Kalkanı
+**(Sürüm: v3.1.0 - Risk Architect Modeli)**
+*   **(Otopsi Ajanı - Post Mortem):** Sistem zarar eden (LOSS) işlemlerin geçmiş fiyat verilerini Gemini yapay zekasına asenkron olarak gönderip `"Neden stop olduk buna bir kural çıkar"` emri vererek kendi hatalarından canlı Dersler (Lessons) çıkarmayı öğrendi.
+*   **(Otonom Karar Gecikmesi ve Slippage/Kayma Koruması):** Yapay Zekanın bir sinyalin girilip girilmeyeceğini, geçmiş dersleri (hafıza) tarayarak düşünmesi 5-15 saniyelik bir gecikme yarattığından; karar çıktıktan hemen sonra canlı fiyat tekrar teyit edilir. Sinyali ilk bulduğumuz puanlama anı ile LLM'nin olay bittikten sonraki ONAY anı arasında fiyat binde 3'ten (**%0.3**) fazla kaymışsa (Slippage), emir **BORSAYA OTOMATİK İLETİLMEZ**. Kullanıcının inisiyatifine bırakılarak Manuel Giriş uyarısı verilir. Bu muazzam kural, sermayenin gecikme kaynaklı kötü R:R oranlarından korunmasını sağlayan tam teşekküllü bir Fill or Kill (FOK) güvenliğidir.
+*   **(Gölge İzleme & Evrimsel İstisnalar - Shadow Evolution):** LLM'nin geçmiş veriye dayanarak işleme girmeyi engellediği durumlar (Shadow Trades) arka planda ajan tarafından kâr/zarar yönünden gizlice izlenir. Şayet Ajanın "SL olacak" deyip ENGELLEDİĞİ bir işlem şaşırtıcı şekilde HEDEFE (TP) ulaşırsa; kuralı silmek yerine **"Evrimsel Esneklik"** devreye girer. İşlemin son 24 saati AI'a tekrar okutularak, orijinal kuralın altına *"İSTİSNA: Eğer mevcut ortam [Sebebiyet] içeriyorsa bu kuralı bozup emre izin ver"* tarzında alt-başlıklar ağacı kurulur. Bu sistem, PeriskopAI'ı sığ bir bot olmaktan çıkarıp, esnek zekalı bir Fon Yöneticisi yapar.
+
 ---
 
 ## 🔬 Standart Backtest Protokolü (PeriskopAI Protokolü)
