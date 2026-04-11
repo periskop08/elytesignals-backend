@@ -1407,8 +1407,8 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
         }
         
-        let hasSweep = warnings.some(w => w.includes('Liquidity Sweep'));
-        if (hasOrderBlock && hasSweep) {
+        let hasSweepSynergy = warnings.some(w => w.includes('Liquidity Sweep'));
+        if (hasOrderBlock && hasSweepSynergy) {
             qualityScore += 10;
             warnings.push('Sinerji: Keskin Nişancı Bonusu (+10)');
         }
