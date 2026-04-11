@@ -1406,6 +1406,12 @@ async function analyzeCoin(symbolInfo) {
             qualityScore += 10;
             warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
         }
+        
+        let hasSweep = warnings.some(w => w.includes('Liquidity Sweep'));
+        if (hasOrderBlock && hasSweep) {
+            qualityScore += 10;
+            warnings.push('Sinerji: Keskin Nişancı Bonusu (+10)');
+        }
 
         // 3. Çatışma Cezası (Güçlü sinyale rağmen momentum veya trend bitikse)
         let hasStochConflict = warnings.some(w => w.includes('StochRSI Overbought') || w.includes('StochRSI Oversold'));
