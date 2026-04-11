@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { ATR, EMA, IchimokuCloud, StochasticRSI } = require('technicalindicators');
+const { ATR, EMA, IchimokuCloud, StochasticRSI, ADX } = require('technicalindicators');
 
 function calculateKAMA(prices, period = 10, fastEMA = 2, slowEMA = 30) {
     if (prices.length <= period) return Array(prices.length).fill(null);
@@ -128,6 +128,25 @@ async function backtest(assetInfo) {
         
         const avgVol = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
         if (volumes[volumes.length-1] / (avgVol || 1) >= 1.2) qualityScore += 15;
+
+        // MARKET REGIME (ADX + ATR)
+        const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
+        const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
+        let avgATROld = currentATR;
+        const atrResArray = ATR.calculate({ high: highs, low: lows, close: closes, period: 14 });
+        if (atrResArray.length >= 14) {
+            const last14Atr = atrResArray.slice(-14);
+            avgATROld = last14Atr.reduce((acc, val) => acc + val, 0) / 14;
+        }
+        const isVolatileExpanding = currentATR > (avgATROld * 1.1);
+
+        if (currentADX >= 25 && isVolatileExpanding) {
+            qualityScore += 5; 
+        } else if (currentADX >= 25 && !isVolatileExpanding) {
+            qualityScore += 5;
+        } else if (currentADX < 20) {
+            qualityScore -= 5;
+        }
         
         const kama = calculateKAMA(closes, 10, 2, 30);
         if (kama[kama.length-1]) {
