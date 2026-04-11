@@ -38,7 +38,7 @@ Tüm analizi yaptıktan sonra AŞAĞIDAKİ JSON ŞABLONU İLE yanıt ver (Başka
   "relevant": true/false, // Haber borsayı/hisseleri direkt vurmuyorsa magazin ise false yap.
   "relatedSymbols": "TSMC, GOOGL", // Etkilenen şirket/ETF kodlarını (yoksa boş bırak).
   "sentimentScore": 50, // Puanı çevir: (+4/+5 Güçlü Olumlu) = 80-100, (+2/+3 Ilımlı Olumlu) = 60-75, (-1/0/+1 Nötr/Karışık) = 45-55, (-2/-3 Ilımlı Olumsuz) = 25-40, (-4/-5 Güçlü Olumsuz) = 0-20.
-  "summary": "[ETKİ ETİKETİ]\nBuraya analize göre YEŞİL KUTU - POZİTİF ETKİ (veya KIRMIZI KUTU - NEGATİF ETKİ, veya GRİ/SARI KUTU - NÖTR/KARIŞIK) yaz.\n\n📌 KISA HABER ÖZETİ:\n(Buraya kurallara uygun yorumsuz 5 cümlelik özet)\n\n🔍 DETAYLI ANALİZ RAPORU:\n✅ Olumlu Yönler:\n- (1-2 cümlelik somut kanıtlanmış çıkarım)\n⚠️ Riskler & Olumsuz Yönler:\n- (Sadece gerçekçi riskler, sıfır spekülasyon)\n💡 Analist Yorumu:\n(2-3 cümlelik dengeli, mantıklı, asla intihar/çöküş demeyen Wall Street yorumu.)"
+  "summary": "[ETKİ ETİKETİ]\nBuraya analize göre ✅ POZİTİF ETKİ (veya 🔴 NEGATİF ETKİ, veya ⚪ NÖTR/KARIŞIK) yaz.\n\n📌 KISA HABER ÖZETİ:\n(Buraya kurallara uygun yorumsuz 5 cümlelik özet)\n\n🔍 DETAYLI ANALİZ RAPORU:\n✅ Olumlu Yönler:\n- (1-2 cümlelik somut kanıtlanmış çıkarım)\n⚠️ Riskler & Olumsuz Yönler:\n- (Sadece gerçekçi riskler, sıfır spekülasyon)\n💡 Analist Yorumu:\n(2-3 cümlelik dengeli, mantıklı, asla intihar/çöküş demeyen Wall Street yorumu.)"
 }
 `;
 

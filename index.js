@@ -1629,10 +1629,10 @@ Haber İçeriği: ${newsItem.content}
 
 2. BÖLÜM — ETKİ ETİKETİ ve RENK KURALLARI
 Şirketin tekel/pazar konumunu (Apple/Google vb.) ve bağımlılıklarını gözeterek karar ver.
-Analizin sonucuna göre Raporun TEPE NOKTASINA şu kutulardan birini ekle:
-✅ YEŞİL KUTU — POZİTİF ETKİ
-🔴 KIRMIZI KUTU — NEGATİF ETKİ
-⚪ GRİ KUTU — NÖTR/KARIŞIK
+Analizin sonucuna göre Raporun TEPE NOKTASINA şu seçeneklerden birini ekle:
+✅ POZİTİF ETKİ
+🔴 NEGATİF ETKİ
+⚪ NÖTR/KARIŞIK
 
 3. BÖLÜM — DETAYLI ANALİZ RAPORU YAZMA
 Özetin ALTINDA, şu şablonla detaylı rapor yaz:
