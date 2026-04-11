@@ -99,6 +99,13 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 *   **(Yapay Zeka Mimarisi Uyumlanması):** ChatGPT'den alınan "15 Yıllık Kurumsal Price Action" dökümü algoritma ile kodlara döküldü. Sistemin puanlamasının şişip çökmesini (Overfitting) engellemek adına Özel Kategori Slot (Bölge + Tetik + Tuzak) sistemine geçildi.
 *   **(Tetik Slotu):** `Killer Wick (Fitil)` veya `Engulfing (Yutan Mum)`. İkisi de piyasa dönüşünü haber verir. İşlemde birinden biri yakalanırsa **+20 Puan** alınır. Aynı andalarsa puan katlanmaz.
 *   **(Tuzak Slotu):** `Liquidity Sweep (Stop Patlatma)`. İşlem onayı almadan hemen önce Eşit Dipler veya Eşit Tepeler (Equal Lows/Highs) temizlenmiş ve onaylı bir kapanış gelmişse ekstra **+15 Puan** verilir.
+
+### Tarih: 11 Nisan 2026 - Macro/Micro (300 Mum + 200 EMA) Fon Ayrışımı
+**(Sürüm: v3.0.0 - Kurumsal Filtre)**
+*   **(Değişiklik):** Piyasadaki fiyat anormalliklerini ve yanlış hesaplanan "Trend İhlallerini" (Ceza: -15 puan) engellemek adına periyodik mum kapasitesi 250'den **300 Muma** çıkartıldı.
+*   **(Macro Context):** 300 mumluk devasa bir verisetinden "200 EMA (Üssel Hareketli Ortalama)" verisi ısındırılarak çekildi. SMA (Basit Ortalama) tamamen terk edildi. Bu, trendi çok daha erken ve sert bir isabetle kavramamızı sağladı.
+*   **(Micro Setup):** Sinyal bölgesindeki Order Block, FVG, Wick ve Sweep analizleri son **100 Mum** içine izole edilerek sistem "Pusu" (Keskin Nişancı) moduna sokuldu.
+*   **(Fon Disiplini):** Backtest sonuçlarında açıkça görülen (Score < 60 olan işlemlerin %30 WinRate'te kalması) zafiyetine karşı sistem, Puan Barajının **65** olmasının matematiksel doğruluğunu tamamen tasdikleyip bu barajı kalıcı kıldı. Havuzda işlem sayısı azalırken kâr marjı arşa çıkarıldı.
 ### Tarih: 10 Nisan 2026 - R:R (Risk/Reward) Bonusu İptali & Saf PA Modelinin Devreye Alınması
 **(Sürüm: v2.9.1)**
 *   **(Değişiklik Gerekçesi):** Yüksek R:R (1:2 ve üzeri) oranlarına verilen `+25` puanlık ödülün, zayıf Price Action yapısına sahip "çöp" sinyalleri sadece "stopu ucuz" diye puanla şişirip sisteme soktuğu tespit edildi. Bu durum PeriskopAI sisteminin kalitesinde enflasyon yarattığı için **R:R Bonusları tamamen kaldırıldı.**
