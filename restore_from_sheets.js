@@ -38,39 +38,22 @@ async function main() {
         
         db.serialize(() => {
             db.run("DELETE FROM signals;");
-            db.run("DELETE FROM closed_signals;");
             
             const insertSignal = db.prepare(`
-                INSERT INTO signals (id, symbol, type, entryPrice, targetPrice, stopPrice, status, warnings, createdAt, reachedTwoPercent, qualityScore)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `);
-            const insertClosed = db.prepare(`
-                INSERT INTO closed_signals (id, symbol, type, status, profit, entryTime, closeTime)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO signals (id, symbol, type, entryPrice, targetPrice, stopPrice, status, warnings, createdAt, reachedTwoPercent, qualityScore, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
             let activeCount = 0;
             let closedCount = 0;
 
             rows.forEach((row, index) => {
-                // Column Mapping:
-                // 0: Tarih (DD.MM.YYYY HH:mm:ss)
-                // 1: Coin Adı (NXPCUSDT)
-                // 2: Skoru (65)
-                // 3: Yön (SHORT / LONG)
-                // 4: TP% (%2.00)
-                // 5: SL% (%0.88)
-                // 6: Durum (LOSS, WIN, ACTIVE, BREAKEVEN)
-                // 7: Açıklama
-                // 8: ID (14) -> Can be missing if not added correctly, use index + 1
-                
                 const dateStr = row[0];
                 const symbol = row[1];
                 const type = row[3];
                 const status = row[6] || 'ACTIVE';
                 const id = row[8] ? parseInt(row[8], 10) : (index + 1);
                 
-                // Parse date (DD.MM.YYYY HH:mm:ss to ISO)
                 let createdAt = new Date().toISOString();
                 let closeTime = new Date().toISOString();
 
@@ -84,35 +67,24 @@ async function main() {
                     }
                 }
 
-                if (status === 'ACTIVE') {
-                    // For active signal, we need entry, tp, sl.
-                    // Fake prices based on 100 since we only care about percentages!
-                    // Wait, Elyte scanner tracks (currentPrice - entryPrice) / entryPrice * 100
-                    // But if BingX is trading, it uses real prices. If no real price, tracking will be broken until we fetch real price.
-                    // Wait, we can fetch real price from Binance/BingX right now?
-                    // We'll just put 100 as base price, 102 as TP, 99 as SL.
-                    const entryPrice = 100;
-                    const tpVal = row[4] ? parseFloat(row[4].replace('%', '')) : 2.0;
-                    const slVal = row[5] ? parseFloat(row[5].replace('%', '')) : 0.88;
-                    const targetPrice = type === 'LONG' ? entryPrice * (1 + tpVal/100) : entryPrice * (1 - tpVal/100);
-                    const stopPrice = type === 'LONG' ? entryPrice * (1 - slVal/100) : entryPrice * (1 + slVal/100);
-                    const qualityScore = row[2] ? parseInt(row[2], 10) : 50;
+                const entryPrice = 100;
+                const tpVal = row[4] ? parseFloat(row[4].replace('%', '')) : 2.0;
+                const slVal = row[5] ? parseFloat(row[5].replace('%', '')) : 0.88;
+                const targetPrice = type === 'LONG' ? entryPrice * (1 + tpVal/100) : entryPrice * (1 - tpVal/100);
+                const stopPrice = type === 'LONG' ? entryPrice * (1 - slVal/100) : entryPrice * (1 + slVal/100);
+                const qualityScore = row[2] ? parseInt(row[2], 10) : 50;
+                const reachedTwoPercent = status === 'WIN' ? 1 : 0; // Guess that winning ones reached it
 
-                    insertSignal.run(id, symbol, type, entryPrice, targetPrice, stopPrice, status, row[7] || "[]", createdAt, 0, qualityScore);
+                insertSignal.run(id, symbol, type, entryPrice, targetPrice, stopPrice, status, row[7] || "[]", createdAt, reachedTwoPercent, qualityScore, closeTime);
+
+                if (status === 'ACTIVE') {
                     activeCount++;
                 } else {
-                    // WIN, LOSS, BREAKEVEN
-                    let profit = 0;
-                    if (status === 'WIN') profit = 10; // Default 1R profit mapping
-                    else if (status === 'LOSS') profit = -10;
-                    
-                    insertClosed.run(id, symbol, type, status, profit, createdAt, closeTime);
                     closedCount++;
                 }
             });
 
             insertSignal.finalize();
-            insertClosed.finalize();
 
             console.log(`Successfully restored ${activeCount} ACTIVE and ${closedCount} CLOSED signals to SQLite.`);
         });
