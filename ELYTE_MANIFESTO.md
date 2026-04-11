@@ -129,6 +129,12 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 *   **(Kantan İstihbarat Ajanı):** `kantan.news` API ucuna sızan yepyeni bir otonom Muhabir Ajan (`news_agent.js`) yazıldı. API'den akan tüm ham haberler önce Gemini tarafından okunur, gereksiz ve magazinel teknoloji haberleri çöpe atılırken sadece finansal/hisse senedi etkisi (Katalizör) yaratacak gelişmeler "Son Dakika İstihbaratı" (2 cümlelik net özetlerle) olarak veri tabanına işlenir.
 *   **(Hamdi Bey'in Zihnine Enjeksiyon):** Gece otonom yapılan `screener_engine.js` (Borsa Taraması) ve Chat üzerinden yapılan "Hamdi Bey" soru-cevaplarında yepyeni bir Zihin Süzgeci açıldı. Artık Hamdi Bey doğrudan TSLA fiyatına bakıp konuşmuyor; önce veri tabanında "TSLA ile ilgili son 48 saatte ne olmuş" diye haberleri tarıyor ve bu bilgiyi analizine (Katalizör/Risk olarak) katıyor.
 *   **(Glassmorphism Terminal):** Dashboard'da sağ tarafa şık ve akıcı bir Varlık Yönetimi Haber Panosu eklendi. Gelen haberlerin yapay zeka duygu puanına (Sentiment) göre Kırmızı/Sarı/Yeşil renkli radarlarla frontend arayüzünden anlık takibi sağlandı. Her şey Vercel'a otomatik deployment (Git Push) mantığına bağlandı.
+
+### Tarih: 12 Nisan 2026 - Hacim Koruması, AI Optimizasyonu ve Dashboard Sadeleşmesi
+**(Sürüm: v3.4.0 - Güvenlik & Optimizasyon Paketi)**
+*   **(Ticari Hacmi Koruma Refleksi - Baraj 55):** Piyasanın son durumunda, aşırı katı barajların fırsat maliyetini artırdığı gözlemlenerek "Kalite Skoru" (Sinyal Onay Barajı) her iki yön için de (LONG/SHORT) kalıcı olarak **55 Puan'a** indirgenmiştir.
+*   **(Yapay Zeka 404 API Körlüğü Düzeltmesi):** Gece Raporu, Gölge Ajan ve Sinyal Tarayıcı kodlarına yazılmış olan ve henüz piyasada olmayan `gemini-3.1-pro` model ismi, API'de aktif olarak çalışan `gemini-3.1-pro-preview` ile değiştirilmiştir. Sistemdeki yapay zeka yeniden aktif edilmiş ve körlük giderilmiştir.
+*   **(UI Sadeliği - Kantan Haber Göçü):** Varlık Yönetimi sayfasındaki karmaşık haber ekranı silinerek Dashboard ferahlatıldı. Haberler ve yanıp sönen kırmızı istihbarat uyarı ışığı doğrudan özel olarak tasarlanan "Hisse Haberleri" sekmesine taşındı.
 ---
 
 ## 🔬 Standart Backtest Protokolü (PeriskopAI Protokolü)
