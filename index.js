@@ -14,12 +14,18 @@ const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
 const cron = require('node-cron');
 const { runDailyScreener } = require('./screener_engine');
-const { fetchAndProcessNews } = require('./news_agent');
+const { fetchAndProcessNews, sendDailyNewsReport } = require('./news_agent');
 
 // Her 30 dakikada bir Kantan.news istihbaratını çalıştır
 cron.schedule('*/30 * * * *', () => {
     console.log("[CRON] Kantan News Agent İstihbarat Taraması Başlıyor...");
     fetchAndProcessNews();
+});
+
+// Her gece 03:05'te Hamdi Bey'in günlük raporunu gönder
+cron.schedule('5 3 * * *', () => {
+    console.log("[CRON] Hamdi Bey Günlük Rapor Başlıyor...");
+    sendDailyNewsReport();
 });
 global.nasdaqCache = {
     appetite: "Risk On (Güçlü Boğa)", 

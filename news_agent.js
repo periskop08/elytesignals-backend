@@ -1,6 +1,12 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database');
 require('dotenv').config();
+const TelegramBot = require('node-telegram-bot-api');
+
+let telegramBot = null;
+if (process.env.TELEGRAM_BOT_TOKEN) {
+    telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -158,6 +164,32 @@ HABER İÇERİĞİ: ${promptContent}
     }
 }
 
+async function sendDailyNewsReport() {
+    if (!telegramBot || !process.env.ADMIN_TELEGRAM_ID) return;
+    try {
+        const row = await new Promise((resolve, reject) => {
+            db.get(`SELECT count(id) as totalCount, 
+                           sum(case when relatedSymbols != '' and relatedSymbols is not null then 1 else 0 end) as symbolsCount 
+                    FROM stock_news 
+                    WHERE datetime(createdAt) > datetime('now', '-24 hours')`, [], (err, res) => {
+                if (err) reject(err);
+                else resolve(res);
+            });
+        });
+        
+        const total = row ? row.totalCount : 0;
+        const symbols = row ? row.symbolsCount : 0;
+
+        const msg = `📰 *Merhaba ben Hamdi Bey; Görevimin başındayım.*\n\nBugün Kantan News altyapısından toplam *${total}* adet haber çektim ve bu haberler arasından gizli etkilenecek olan *${symbols}* adet hisse bilgisi yazdım.\n\nÇalışmaya devam ediyorum, iyi geceler.`;
+        
+        await telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
+        console.log("[News Agent] Günlük rapor Telegram'a iletildi.");
+    } catch(e) {
+        console.error("[News Agent] Günlük rapor hatası:", e.message);
+    }
+}
+
 module.exports = {
-    fetchAndProcessNews
+    fetchAndProcessNews,
+    sendDailyNewsReport
 };
