@@ -9,7 +9,7 @@ const db = new sqlite3.Database(dbPath);
 
 const { GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, PERISKOP_TELEGRAM_ID } = process.env;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
 function runQuery(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ async function sendTelegramMessage(text) {
 }
 
 async function generateStrategyReport() {
-    console.log("=== Baş Stratejist (CRO) Gemini Ajanı Başlatıldı ===");
+    console.log("=== Baş Stratejist (CRO) Ekin Bey Başlatıldı ===");
 
     const sqlWins = `
         SELECT ut.symbol, ut.type, ut.pnl, s.qualityScore, s.warnings 
@@ -59,6 +59,7 @@ async function generateStrategyReport() {
 
         if (wins.length === 0 && losses.length === 0) {
             console.log("Analiz edilecek geçmiş veri bulunamadı.");
+            await sendTelegramMessage("👨‍💼 *Merhaba Ben Ekin Bey, görevimin başındayım.*\n\nBugün analiz edilecek yeni bir otopilot işlemi kapanmadığı için sunacak bir strateji raporum yok.\n\nİyi geceler.");
             process.exit(0);
         }
 
@@ -96,7 +97,8 @@ async function generateStrategyReport() {
         console.log(response);
 
         // Send to Telegram
-        await sendTelegramMessage(`📊 *PeriskopAI CRO Baş Stratejist Raporu*\n\n${response}`);
+        let ekinMsg = `👨‍💼 *Merhaba Ben Ekin Bey, görevimin başındayım.*\n\nİşte dünkü analizlere göre yapay zeka tabanlı Strateji Raporum:\n\n${response}\n\nİyi geceler.`;
+        await sendTelegramMessage(ekinMsg);
         console.log("\nTelegram raporu iletildi. Görev tamam.");
         process.exit(0);
     } catch(e) {
