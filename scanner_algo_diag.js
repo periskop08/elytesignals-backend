@@ -587,6 +587,15 @@ async function analyzeCoin(symbolInfo) {
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
         
+        // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
+        // Hacmi 5M$ üzerinde olan bir coin tek saatte %10'dan fazla hareket etmişse İstihbarat fırlat.
+        const currentOpen = opens[opens.length - 1];
+        const diff = (currentPrice - currentOpen) / currentOpen;
+        if (Math.abs(diff) >= 0.10 && globalVol >= 5000000) {
+            const { fireMercanBey } = require('./mercan_bey');
+            fireMercanBey(sym, diff > 0 ? 'PUMP' : 'DUMP', diff);
+        }
+
     if (direction === 'LONG' && globalVol < 4000000) { console.log("REJECT: Volume < 4M. Current Vol:", globalVol); return null; }
 
         
