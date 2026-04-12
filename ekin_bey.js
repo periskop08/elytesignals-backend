@@ -3,6 +3,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const axios = require('axios');
+const cron = require('node-cron');
 
 const dbPath = path.resolve(__dirname, 'signals.db');
 const db = new sqlite3.Database(dbPath);
@@ -60,7 +61,7 @@ async function generateStrategyReport() {
         if (wins.length === 0 && losses.length === 0) {
             console.log("Analiz edilecek geçmiş veri bulunamadı.");
             await sendTelegramMessage("👨‍💼 *Merhaba Ben Ekin Bey, görevimin başındayım.*\n\nBugün analiz edilecek yeni bir otopilot işlemi kapanmadığı için sunacak bir strateji raporum yok.\n\nİyi geceler.");
-            process.exit(0);
+            return;
         }
 
         let contextData = "--- KAZANAN (WIN) İŞLEMLER BİLANÇOSU ---\n";
@@ -103,11 +104,13 @@ async function generateStrategyReport() {
         let ekinMsg = `👨‍💼 *Merhaba Ben Ekin Bey, görevimin başındayım.*\n\nİşte dünkü analizlere göre yapay zeka tabanlı Strateji Raporum:\n\n${response}\n\nİyi geceler.`;
         await sendTelegramMessage(ekinMsg);
         console.log("\nTelegram raporu iletildi. Görev tamam.");
-        process.exit(0);
     } catch(e) {
         console.error("Raporlama hatası:", e);
-        process.exit(1);
     }
 }
 
-generateStrategyReport();
+cron.schedule('30 3 * * *', async () => {
+    await generateStrategyReport();
+});
+
+console.log("=== Baş Stratejist (CRO) Ekin Bey servisi başlatıldı (Nöbette) ===");
