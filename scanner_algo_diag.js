@@ -314,7 +314,14 @@ async function checkActiveSignals() {
                                     [pnl, reason, trade.id]
                                 );
                                 
-                                // Orijinal Global sinyal duruyor olabilir. Ancak Kullanıcı Şahsi Favorilerinde "Aktif" olanları göstermeyeceğimizden listeden düşecektir.
+                                // Orijinal Sinyal Tablosunu ve Google Sheets'i Senkronize Et
+                                const sStatus = pnl > 0 ? 'WIN' : 'LOSS';
+                                await db.run("UPDATE signals SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [sStatus, trade.signalId]);
+                                
+                                const googleApi = require('./google-api');
+                                if (googleApi.updateSheetSignalStatus) {
+                                    await googleApi.updateSheetSignalStatus(trade.signalId, sStatus);
+                                }
                             }
                         } else {
                             // --- BREAKEVEN TRAILING STOP LOGIC ---
