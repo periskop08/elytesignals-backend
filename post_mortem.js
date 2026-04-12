@@ -103,7 +103,7 @@ async function runPostMortem() {
         SELECT u.* 
         FROM user_trades u 
         LEFT JOIN ai_lessons a ON u.id = a.tradeId 
-        WHERE u.status = 'CLOSED_LOSS' 
+        WHERE u.status = 'CLOSED' AND u.pnl < 0
         AND a.id IS NULL 
         ORDER BY u.id DESC 
         LIMIT 5;
