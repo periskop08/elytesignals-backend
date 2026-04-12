@@ -135,6 +135,19 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 *   **(Ticari Hacmi Koruma Refleksi - Baraj 55):** Piyasanın son durumunda, aşırı katı barajların fırsat maliyetini artırdığı gözlemlenerek "Kalite Skoru" (Sinyal Onay Barajı) her iki yön için de (LONG/SHORT) kalıcı olarak **55 Puan'a** indirgenmiştir.
 *   **(Yapay Zeka 404 API Körlüğü Düzeltmesi):** Gece Raporu, Gölge Ajan ve Sinyal Tarayıcı kodlarına yazılmış olan ve henüz piyasada olmayan `gemini-3.1-pro` model ismi, API'de aktif olarak çalışan `gemini-3.1-pro-preview` ile değiştirilmiştir. Sistemdeki yapay zeka yeniden aktif edilmiş ve körlük giderilmiştir.
 *   **(UI Sadeliği - Kantan Haber Göçü):** Varlık Yönetimi sayfasındaki karmaşık haber ekranı silinerek Dashboard ferahlatıldı. Haberler ve yanıp sönen kırmızı istihbarat uyarı ışığı doğrudan özel olarak tasarlanan "Hisse Haberleri" sekmesine taşındı.
+
+### Tarih: 12 Nisan 2026 - Hedge Fon Ekibinin Kurulması (Altı Ajanlı Ekosistem) & Anomali Radarı
+**(Sürüm: v4.0.0 - Otonom Ajan Bürokrasisi)**
+*   **(AI Core) Hedge Fon Ajanları Kişiselleştirmesi:** Sistem arkasında koşan düz ve isimsiz kod blokları, "Elyte Ajan Bürokrasisi"ne dönüştürüldü. Her ajanın Telegram'da kimliği ve sabit mesaisi kodlandı: 
+    - **Altay Bey:** Teknik Tarama ve Sinyal Bulucu (`scanner_algo_diag.js`).
+    - **Hamdi Bey:** Makro-Ekonomi, Hisse İstihbaratı ve Haber Ajansı yöneticisi (`news_agent.js`).
+    - **Börü Bey:** Gölge Sinyal Takipçisi ve Kar/Zarar Esneklik yöneticisi (`shadow_tracker.js`).
+    - **Arif Bey:** Kaybeden İşlemler (Loss) tespit ve Otopsi yöneticisi (`arif_bey.js`).
+    - **Mercan Bey:** Canlı Anomali Tarama ve Enformasyon yöneticisi (`mercan_bey.js`).
+    - **Ekin Bey:** Tüm fonun Strateji, Risk ve Bilanço yöneticisi (CRO) (`ekin_bey.js`).
+*   **(Gece Vardiyası Rapor Ağı):** Bütün ajanlar her gece mesai saatlerinde Telegram üzerinden varlık denetim komutlarını yönetecek şekilde (Her gece 03:00 - 03:30 arası peşpeşe sırayla) Otonom `node-cron` mimarilerine entegre edildi. PM2 üzerinde sonsuz ve aralıksız uyanık bekleyecek şekilde konfigüre edildiler.
+*   **(Yeni Ajan Teknolojisi - Mercan Bey Otonom Araştırma):** Piyasada +5M$ hacimli varlıklarda tek mumda %10 ve üzeri oluşan şüpheli ve "agresif (Pump/Dump)" hareketleri milisaniyede yakalayarak, **Gemini 1.5 Pro'nun Google Search Grounding** yeteneği ile saniyeler içinde anlık internet araştırması yapan, dev fon hareketliliğinin sebebini bularak Telegram'a fırlatan yepyeni bir otonom ajan yazılıma dahil edildi.
+*   **(Bug Fix - Sinsi Google E-Tablo Kördüğümü Çözüldü):** Borsa tarafından "Anlık iğne (Fitil)" gibi kısa sürelerde fırlayan fiyatlar sonucu stop veya TP olan işlemlerin (Orphan Trades), Google Sheets ve ana Sinyal API'sine `ACTIVE` (Hala açık) olarak asılıp kalmasına sebep olan teknik köprü kusuru onarıldı. Google Sheets güncelleme robotunun verileri bulma şekli, tablolar yeniden oluşturulduğunda biriken eski duplicate (Çakışan) ID'leri yanlış ezmesini engellemek adına tersine devrilip, "Aşağıdan-Yukarı (Bottom-Up)" formatıyla güncellendi. Active kalan tüm hayalet sinyaller e-tablolarda kusursuzca gerçek duruma güncellendi.
 ---
 
 ## 🔬 Standart Backtest Protokolü (PeriskopAI Protokolü)
