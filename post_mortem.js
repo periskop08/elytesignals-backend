@@ -3,9 +3,15 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const axios = require('axios');
+const TelegramBot = require('node-telegram-bot-api');
 
 const dbPath = path.resolve(__dirname, 'signals.db');
 const db = new sqlite3.Database(dbPath);
+
+let telegramBot = null;
+if (process.env.TELEGRAM_BOT_TOKEN) {
+    telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+}
 
 const { GEMINI_API_KEY } = process.env;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -90,8 +96,10 @@ Ders cümlen mutlaka "Ders: " kelimesiyle başlasın. Maksimum 2 cümle olsun. �
         // Veritabanına kaydet
         await runExec("INSERT INTO ai_lessons (symbol, tradeId, lessonText) VALUES (?, ?, ?)", [trade.symbol, trade.id, lessonText]);
         console.log(`[POST_MORTEM] Kayıt başarılı.`);
+        return { symbol: trade.symbol, lesson: lessonText };
     } catch(e) {
         console.error(`[POST_MORTEM] Analiz hatası (${trade.symbol}):`, e.message);
+        return null;
     }
 }
 
@@ -118,10 +126,21 @@ async function runPostMortem() {
         
         console.log(`${pendingLosses.length} adet işlem inceleniyor...`);
         
+        let processedLessons = [];
         for (const trade of pendingLosses) {
-            await analyzeLoss(trade);
+            const lessonObj = await analyzeLoss(trade);
+            if (lessonObj) processedLessons.push(lessonObj);
             // API Rate limit'e takılmamak için bekleme
             await new Promise(r => setTimeout(r, 2000));
+        }
+
+        if (processedLessons.length > 0 && telegramBot && process.env.ADMIN_TELEGRAM_ID) {
+            let msg = `👨🏻‍💼 *Merhaba ben Arif, görevimin başındayım;*\n\nDün gece stop olan işlemlerin otopsi analizini tamamladım. İşte çıkarımlarım:\n\n`;
+            processedLessons.forEach(p => {
+                msg += `🔘 *${p.symbol}*\n${p.lesson}\n\n`;
+            });
+            await telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
+            console.log("Arif'in günlük raporu Telegram'a iletildi.");
         }
 
         console.log("=== Post-Mortem Ajanı Görevini Tamamladı ===");
