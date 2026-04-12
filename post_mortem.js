@@ -121,6 +121,13 @@ async function runPostMortem() {
         const pendingLosses = await runQuery(sql);
         if (pendingLosses.length === 0) {
             console.log("İncelenecek yeni bir Zarar (LOSS) işlemi bulunamadı. Görev tamam.");
+            if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
+                await telegramBot.sendMessage(
+                    process.env.ADMIN_TELEGRAM_ID, 
+                    "👨🏻‍💼 *Merhaba ben Arif, görevimin başındayım;*\n\nBugün stop olmamışız, kalkanlarımız sağlam! Yarın görüşmek üzere, iyi geceler...", 
+                    { parse_mode: 'Markdown' }
+                );
+            }
             process.exit(0);
         }
         
