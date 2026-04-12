@@ -86,9 +86,12 @@ async function generateStrategyReport() {
 
         1. GİZLİ KAZANÇ PATERNİ: Kazanan işlemlerin ortak özellikleri nelerdir? Hangi uyarı/rejim kombinasyonlarında paramızı katlıyoruz?
         2. KRONİK ZAAFİYETLER: Kaybeden işlemlerin (Zarar) asıl kanayan yarası nedir? Hangi formasyon/tuzak ya da rejimde durmadan stop oluyoruz? Asıl sorun nerede?
-        3. EYLEM PLANI (3 AKSİYON): Bir yazılım/quant geliştirici ekibine hitaben, otopilot kodlarındaki puanlama barajlarına (Örn: "Şu duruma -10 ceza verelim, bu duruma +15 bonus verelim") yönelik matematiksel 3 adet net tavsiye yaz.
+        3. EYLEM PLANI (3 AKSİYON): Otopilot kodlarındaki puanlama barajlarına yönelik matematiksel 3 adet net tavsiye.
 
-        Not: Resmi, analitik ve nokta atışı tespitler yap.`;
+        KESİN KURALLAR:
+        - Mail veya mektup taslağı (Kime, Kimden, Tarih, Konu) ASLA kullanma.
+        - Sahte bir tarih veya uydurma veri ASLA yazma.
+        - Raporun tamamı kısa, çok net ve tamamen teknik tespitlere odaklansın. Doğrudan başlıklara gir.`;
 
         const result = await model.generateContent(prompt);
         let response = result.response.text();
