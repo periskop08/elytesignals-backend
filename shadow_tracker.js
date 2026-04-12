@@ -80,13 +80,13 @@ async function checkShadowTrades() {
 
             if (hitLoss) {
                 await runExec("UPDATE shadow_trades SET status = 'LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
-                console.log(`[SHADOW] Ajan Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS). Hafıza onaylandı.`);
+                console.log(`[BÖRÜ_BEY] Sistem Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS).`);
                 if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                    bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `🤖 *Ajan Haklı Çıktı! (Ders Onaylandı)* 🤖\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom öğrenim başarılı.`);
+                    bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.`);
                 }
             } else if (hitWin) {
                 await runExec("UPDATE shadow_trades SET status = 'WIN', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
-                console.log(`[SHADOW] Ajan Yanıldı! Engellediğimiz ${trade.symbol} (${trade.type}) işlemi hedefe ulaştı (WIN). Dersi güncellemeli.`);
+                console.log(`[BÖRÜ_BEY] Sistem Yanıldı! Engellediğimiz ${trade.symbol} (${trade.type}) işlemi hedefe ulaştı (WIN).`);
                 if (trade.lessonId) {
                     try {
                         const lessonData = await runQuery("SELECT lessonText FROM ai_lessons WHERE id = ?", [trade.lessonId]);
@@ -118,27 +118,47 @@ Bana Orijinal Kuralı tekrar ver, devamına da "İSTİSNA: [Bu şartlar altında
                             const exceptionRuleText = aiRes.response.text().trim();
 
                             await runExec("UPDATE ai_lessons SET lessonText = ? WHERE id = ?", [exceptionRuleText, trade.lessonId]);
-                            console.log(`[SHADOW EXPLORATION] Kural güncellendi: ${exceptionRuleText}`);
+                            console.log(`[BÖRÜ_BEY] Kural güncellendi: ${exceptionRuleText}`);
 
                             if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                                bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Ajan Yanıldı! (Katı Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden yorumlandı ve "İstisna" alt başlığına sahip esnek bir ağaç yapısına geçildi.\n\n_Yeni Kural:_ ${exceptionRuleText}`, { parse_mode: 'Markdown' });
+                                bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden yorumlandı ve "İstisna" alt başlığına sahip esnek bir ağaç yapısına geçildi.\n\n_Yeni Kural:_ ${exceptionRuleText}`, { parse_mode: 'Markdown' });
                             }
                         }
                     } catch (err) {
-                        console.error("[SHADOW EVOLUTION] Error adapting AI lesson:", err.message);
+                        console.error("[BÖRÜ_BEY] Error adapting AI lesson:", err.message);
                     }
                 } else {
                     if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                        bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Ajan Yanıldı!* \n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ!`);
+                        bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Börü Bey Uyarıyor!* \n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ ama biz girmedik!`);
                     }
                 }
             }
         }
     } catch (e) {
-        console.error("Shadow check error:", e);
+        console.error("[BÖRÜ_BEY] Shadow check error:", e);
     }
 }
 
-console.log("[SHADOW_TRACKER] Gölge Takip Ajanı Aktif!");
+console.log("[BÖRÜ_BEY] Gölge Takip Ajanı (Börü Bey) Aktif!");
 setInterval(checkShadowTrades, 60000); // Her dakikada bir kontrol et
 checkShadowTrades();
+
+// Her gece 03:10'da Börü Bey'in Telegram raporu
+cron.schedule('10 3 * * *', async () => {
+    try {
+        const row = await runQuery(`SELECT count(id) as cnt FROM user_trades WHERE status = 'CLOSED' AND pnl < 0 AND datetime(closedAt) > datetime('now', '-24 hours')`);
+        const shadowRow = await runQuery(`SELECT count(id) as cnt FROM shadow_trades WHERE status = 'LOSS' AND datetime(closedAt) > datetime('now', '-24 hours')`);
+        
+        let lostCount = (row && row.length > 0) ? row[0].cnt : 0;
+        let shadowCount = (shadowRow && shadowRow.length > 0) ? shadowRow[0].cnt : 0;
+        let totalAutopsy = lostCount; // user_trades represent the actual autopsies that Arif checks
+
+        let msg = `🐺 *Merhaba ben Börü Bey; Görevimin başındayım.*\n\nBugün portföyümüzdeki işlemleri saniye saniye takip ederek, stop olan *${totalAutopsy}* adet işlemi incelenmesi için Arif Bey'e (Otopsi) sevk ettim.\n\nNöbete devam ediyorum, iyi geceler.`;
+        if (bot && TELEGRAM_ADMIN_CHAT_ID) {
+            await bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, msg, { parse_mode: 'Markdown' });
+            console.log("[BÖRÜ_BEY] Günlük rapor Telegram'a iletildi.");
+        }
+    } catch(e) {
+        console.error("[BÖRÜ_BEY] Günlük rapor hatası:", e.message);
+    }
+});
