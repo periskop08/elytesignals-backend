@@ -83,7 +83,7 @@ async function updateSheetSignalStatus(targetSignalId, newStatus) {
         if (!rows || rows.length === 0) return false;
 
         let targetRowIndex = -1;
-        for (let i = 0; i < rows.length; i++) {
+        for (let i = rows.length - 1; i >= 0; i--) {
             if (rows[i][0] && rows[i][0].toString() === targetSignalId.toString()) {
                 targetRowIndex = i + 1; // 1-index based
                 break;
