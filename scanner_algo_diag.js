@@ -284,7 +284,7 @@ async function checkActiveSignals() {
         const activeSignals = await db.all("SELECT * FROM signals WHERE status = 'ACTIVE'");
         if(!activeSignals || activeSignals.length === 0) return;
 
-        console.log(`[SCANNER] Checking ${activeSignals.length} active signals...`);
+        console.log(`[ALTAY_BEY] Checking ${activeSignals.length} active signals...`);
 
         // Batch fetch all prices at once (BingX API)
         const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
@@ -394,10 +394,10 @@ async function checkActiveSignals() {
                              
                              if (netUsd !== null && netUsd !== undefined) {
                                   await db.run("UPDATE signals SET status = ?, netPnlUsd = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, netUsd, signal.id]);
-                                  console.log(`[SCANNER] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: $${netUsd.toFixed(4)})`);
+                                  console.log(`[ALTAY_BEY] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: $${netUsd.toFixed(4)})`);
                              } else {
                                   await db.run("UPDATE signals SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [newStatus, signal.id]);
-                                  console.log(`[SCANNER] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: YAKALANAMADI)`);
+                                  console.log(`[ALTAY_BEY] Signal ${signal.symbol} closed as ${newStatus} (Net PnL: YAKALANAMADI)`);
                              }
                              
                              // Telegram Bildirimi (TP veya SL)
@@ -1173,13 +1173,13 @@ let isScanning = false;
 
 async function runScan() {
     if (isScanning) {
-        console.log('[SCANNER] Tarama zaten devam ediyor, atlanıyor...');
+        console.log('[ALTAY_BEY] Tarama zaten devam ediyor, atlanıyor...');
         return;
     }
     isScanning = true;
 
     try {
-        console.log('[SCANNER] Starting BingX pairs scan for new signals...');
+        console.log('[ALTAY_BEY] Starting BingX pairs scan for new signals...');
 
     // 2. Yeni pariteleri tara
     const cryptoPairs = await getUsdtPairs();
@@ -1187,7 +1187,7 @@ async function runScan() {
     const assetsToScan = isWeekend ? [] : ASSET_SYMBOLS; // Hafta sonu varlıklara istek atma
     
     const allPairs = [...cryptoPairs, ...assetsToScan];
-    console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan.`);
+    console.log(`[ALTAY_BEY] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan.`);
 
     let signalCount = 0;
     
@@ -1206,7 +1206,7 @@ async function runScan() {
                 [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings]
             );
             const signalId = insertResult.id;
-            console.log(`[SCANNER] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
+            console.log(`[ALTAY_BEY] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
             
             // Google Sheets'e Yaz
             try {
@@ -1304,13 +1304,13 @@ async function runScan() {
         await delay(100); 
     }
 
-    console.log(`[SCANNER] Scan complete. Found ${signalCount} new signals.`);
+    console.log(`[ALTAY_BEY] Scan complete. Found ${signalCount} new signals.`);
     } finally {
         isScanning = false;
     }
 }
 async function sendNightlyReport() {
-    console.log('[SCANNER] Generating Nightly Quality Score Report...');
+    console.log('[ALTAY_BEY] Generating Nightly Quality Score Report...');
     try {
         let yesterdaysDate = new Date();
         // UTC'de olduğumuz varsayımı ile: dünü almak için
@@ -1364,7 +1364,7 @@ async function sendNightlyReport() {
 
         if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
             await telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, reportText, { parse_mode: 'Markdown' });
-            console.log('[SCANNER] Nightly report & Backup status successfully sent to Telegram.');
+            console.log('[ALTAY_BEY] Nightly report & Backup status successfully sent to Telegram.');
         }
 
         // --- GOOGLE SHEETS YEDEKLEME (Yeni Yapı) ---
@@ -1413,17 +1413,17 @@ async function sendNightlyReport() {
                 await googleApi.appendToSheet(rowsToInsert, 'REPORT');
             }
         } catch (e) {
-            console.error('[SCANNER] Google Sheets entegrasyon hatası:', e.message);
+            console.error('[ALTAY_BEY] Google Sheets entegrasyon hatası:', e.message);
         }
 
     } catch (error) {
-         console.error('[SCANNER] Send Nightly Report Error: ', error);
+         console.error('[ALTAY_BEY] Send Nightly Report Error: ', error);
     }
 }
 
 function backupSystem() {
     return new Promise((resolve, reject) => {
-        console.log('[SCANNER] Starting nightly system backup to Server...');
+        console.log('[ALTAY_BEY] Starting nightly system backup to Server...');
         try {
             const dateStr = new Date().toISOString().split('T')[0];
             const path = require('path');
@@ -1437,15 +1437,15 @@ function backupSystem() {
             const cmd = `mkdir -p "${backupFolder}" && rsync -av --exclude="node_modules" --exclude=".git" --exclude=".expo" "${sourceFolder}/" "${backupFolder}/"`;
             exec(cmd, (error, stdout, stderr) => {
                 if (error) {
-                    console.error('[SCANNER] Backup Failed:', error.message);
+                    console.error('[ALTAY_BEY] Backup Failed:', error.message);
                     reject(`⚠️ *Elyte Sistem Yedekleme Hatası!*\n\`${error.message}\``);
                     return;
                 }
-                console.log(`[SCANNER] Backup successfully created at: ${backupFolder}`);
+                console.log(`[ALTAY_BEY] Backup successfully created at: ${backupFolder}`);
                 resolve(`📦 *Sistem Yedeği Başarıyla Alındı!*\nKlasör: \`${backupFolder}\`\nDostum, kodların ve sistemin her gece olduğu gibi güvenli sunucu dizinine yedeklendi! 🫡`);
             });
         } catch(e) {
-            console.error('[SCANNER] Backup Exception:', e);
+            console.error('[ALTAY_BEY] Backup Exception:', e);
             reject(`⚠️ *Elyte Sistem Yedekleme Hatası!*\n\`${e.message}\``);
         }
     });

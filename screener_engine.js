@@ -16,10 +16,10 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 }
 
 async function runDailyScreener() {
-    console.log("[AI SCREENER] Otomatik günluk borsa taramasi basliyor...");
+    console.log("[ALTAY_BEY] Otomatik günluk borsa taramasi basliyor...");
 
     if (!ai) {
-        console.error("[AI SCREENER] Gemini API Key bulunamadi, tarama durduruldu.");
+        console.error("[ALTAY_BEY] Gemini API Key bulunamadi, tarama durduruldu.");
         return;
     }
 
@@ -40,18 +40,18 @@ async function runDailyScreener() {
                     res.quotes.forEach(q => potentialSymbols.push(q.symbol));
                 }
             } catch(err) {
-                 console.error(`[AI SCREENER] Screener ${q.scrIds} error:`, err.message);
+                 console.error(`[ALTAY_BEY] Screener ${q.scrIds} error:`, err.message);
             }
         }
         
         // Uniquify symbols
         potentialSymbols = [...new Set(potentialSymbols)].filter(Boolean);
         if (potentialSymbols.length === 0) {
-            console.log("[AI SCREENER] Tarayici hisse bulamadi.");
+            console.log("[ALTAY_BEY] Tarayici hisse bulamadi.");
             return;
         }
 
-        console.log(`[AI SCREENER] Toplam ${potentialSymbols.length} ham aday bulundu. Yapay zeka filteresine giriyor...`);
+        console.log(`[ALTAY_BEY] Toplam ${potentialSymbols.length} ham aday bulundu. Yapay zeka filteresine giriyor...`);
 
         // Check against existing portfolio assets to only discover NEW ones
         const existingRows = await db.all("SELECT symbol FROM portfolio_assets");
@@ -59,11 +59,11 @@ async function runDailyScreener() {
         const newCandidates = potentialSymbols.filter(s => !existingSet.has(s)).slice(0, 5); // Limit to top 5 fresh candidates per day to respect API limits
 
         if (newCandidates.length === 0) {
-            console.log("[AI SCREENER] Yeni hisse adayi bulunamadi.");
+            console.log("[ALTAY_BEY] Yeni hisse adayi bulunamadi.");
             return;
         }
 
-        console.log(`[AI SCREENER] Gemini ${newCandidates.length} adayi inisellestiriyor:`, newCandidates);
+        console.log(`[ALTAY_BEY] Gemini ${newCandidates.length} adayi inisellestiriyor:`, newCandidates);
 
         let addedAny = false;
 
@@ -168,7 +168,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
 
                 // AI Approval Threshold check
                 if (parsed.sentimentPercent > 85) {
-                    console.log(`[AI SCREENER] ${symbol} basariyla incelendi ve skor: ${parsed.sentimentPercent}. Portfoye ekleniyor.`);
+                    console.log(`[ALTAY_BEY] ${symbol} basariyla incelendi ve skor: ${parsed.sentimentPercent}. Portfoye ekleniyor.`);
                     
                     // Insert into AI Sentiments database
                     await db.run("DELETE FROM ai_sentiments WHERE symbol = ?", [symbol]);
@@ -188,16 +188,16 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
 
                     // Send Telegram Alert safely
                     if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-                        const msg = `🚀 *YAPAY ZEKA FIRSAT KEŞFİ!*\n\nAntigravity Screener, Amerikan borsasındaki taramalarda yüksek potansiyelli bir hisse tespit etti ve portföye  *%5 ağırlıkla* dahil etti!\n\n💎 *Hisse:* GİZLİ (Premium)\n🎯 *AI Skoru:* ${parsed.sentimentPercent}/100\n💼 *Sektör Teknoloji/Inovasyon:* ${parsed.edgeScore}/100\n\n📌 _Hissenin çok kapsamlı Gemini 3.1 Pro detaylı fon raporu an itibariyle Varlık Yöneticisi sekmesine yüklendi, hemen siteye göz atabilirsiniz._`;
+                        const msg = `🚀 *YAPAY ZEKA FIRSAT KEŞFİ!*\n\nAltay Bey, Amerikan borsasındaki taramalarda yüksek potansiyelli bir hisse tespit etti ve portföye  *%5 ağırlıkla* dahil etti!\n\n💎 *Hisse:* GİZLİ (Premium)\n🎯 *AI Skoru:* ${parsed.sentimentPercent}/100\n💼 *Sektör Teknoloji/Inovasyon:* ${parsed.edgeScore}/100\n\n📌 _Hissenin çok kapsamlı Gemini 3.1 Pro detaylı fon raporu an itibariyle Varlık Yöneticisi sekmesine yüklendi, hemen siteye göz atabilirsiniz._`;
                         telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' }).catch(e => console.error("Telegram error:", e));
                     }
                     
                     addedAny = true;
                 } else {
-                    console.log(`[AI SCREENER] ${symbol} skoru dusuk kaldi (${parsed.sentimentPercent}). Elendi.`);
+                    console.log(`[ALTAY_BEY] ${symbol} skoru dusuk kaldi (${parsed.sentimentPercent}). Elendi.`);
                 }
             } catch (evalErr) {
-                console.error(`[AI SCREENER] ${symbol} analiz hatasi:`, evalErr.message);
+                console.error(`[ALTAY_BEY] ${symbol} analiz hatasi:`, evalErr.message);
             }
             
             // Wait 5 seconds between evaluating candidates to avoid Rate Limiting
@@ -205,7 +205,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
         }
         
     } catch(err) {
-        console.error("[AI SCREENER] Engine Main Error:", err);
+        console.error("[ALTAY_BEY] Engine Main Error:", err);
     }
 }
 
