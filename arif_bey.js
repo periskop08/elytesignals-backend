@@ -53,7 +53,7 @@ async function fetchBingxCandles(symbol, intervalMinutes, limit) {
 
 async function analyzeLoss(trade) {
     try {
-        console.log(`[POST_MORTEM] Analiz başlıyor: ${trade.symbol} (${trade.type}) ID: ${trade.id}`);
+        console.log(`[ARIF_BEY] Analiz başlıyor: ${trade.symbol} (${trade.type}) ID: ${trade.id}`);
         // Son 15 mumu (15 saati) çekiyoruz (İşlem yeni patladığı için tarihsel yakınsayacak)
         const candles = await fetchBingxCandles(trade.symbol, 60, 24);
         let candleContext = "Son 24 Saatlik Fiyat Hareketi Yok";
@@ -62,7 +62,7 @@ async function analyzeLoss(trade) {
             candleContext = candles.map((c, i) => `H${i+1}: Açılış=${c.open.toFixed(4)}, Kapanış=${c.close.toFixed(4)}, Hacim=${c.volume.toFixed(0)}`).join('\n');
         }
 
-        const prompt = `Sen profesyonel bir Kurumsal Hedge Fon Analisti ve Risk Yöneticisisin. PeriskopAI algoritması tarafından açılmış ancak STOP LOSS (Zarar Kes) olmuş bir işlemi "Post-Mortem (Otopsi)" analizine tabi tutacaksın.
+        const prompt = `Sen profesyonel bir Kurumsal Hedge Fon Analisti ve Risk Yöneticisisin. PeriskopAI algoritması tarafından açılmış ancak STOP LOSS (Zarar Kes) olmuş bir işlemi "Arif Bey (Otopsi)" analizine tabi tutacaksın.
         
 İşlem Bilgileri:
 - Varlık: ${trade.symbol}
@@ -91,20 +91,20 @@ Ders cümlen mutlaka "Ders: " kelimesiyle başlasın. Maksimum 2 cümle olsun. �
             lessonText = response.substring(0, 200) + "...";
         }
 
-        console.log(`[POST_MORTEM] Ders çıkarıldı: ${lessonText}`);
+        console.log(`[ARIF_BEY] Ders çıkarıldı: ${lessonText}`);
 
         // Veritabanına kaydet
         await runExec("INSERT INTO ai_lessons (symbol, tradeId, lessonText) VALUES (?, ?, ?)", [trade.symbol, trade.id, lessonText]);
-        console.log(`[POST_MORTEM] Kayıt başarılı.`);
+        console.log(`[ARIF_BEY] Kayıt başarılı.`);
         return { symbol: trade.symbol, lesson: lessonText };
     } catch(e) {
-        console.error(`[POST_MORTEM] Analiz hatası (${trade.symbol}):`, e.message);
+        console.error(`[ARIF_BEY] Analiz hatası (${trade.symbol}):`, e.message);
         return null;
     }
 }
 
-async function runPostMortem() {
-    console.log("=== Post-Mortem (Otopsi) Ajanı Başlatıldı ===");
+async function runArifBey() {
+    console.log("=== Arif Bey (Otopsi Ajanı) Başlatıldı ===");
     
     // Status = CLOSED_LOSS olan ve henüz ai_lessons tablosunda tradeId'si OLMAYAN işlemleri bul.
     const sql = `
@@ -147,10 +147,10 @@ async function runPostMortem() {
                 msg += `🔘 *${p.symbol}*\n${p.lesson}\n\n`;
             });
             await telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
-            console.log("Arif'in günlük raporu Telegram'a iletildi.");
+            console.log("[ARIF_BEY] Günlük rapor Telegram'a iletildi.");
         }
 
-        console.log("=== Post-Mortem Ajanı Görevini Tamamladı ===");
+        console.log("=== Arif Bey Görevini Tamamladı ===");
         process.exit(0);
     } catch(e) {
         console.error("Critical Error", e);
@@ -158,4 +158,4 @@ async function runPostMortem() {
     }
 }
 
-runPostMortem();
+runArifBey();
