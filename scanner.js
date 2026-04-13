@@ -751,7 +751,7 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // --- SKORLAMA (SCORING) ALTYAPISI ---
-        let qualityScore = 0;
+        let qualityScore = 0, s_struct = 0, s_trig = 0, s_vol = 0, s_trend = 0, s_pat = 0;
         let warnings = [];
         let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
         
@@ -785,7 +785,7 @@ async function analyzeCoin(symbolInfo) {
 
         if (isOppositeSMA) {
             if (trapWickSize > (avgATR * 1.5) && (tempHasOB || tempHasFVG)) {
-                qualityScore += 15;
+                s_struct += 15;
                 warnings.push('Smart Money Trap (+15 Bonus)');
             } else {
                 qualityScore -= 25; // Original scanner.js used -25
@@ -932,7 +932,7 @@ async function analyzeCoin(symbolInfo) {
             }
         }
         if (hasOB) {
-            qualityScore += 25;
+            s_struct += 25;
             warnings.push('Order Block (+25)');
             breakdown.ob = true;
         }
@@ -947,7 +947,7 @@ async function analyzeCoin(symbolInfo) {
             }
         }
         if (hasFVG) {
-            qualityScore += 15;
+            s_struct += 15;
             warnings.push('FVG Confirmed (+15)');
             breakdown.fvg = true;
         } else if (CONFIG.fvgRequired) {
@@ -961,7 +961,7 @@ async function analyzeCoin(symbolInfo) {
         const rvolRatio = recentVol / (avgVol || 1);
         breakdown.rvol = parseFloat(rvolRatio.toFixed(2));
         if (rvolRatio >= 1.2) {
-            qualityScore += 15;
+            s_vol += 15;
             warnings.push('High Volume Spike (+15)');
         }
 
@@ -980,7 +980,7 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('Market Regime: Trending & Volatile (+5)');
         } else if (currentADX >= 25 && !isVolatileExpanding) {
             regime = 'TRENDING';
-            qualityScore += 5;
+            s_trend += 5;
             warnings.push('Market Regime: Trending (+5)');
         } else if (currentADX < 20) {
             regime = 'RANGING';
@@ -1080,7 +1080,7 @@ async function analyzeCoin(symbolInfo) {
             breakdown.flagPattern = true;
             warnings.push('Flag/Pennant (+10)');
             if (breakdown.rvol >= 1.2) {
-                qualityScore += 5; // Ekstra RVOL uyum bonusu
+                s_pat += 5; // Ekstra RVOL uyum bonusu
                 warnings.push('Flag RVOL Bonus (+5)');
             }
         }
@@ -1126,11 +1126,11 @@ async function analyzeCoin(symbolInfo) {
             const currentIchi = ichiRes[ichiRes.length - 1];
             if (direction === 'LONG') {
                 if (currentPrice > currentIchi.spanA && currentPrice > currentIchi.spanB && currentIchi.conversion > currentIchi.base) {
-                    qualityScore += 15; warnings.push('Ichimoku Bull Trend (+15)');
+                    s_trend += 15; warnings.push('Ichimoku Bull Trend (+15)');
                 }
             } else if (direction === 'SHORT') {
                 if (currentPrice < currentIchi.spanA && currentPrice < currentIchi.spanB && currentIchi.conversion < currentIchi.base) {
-                    qualityScore += 15; warnings.push('Ichimoku Bear Trend (+15)');
+                    s_trend += 15; warnings.push('Ichimoku Bear Trend (+15)');
                 }
             }
         }
@@ -1161,6 +1161,8 @@ async function analyzeCoin(symbolInfo) {
                 }
             }
         }
+
+        qualityScore += Math.min(s_struct, 30) + Math.min(s_trig, 15) + Math.min(s_vol, 15) + Math.min(s_trend, 20) + Math.min(s_pat, 15);
 
         // 5. Günlük MA Golden Cross (+10 Puan) (Sadece kalite skoru yüksek olanlara API tasarrufu için sorulur)
         if (qualityScore >= 25) {
@@ -1797,17 +1799,25 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                         bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
-                                    // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI) ---+
+                                    // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
                                     let riskMultiplier = 1.0;
                                     try {
-                                        const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 3");
-                                        if (history && history.length >= 2) {
-                                            if (history[0].status === 'CLOSED_LOSS' && history[1].status === 'CLOSED_LOSS') {
-                                                riskMultiplier = 0.5; // Loss streak - Defans!
-                                                console.log("[DYNAMIC SIZING] Son 2 işlem zarar! Risk %50 azaltıldı.");
-                                            } else if (history.length >= 2 && history[0].status === 'CLOSED_WIN' && history[1].status === 'CLOSED_WIN') {
-                                                riskMultiplier = 1.5; // Win streak - Ofans!
-                                                console.log("[DYNAMIC SIZING] Son 2 işlem kâr! Risk %50 artırıldı.");
+                                        if (signal.qualityScore >= 85) riskMultiplier = 1.3;
+                                        else if (signal.qualityScore >= 75) riskMultiplier = 1.0;
+                                        else if (signal.qualityScore >= 65) riskMultiplier = 0.75;
+                                        else riskMultiplier = 0.5;
+
+                                        const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 20");
+                                        if (history && history.length >= 10) {
+                                            const wins = history.filter(h => h.status === 'CLOSED_WIN').length;
+                                            const winRate = wins / history.length;
+                                            
+                                            if (winRate < 0.35) {
+                                                riskMultiplier *= 0.5;
+                                                console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Portföy Defansa Çekildi.`);
+                                            } else if (winRate > 0.60) {
+                                                riskMultiplier *= 1.5;
+                                                console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Momentum Sürülüyor.`);
                                             }
                                         }
                                     } catch(e) {}
