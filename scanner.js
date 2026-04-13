@@ -647,10 +647,10 @@ async function analyzeCoin(symbolInfo) {
 
         // MATEMATİKSEL LİKİDİTE KONTROLÜ (SWEEP & RECLAIM ZORUNLU TABAN KURAL)
         let sweepIdxLong = -1;
-        let wickSize = 0;
-        const currentLow = lows[lows.length - 1];
-        const currentHigh = highs[highs.length - 1];
-        const currentOpen = opens[opens.length - 1];
+        let trapWickSize = 0;
+        const trapCurrentLow = lows[lows.length - 1];
+        const trapCurrentHigh = highs[highs.length - 1];
+        const trapCurrentOpen = opens[opens.length - 1];
 
         if (recentMin <= rangeLow * 1.005 && currentPrice > rangeLow) {
             let sweepIdx = lows.lastIndexOf(recentMin);
@@ -658,7 +658,7 @@ async function analyzeCoin(symbolInfo) {
                 if (currentPrice > highs[sweepIdx]) { // CHOCH
                     dipDeviation = true;
                     sweepIdxLong = sweepIdx;
-                    wickSize = Math.min(currentOpen, currentPrice) - currentLow;
+                    trapWickSize = Math.min(trapCurrentOpen, currentPrice) - trapCurrentLow;
                 }
             }
         }
@@ -670,7 +670,7 @@ async function analyzeCoin(symbolInfo) {
                 if (currentPrice < lows[sweepIdx]) {
                     tepeDeviation = true;
                     sweepIdxShort = sweepIdx;
-                    wickSize = currentHigh - Math.max(currentOpen, currentPrice);
+                    trapWickSize = trapCurrentHigh - Math.max(trapCurrentOpen, currentPrice);
                 }
             }
         }
@@ -771,7 +771,7 @@ async function analyzeCoin(symbolInfo) {
         if (direction === 'SHORT' && currentPrice > curSma200) isOppositeSMA = true;
 
         if (isOppositeSMA) {
-            if (wickSize > (avgATR * 1.5) && (tempHasOB || tempHasFVG)) {
+            if (trapWickSize > (avgATR * 1.5) && (tempHasOB || tempHasFVG)) {
                 qualityScore += 15;
                 warnings.push('Smart Money Trap (+15 Bonus)');
             } else {
