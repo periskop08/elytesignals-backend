@@ -1362,24 +1362,10 @@ async function analyzeCoin(symbolInfo) {
         }
 
         let requiredReward = risk * requiredRR;
-
         let organicRR = risk > 0 ? (reward / risk) : 0; // Doğal hedef R:R'si
-
-        // 3. Mevcut analiz (EQ, FVG) hedefi, requiredReward'ın altındaysa hedefi esnet/uzat
-        if (reward < requiredReward) {
-            reward = requiredReward;
-            if (direction === 'LONG') targetP = currentPrice + reward;
-            else targetP = currentPrice - reward;
-            warnings.push(`Target Extended to ${requiredRR}R`);
-        }
-
-        let finalRR = risk > 0 ? (reward / risk) : 0;
+        let finalRR = organicRR;
+        
         breakdown.rr = parseFloat(finalRR.toFixed(2));
-
-        // R:R Bonusu Kaldırıldı (Saf PA Kalitesi İçin)
-
-        // Genel RR filtresi (Safety Check)
-        if (finalRR < requiredRR) return null; 
 
         // --- PERPLEXITY ELITE FILTER (v2.0) + CHATGPT SWEEP/ENGULFING ---
         let currentJ = closes.length - 1;
