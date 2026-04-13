@@ -1578,8 +1578,10 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                     );
 
                     // Telegram Admin'e Uyarı Gönder
-                    if (bot && CONFIG.telegramAdminId) {
-                        bot.sendMessage(CONFIG.telegramAdminId, `🤖 *Otonom Ajan Sinyali Reddetti (Shadow Mode)* 🤖\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Sebep:* ${blockReason}\n\nBu sinyal veritabanına ve gruba düşmedi. Sadece gölge modunda arka planda PnL takibine alındı.`, { parse_mode: 'Markdown' });
+                    if (telegramBot && CONFIG.telegramAdminId) {
+                        try {
+                            telegramBot.sendMessage(CONFIG.telegramAdminId, `🤖 *Otonom Ajan Sinyali Reddetti (Shadow Mode)* 🤖\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Sebep:* ${blockReason}\n\nBu sinyal veritabanına ve gruba düşmedi. Sadece gölge modunda arka planda PnL takibine alındı.`, { parse_mode: 'Markdown' });
+                        } catch(e) {}
                     }
                     continue; // Skip DB insertion and everything else
                 }
@@ -1823,6 +1825,11 @@ async function sendNightlyReport() {
         reportText += `⏳ Açık: ${totalActive} İşlem\n`;
         reportText += `🎯 *Başarı Oranı: %${winRate}*\n\n`;
 
+        if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
+            await telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, reportText, { parse_mode: 'Markdown' });
+            console.log('[SCANNER] Nightly report & Backup status successfully sent to Telegram.');
+        }
+
         let scores = Object.keys(detailedData).sort((a, b) => b - a);
         if (scores.length === 0) {
             reportText += `Dün piyasada pozisyon açılmadı.\n\n`;
@@ -1839,8 +1846,9 @@ async function sendNightlyReport() {
         }
 
         if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-            await telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, reportText, { parse_mode: 'Markdown' });
-            console.log('[SCANNER] Nightly report & Backup status successfully sent to Telegram.');
+            let cleanMsg = reportText.replace(/\*\*/g, '*');
+            await telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, cleanMsg, { parse_mode: 'Markdown' });
+            console.log("[ARIF_BEY] Günlük rapor Telegram'a iletildi.");
         }
 
         // --- GOOGLE SHEETS YEDEKLEME (Yeni Yapı) ---
