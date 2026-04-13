@@ -1848,7 +1848,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                 let currentLivePrice = signal.entryPrice;
                                 let slippageExceeded = false;
                                 try {
-                                    const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${signal.symbol}`);
+                                    let fetchSymbol = signal.symbol.includes('-') ? signal.symbol : signal.symbol.replace('USDT', '-USDT');
+                                    const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${fetchSymbol}`);
                                     if (res.data && res.data.data && res.data.data.lastPrice) {
                                         currentLivePrice = parseFloat(res.data.data.lastPrice);
                                         const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;

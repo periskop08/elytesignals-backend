@@ -49,7 +49,8 @@ function recordBypass() {
 
 async function checkLiquidityAsync(symbol, direction) {
     try {
-        const url = `https://open-api.bingx.com/openApi/swap/v2/quote/depth?symbol=${symbol}&limit=5`;
+        let fetchSymbol = symbol.includes('-') ? symbol : symbol.replace('USDT', '-USDT');
+        const url = `https://open-api.bingx.com/openApi/swap/v2/quote/depth?symbol=${fetchSymbol}&limit=5`;
         const response = await axios.get(url, { timeout: 1500 }); // 1.5 Saniye hard-timeout
         
         if (response.data && response.data.code === 0 && response.data.data) {
