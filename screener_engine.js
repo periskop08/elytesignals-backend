@@ -3,6 +3,7 @@ const yahooFinance = new YFClass();
 const db = require('./database');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const TelegramBot = require('node-telegram-bot-api');
+const { RSI, EMA } = require('technicalindicators');
 require('dotenv').config();
 
 let ai = null;
@@ -32,7 +33,31 @@ async function runDailyScreener() {
             { scrIds: 'undervalued_growth_stocks', count: 5 }
         ];
 
+        let sp500State = "DÜŞÜK RİSK (BULL MARKET)";
+        try {
+            const today = new Date();
+            const yearAgo = new Date(today);
+            yearAgo.setFullYear(today.getFullYear() - 1);
+            const spData = await yahooFinance.historical('^GSPC', { period1: yearAgo.toISOString().split('T')[0], interval: '1d' });
+            if (spData && spData.length > 200) {
+                const spCloses = spData.map(d => d.close);
+                const spEma200 = EMA.calculate({ values: spCloses, period: 200 });
+                const currentSpPrice = spCloses[spCloses.length - 1];
+                const ema200Value = spEma200[spEma200.length - 1];
+                
+                if (currentSpPrice < ema200Value) {
+                    sp500State = "🔴 YÜKSEK RİSK (ÇÖKÜŞ SİNYALİ - SP500 EMA200 ALTINDA)";
+                } else if (currentSpPrice < spCloses[spCloses.length - 20]) {
+                    sp500State = "🟡 ORTA RİSK (Kısa Vadeli Düzeltme)";
+                }
+            }
+        } catch(e) { console.log("SP500 Check Error:", e.message); }
+
         let potentialSymbols = [];
+        if (sp500State.includes("YÜKSEK RİSK")) {
+            console.log("[ALTAY_BEY] Piyasada ÇÖKÜŞ var. Inverse ETF'ler taranacak (SQQQ, SH).");
+            potentialSymbols.push("SQQQ", "SH"); 
+        }
         for (const q of queryOptionsList) {
             try {
                 const res = await yahooFinance.screener(q);
@@ -84,6 +109,32 @@ async function runDailyScreener() {
                      metricsObj.revenueGrowth = qs?.financialData?.revenueGrowth !== undefined ? (qs.financialData.revenueGrowth * 100).toFixed(2) + "%" : "Bilinmiyor";
                 } catch(e) {}
 
+                let swingData = { rsi: "Bilinmiyor", ema50: "Bilinmiyor", ema200: "Bilinmiyor", trend: "Bilinmiyor" };
+                try {
+                    const today = new Date();
+                    const yearAgo = new Date(today);
+                    yearAgo.setFullYear(today.getFullYear() - 1); 
+                    const hist = await yahooFinance.historical(symbol, { period1: yearAgo.toISOString().split('T')[0], interval: '1d' });
+                    if (hist && hist.length > 200) {
+                        const closes = hist.map(h => h.close);
+                        const rsiVals = RSI.calculate({ values: closes, period: 14 });
+                        const ema50Vals = EMA.calculate({ values: closes, period: 50 });
+                        const ema200Vals = EMA.calculate({ values: closes, period: 200 });
+                        
+                        swingData.rsi = rsiVals.length > 0 ? rsiVals[rsiVals.length - 1].toFixed(2) : "Bilinmiyor";
+                        swingData.ema50 = ema50Vals.length > 0 ? ema50Vals[ema50Vals.length - 1].toFixed(2) : "Bilinmiyor";
+                        swingData.ema200 = ema200Vals.length > 0 ? ema200Vals[ema200Vals.length - 1].toFixed(2) : "Bilinmiyor";
+                        
+                        if (currentPrice > parseFloat(swingData.ema50) && currentPrice > parseFloat(swingData.ema200)) {
+                            swingData.trend = "Trend Yukarı (Boğa)";
+                        } else if (currentPrice < parseFloat(swingData.ema50) && currentPrice < parseFloat(swingData.ema200)) {
+                            swingData.trend = "Trend Aşağı (Çöküş/Ayı)";
+                        } else {
+                            swingData.trend = "Yatay / Konsolidasyon";
+                        }
+                    }
+                } catch(e) { console.error("Swing Data Fetch Error:", e.message); }
+
                 // Kantan Haber İstihbaratını DB'den çek
                 let newsContextTexts = [];
                 try {
@@ -94,67 +145,66 @@ async function runDailyScreener() {
                 } catch(e) {}
 
                 const promptTemplate = `
-Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist (Forensic Analyst) ve Şüpheci (Bearish Eğilimli) Stratejik Risk Uzmanısın. Görevin: Şirketlerin büyüme masallarını sorgulamak, sahte kârları bulmak ve piyasanın aşırı fiyatladığı balonları (hype) tespit etmektir. 
-**Kullanıcı (User) Bilgileri**: Antalya/Türkiye bazlı kabin ekibi + tech/yatırımcı; odak: AI altyapı (NVDA/AMD/TSMC), savunma, nükleer, dronlar, siber. Uzmanlık alanın: yarı iletken, yapay zeka, GPU, bulut bilişim.
+Sen **Investment Agent AI (Hamdi Bey)**'sin – Kıdemli Adli Finansal Analist ve Nicel Quant Fon Başkanı. Görevin: Sadece bilanço okumak değil, piyasa trendlerini (Swing Trading) ve Makro Çöküş koşullarını tarayarak "Spot Hisse veya Ters ETF" kararlarını matematiksel/teknik mükemmellikle vermektir. Yarı iletken, savunma ve inovasyon teknoloji hisselerine (ve çöküşte SQQQ gibi defanslara) odaklanırsın.
 
 Analiz Edilecek Varlık: ${symbol}
 Güncel Fiyat: $${currentPrice}
 
 ${newsContextTexts.length > 0 ? `=== KANTAN.NEWS İSTİHBARAT RAPORU (SON 48 SAAT) ===\n${newsContextTexts.join('\n')}\n==========================\n` : ''}
-=== FINANSAL VERİ SETİ ===
+=== TEMEL FINANSAL VERİ SETİ ===
 - PEG Oranı: ${metricsObj.pegRatio}
 - İleri F/K (PE): ${metricsObj.forwardPE}
-- Güncel F/K: ${metricsObj.trailingPE}
-- Fiyat/Satış (P/S): ${metricsObj.priceToSales}
-- FCF: ${metricsObj.fcf}
+- FCF (Serbest Nakit): ${metricsObj.fcf}
 - Borç / FAVÖK: ${metricsObj.debtToEbitda}
 - Gelir Büyümesi: ${metricsObj.revenueGrowth}
+
+=== MAKRO (SP500) DURUMU ===
+- SP500 Risk Seviyesi: ${sp500State}
+
+=== GÜNLÜK (SWING) TEKNİK VERİLERİ ===
+- Genel Trend (EMA50 / EMA200 Kıyası): ${swingData.trend}
+- Günlük EMA 50: $${swingData.ema50}
+- Günlük EMA 200: $${swingData.ema200}
+- Günlük RSI (14): ${swingData.rsi}
 ==========================
 
-**Hamdi Bey Taktik Kuralları & Şablonları (Her Analizde Uygula):**
+**Hamdi Bey Taktik Kuralları & Şablonları (Option C):**
 
-1. **Adli Moat ve Gelir Kalitesi Analizi**:
-   - Gelir artarken Kâr Marjı daralıyorsa bunu "Pazar Payı için Fiyat Kırma (Price War)" ve "Rekabet Avantajı Kaybı" olarak raporla.
-   - Doğrudan Yer Değiştirme (Replacement) Riski: Şirketin ürünü OpenAI/Claude gibi LLM'ler içinde basit bir "özellik" haline getirilebiliyorsa "KRİTİK AI RİSKİ" mühürünü vur.
-   - Defensive Capex: Şirket sadece hayatta kalmak için AI donanımına para yakıyorsa cezalandır. Açıklamalardaki "AI kullanıyoruz" illüzyonlarına şüpheci yaklaş.
+1. **SWING TRADE STRATEJİSİ (Hisse Long Yönlü)**:
+    - Günlük RSI 30 civarındaysa (Aşırı Satım) ve bilanço kaliteliyse: Harika Fırsat!
+    - Günlük fiyat EMA 200'e temas ediyorsa (Destek reaksiyonu): Harika Fırsat!
+    - Eğer RSI > 70 ise ve fiyat EMA50'den çok uzaklaşmışsa: İşlem Açma! (Ekstrapahalı Balonu). Büyüme/Nakit akışı çok iyi olsa bile tekniğe sadık kal ve Skoru düşür.
 
-2. **Şirket-Agnostik Muadil Karşılaştırması ve Katı Değerleme Mimarisi**:
-   - Hangi şirket verilirse otomatik olarak 3-4 rakibini (muadilini) tespit et (Örn. NVIDIA için AMD, TSMC. Savunma için NOC, RTX).
-   - **Büyüme Şartı**: >%15 ise = "Güçlü", %5-15 arası = "Orta", <%5 ="Yavaş". *Ayrıca yapay gelirleri (karbon kredisi, tek seferlik satış) tespit et.*
-   - **Çarpan Kuralı (ŞÜPHECİ)**: Şirketin P/E, PEG veya P/S çarpanı muadil ortalamasından %30'dan fazla primli (yüksek) işlem görüyorsa, acımasızca = "Ekstrapahalı (Balon)" etiketini yapıştır. Büyümenin bu %30+ primi hak edip etmediğini sorgula.
+2. **INVERSE ETF VE NAKİT DEFANSI**:
+    - Analiz edilen varlık "SQQQ" veya "SH" gibi bir Ters ETF ise ve SP500 durumu "🔴 YÜKSEK RİSK" moduna geçmişse: Bu varlığa EN YÜKSEK PUANI (95+) VER! Ters ETF'yi sepetimize sigorta (Hedge) amaçlı eklememizi sağla. Makro çöküşlerde hisse senedi değil Ters Fon almak birincil önceliğindir!
 
-3. **Ekosistem, Stratejik Anlaşmalar ve Katalizör Avcılığı**:
-   - Şirketin son 12 ay içindeki (M&A, yatırım, ortaklık) hareketlerini listele. Her anlaşmanın sektöre/rakiplere olan etkisini hesapla.
-   
-4. **Teknik Seviyeler ve Karar Alma**:
-   - Uzun vadeli Bull/Bear fiyat hedefleri belirle.
+3. **GENEL İŞLEM VE DEĞERLEME KURALI**:
+    - Gelir artarken Kâr Marjı daralıyorsa "Pazar Payı için Fiyat Kırma" riskidir.
+    - Şirketin P/E, PEG çarpanı aşırı primliyse "Balon" de.
 
 ZORUNLU ÇIKTI FORMATI:
 Yanıtını KESİNLİKLE JSON FORMATINDA ver.
 {
     "ceoScore": [0-100 Liderlik Kalitesi],
-    "edgeScore": [0-100 Moat ve Rekabet Puanı],
-    "earningsScore": [0-100 Bilanço, %15 Büyüme ve Ucuzluk Puanı],
-    "insiderScore": [0-100 Güvenlik puanı],
+    "edgeScore": [0-100 Makro/Teknik/Moat Uyumu Puanı],
+    "earningsScore": [0-100 Bilanço ve Trend Onay Puanı],
+    "insiderScore": [0-100 Risk Yönetim / Defans Puanı],
     "patentScore": [0-100 Eko-Sistem/Patent Puanı],
     "sentimentPercent": [0-100 Karar Gücü Puanı. 85+ ise kesin PORTFÖYE EKLENİR (AL)],
-    "entryPriceTarget": [0.00 şeklinde Optimal Alım (Destek veya Breakout) Fiyat Tahmini],
+    "entryPriceTarget": [0.00 şeklinde Optimal Alım (Destek MA) Fiyat Tahmini],
     "summary": "120 karakterlik (Ucuz/Adil/Pahalı) durum özeti ve nihai AL/SAT kararı",
     "detailedReport": "Aşağıdaki kurala uygun kapsamlı metin (JSON yapısını bozmadan)"
 }
 
 *** JSON İÇİNDEKİ detailedReport ALANI İÇİN KAPSAMLI ŞABLON (Markdown olarak) ***
-### Varlık Analizi ve Moat Tezi: ${symbol}
-1. **Finansal Metrikler ve Muadil Karşılaştırması**: [Büyüme durumu, P/E/PEG muadil (3-4 rakip) kıyası. Nihai kararın (Ucuz/Adil/Pahalı) belirtilmesi.]
-2. **Katalizörler ve Ekosistem Ağı**: [Stratejik anlaşmaların rakiplere etkisi.]
-3. **DEĞERLEME VE REKABET RİSKLERİ**: [Eğer şirket pahalıysa veya zorlanıyorsa "Piyasa beklentileri, şirketin mevcut operasyonel gerçekliğinden ve artan rekabet baskısından kopuktur." cümlesini kullanarak riskleri sırala. AI Yıkım riskini ekle.]
-4. **Optimal Alım Fiyatı ve Teknik Strateji**:
-   - **Destek Alımı**: [Tahmini MA destek seviyesi veya optimal giriş.]
+### Varlık Analizi ve Swing Trend Tezi: ${symbol}
+1. **Swing Teknik ve Makro Konum**: [RSI durumu, EMA destekleri ve mevcut SP500 makro çöküş riskine göre varlığın alım bölgesinde olup olmadığının tespiti.]
+2. **Finansal Metrikler ve Moat Değerlemesi**: [Büyüme durumu, FCF ve P/E kıyası. Nihai kararın (Ucuz/Adil/Pahalı) belirtilmesi.]
+3. **Katalizörler ve Ekosistem Ağı**: [Kantan News istihbaratındaki stratejik anlaşmaların etkisi.]
+4. **DEĞERLEME VE REKABET RİSKLERİ**: [AI Yıkım riski veya aşırı fiyatlama riski.]
+5. **Optimal Alım Fiyatı ve Teknik Strateji**:
+   - **Destek Alımı**: [Tahmini EMA destek seviyesi.]
    - **Upside Breakout**: [Direnç kırılımı stratejisi.]
-5. **Aksiyonlar & Stratejik Özet Tablosu**:
-| Anlaşma / Katalizör | Tahmini Tarih | Rakiplere Etkisi | Fiyat/Pazar Etkisi | Uzun Vadeli Potansiyel |
-|---------------------|---------------|------------------|---------------------|--------------------------|
-| [Veri] | [Veri] | [Veri] | [Veri] | [Veri] |
 `;
 
                 const model = ai.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
