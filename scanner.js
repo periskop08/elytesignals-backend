@@ -363,6 +363,11 @@ async function checkActiveSignals() {
              });
         }
 
+        if (!res || !res.data || !Array.isArray(res.data.data)) {
+             console.error("BingX Ticker Error: res.data.data is not an array or missing.");
+             return;
+        }
+
         res.data.data.forEach(t => {
              let mappedKey = t.symbol.replace('-', '');
              if (reverseMap[t.symbol]) mappedKey = reverseMap[t.symbol];
