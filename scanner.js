@@ -1499,13 +1499,8 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('Sinerji: Keskin Nişancı Bonusu (+10)');
         }
 
-        // 3. Çatışma Cezası (Güçlü sinyale rağmen momentum veya trend bitikse)
-        let hasStochConflict = warnings.some(w => w.includes('StochRSI Overbought') || w.includes('StochRSI Oversold'));
-        let isChoppy = currentADX < 20;
-        if (checkKillerWick && (isChoppy || hasStochConflict)) {
-            qualityScore -= 10;
-            warnings.push('Sinyal Çatışması Cezası (-10)');
-        }
+        // 3. Çatışma Cezası (İptal Edildi - VETO Kuralları Yeterli)
+        // V3.3: ADX < 20 veya StochRSI extreme durumları üst satırlarda doğrudan reddedildiği için redundant ceza kaldırıldı.
         
         // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
         // --- END PERPLEXITY & CHATGPT FILTER ---
