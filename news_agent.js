@@ -108,6 +108,27 @@ async function fetchAndProcessNews() {
             // Eğer yoksa işle
             console.log(`[News Agent] Yeni haber bulundu: ${article.title}`);
             const fullContent = article.content ? article.content.replace(/<[^>]+>/g, ' ').trim() : article.title; 
+            
+            // 🚨 HASH/KELİME DRENAJ KALKANI (Lokal Filtre) 🚨
+            const textToTest = (article.title + " " + fullContent).toLowerCase();
+            const keywords = [
+                'çip', 'chip', 'yarı iletken', 'semiconductor', 'yapay zeka', 'ai ', // 'ai ' with space to avoid capturing words with 'ai' inside
+                'enerji', 'jeopolitik', 'savunma sanayi', 'yazılım', 
+                'anthropic', 'open ai', 'openai', 'meta', 'gemini', 'chatgpt', 'claude', 'nvidia', 'amd', 'intel'
+            ];
+            
+            const isRelevant = keywords.some(kw => textToTest.includes(kw));
+
+            if (!isRelevant) {
+                console.log(`[News Agent] ATLANDI (İlgisiz Konu): ${article.title}`);
+                // Gemini'ı meşgul etmemek için haberi DB'ye "SKIPPED" olarak yaz, bir dahaki döngüde atlanmasını sağla.
+                await runQuery(
+                    `INSERT INTO stock_news (kantanId, slug, title, content, publishedAt, sentiment, impact, relatedAssets, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [article.id, article.slug, article.title, 'SKIPPED_BY_FILTER', article.publishedAt || new Date().toISOString(), 'NEUTRAL', 'NONE', '[]', Date.now()]
+                );
+                continue;
+            }
+
             const promptContent = fullContent.substring(0, 3000); // Sadece AI'ın okuyacağı kısmı kısalt (Maliyet/Hız için)
             
             const prompt = `${extractAssetsRules}
