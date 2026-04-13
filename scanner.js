@@ -701,6 +701,14 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
+        // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
+        // Hacmi 5M$ üzerinde olan bir coin tek saatte %10'dan fazla hareket etmişse İstihbarat fırlat.
+        const diff = (currentPrice - trapCurrentOpen) / trapCurrentOpen;
+        if (Math.abs(diff) >= 0.10 && globalVol >= 5000000) {
+            const { fireMercanBey } = require('./mercan_bey');
+            fireMercanBey(sym, diff > 0 ? 'PUMP' : 'DUMP', diff);
+        }
+
         if (direction === 'LONG' && globalVol < 4000000) {
             // Hacim 4 Milyonun altındaysa LONG YASAK (Slippage / Scam Wick koruması)
             return null;
