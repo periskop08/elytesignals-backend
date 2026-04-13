@@ -1991,8 +1991,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                 signalCount++;
             }
 
-            // Rate limit'i aşmamak için her istek arası 100ms bekle (1 saniyede 10 istek, limite çok uzak)
-            await delay(100);
+            // Rate limit'i aşmamak için her istek arası 400ms bekle (BingX limiti yoğunluğu)
+            await delay(400);
         }
 
         console.log(`[SCANNER] Scan complete. Found ${signalCount} new signals.`);
