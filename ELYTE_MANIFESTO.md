@@ -160,3 +160,12 @@ Yönetici (User) sisteme "Backtest yap" komutu verdiğinde AI (Antigravity) tara
     - Kaçı TP (Hedef), Kaçı SL (Zarar Kes) oldu
     - Win Rate (Kazanma Oranı) yüzdesi
     - **Kasa Simülasyonu:** 500$ başlangıç kasası, R:R=1.5 kuralları, Çapraz Mod 20X kaldıraç mantığına göre 1 ayın sonundaki *Net Kâr/Zarar (USD)* durumu tablolandırılır.
+
+---
+
+## 🔥 Perplexity Konseyi (v2.1) Optimizasyon Kararları
+Altay Bey'in kalbine (Kripto işlem algoritması) Ekin Bey ve Perplexity'nin vizyoner katkılarıyla üç yeni hayati modül eklenmiş ve 114 Altcoinlik devasa bir "1 Ay Matematiksel Backtest" sürecinden geçirilerek kalıcı olarak kodlanmıştır:
+
+1. **Ranging Limit (ADX < 20) Baskısı:** Piyasa ADX bazlı yatay moda girdiğinde (Ranging) uzun hedeflerden vazgeçilir. Hedef maksimum `1.0R` olarak daraltılır ve algoritmaya fazladan `-15 Ceza Puanı` (Soft-block) uygulanır. **Amaç:** Ranging alanlarda işlemi daraltmak ve zayıf sinyalleri bertaraf etmektir.
+2. **Hard-Block (Sert Veto):** Piyasa yataya bağlamış (ADX < 20) VE ana işlem yönü (Long/Short) Makro BTC trendine zıtsa; sistem kurulumun kalan güzelliğine bakmaz, puan hesabı yapmadan işlemi doğrudan \`VETO\` eder.
+3. **SMA 200 Smart Money Tuzağı:** "Fiyatın 200 SMA altında olması -15 ceza yemeli" kuralı optimize edilmiştir. Eğer fiyat SMA'ya tersken **dev bir süpürme iğnesi (> 1.5 ATR)** ve Order Block barındırıyorsa, bu Kurumsal Paranın perakende avlamak için kurduğu kusursuz bir tuzak kabul edilir. Sistem -15 cezayı silerek setup'a anında **+15 Kurumsal Av Bonusu** yükler.
