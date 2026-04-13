@@ -114,3 +114,5 @@ cron.schedule('30 3 * * *', async () => {
 });
 
 console.log("=== Baş Stratejist (CRO) Ekin Bey servisi başlatıldı (Nöbette) ===");
+
+module.exports = { generateStrategyReport };
