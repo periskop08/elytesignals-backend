@@ -4,6 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
+const cron = require('node-cron');
 
 const dbPath = path.resolve(__dirname, 'signals.db');
 const db = new sqlite3.Database(dbPath);
@@ -128,7 +129,7 @@ async function runArifBey() {
                     { parse_mode: 'Markdown' }
                 );
             }
-            process.exit(0);
+            return;
         }
         
         console.log(`${pendingLosses.length} adet işlem inceleniyor...`);
@@ -151,11 +152,14 @@ async function runArifBey() {
         }
 
         console.log("=== Arif Bey Görevini Tamamladı ===");
-        process.exit(0);
     } catch(e) {
         console.error("Critical Error", e);
-        process.exit(1);
     }
 }
 
-runArifBey();
+// Her gece 03:00'da çalışır
+cron.schedule('0 3 * * *', async () => {
+    await runArifBey();
+});
+
+console.log("=== Arif Bey (Otopsi Ajanı) servisi başlatıldı (Nöbette) ===");
