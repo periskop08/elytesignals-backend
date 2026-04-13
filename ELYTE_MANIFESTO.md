@@ -27,7 +27,7 @@ Elyte motoru, teknik analiz, makro veriler ve kurumsal opsiyon tahtası (Hisse S
 *   **Ichimoku Trend Onayı (+15):** Fiyat bulutun ve Tenkan/Kijun çizgilerinin doğru tarafındaysa trend onayı alınır.
 *   **4H Multi-Timeframe Trend Onayı (+15 veya -5):** İşlem yönü, 4 saatlik grafik trendiyle eşleşmiyorsa ceza alır, eşleşiyorsa premium puan alır.
 *   **ADX Rejimi (Trend Gücü):** ADX > 25 ise (+10 puan). Fiyat yataysa ve testere piyasasıysa (ADX < 20) (-10) ceza alır.
-*   **Stochastic RSI Aşırı Alım/Satım Cezaları (-10):** İşlem yönüne göre StochRSI zirve (80+) veya dip (20-) noktalardaysa FOMO'ya kapılmamak için ceza kesilir.
+*   **Stochastic RSI FOMO Kalkanı (Aşırı Alım/Satım Koruması):** Eskiden StochRSI (zirve 80+ veya dip 20-) olan işlemlere sadece (-15) FOMO cezası verilirdi. Artık **"ADX Şartlı İnfaz"** kuralı devrededir: Eğer fiyat zirvede/dipte ekstrem şişmiş vaziyetteyse ve Trend Gücü (ADX) **30'un altındaysa (zayıf trend)** işlem doğrudan **VETO EDİLİP REDDEDİLİR**. Eğer ADX > 30 ise (kasırga rüzgarı varsa), fiyatın şişmesi umursanmaz ve işlem ceza verilmeden ONAYLANIR (Rüzgarın yönüne set çekilmez).
 *   **Portföy Çeşitliliği Cezası (-12):** Aynı anda Majör kriptolarda (BTC, ETH, SOL, BNB) birden fazla aynı yönlü işlem açıksa risk yönetimi için puan düşürülür.
 
 ### 2- Hisse Senedi ve Varlık (MTA) Özel Analiz Motoru
