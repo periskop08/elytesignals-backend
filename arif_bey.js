@@ -5,6 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
 const cron = require('node-cron');
+const { logTokenUsage } = require('./usage_tracker');
 
 const dbPath = path.resolve(__dirname, 'signals.db');
 const db = new sqlite3.Database(dbPath);
@@ -81,6 +82,7 @@ DERS ÇIKARIMI: Veritabanına kaydedilecek, gelecekteki işlemlerde yapay zekay�
 Ders cümlen mutlaka "Ders: " kelimesiyle başlasın. Maksimum 2 cümle olsun. Şiirsel olma, teknik konuş.`;
 
         const result = await model.generateContent(prompt);
+        await logTokenUsage('Arif Bey', result);
         let response = result.response.text();
         
         // "Ders: " kısmını ayıklama

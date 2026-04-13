@@ -5,6 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { logTokenUsage } = require('./usage_tracker');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
@@ -115,6 +116,7 @@ Görev: Kuralı tamamen çöpe atmak yerine, bu olayı analiz edip kurala bir "�
 Önce "GEREKÇE:" başlığı altında bu istisnayı NEDEN eklediğini grafik mumlarına bakarak detaylıca anlat. Sonra "YENİ KURAL:" başlığı altında Orijinal Kuralı ve İstisna kısmını birleştirerek yaz.`;
 
                             const aiRes = await model.generateContent(prompt);
+                            await logTokenUsage('Börü Bey', aiRes);
                             const exceptionRuleText = aiRes.response.text().trim();
 
                             await runExec("UPDATE ai_lessons SET lessonText = ? WHERE id = ?", [exceptionRuleText, trade.lessonId]);

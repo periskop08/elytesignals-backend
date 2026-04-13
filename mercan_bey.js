@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const TelegramBot = require('node-telegram-bot-api');
+const { logTokenUsage } = require('./usage_tracker');
 
 // Gemini 1.5 Pro Search Grounding yeteneği için tanımlama
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -45,6 +46,7 @@ KURAL 1: Eğer ${symbol} ile ilgili bu düşüşe veya yükselişe sebep olacak 
 KURAL 2: Eğer somut bir veri veya haber bulursan, 3 veya 4 cümlelik çok net, finansal ve profesyonel bir özet raporu yaz. Zırva ve gereksiz laf kalabalığı yapma.`;
 
         const result = await searchModel.generateContent(prompt);
+        await logTokenUsage('Mercan Bey', result);
         let responseText = result.response.text().trim();
 
         // Fazladan referans/dipnot linkleri eklenmişse temizleyebiliriz ama genelde faydalıdır.
