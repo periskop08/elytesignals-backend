@@ -1804,7 +1804,7 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                 if (slippageExceeded) {
                                     console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
                                     if (bot && CONFIG.telegramAdminId) {
-                                        bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
+                                        bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\\n\\n🎯 İşlem: #${signal.symbol} (${signal.type})\\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\\n\\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
                                     // +--- SEPET KORELASYON MOTORU ---+
