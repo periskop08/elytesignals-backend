@@ -17,10 +17,10 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 }
 
 async function runDailyScreener() {
-    console.log("[ALTAY_BEY] Otomatik günluk borsa taramasi basliyor...");
+    console.log("[HAMDI_BEY] Otomatik günluk borsa taramasi basliyor...");
 
     if (!ai) {
-        console.error("[ALTAY_BEY] Gemini API Key bulunamadi, tarama durduruldu.");
+        console.error("[HAMDI_BEY] Gemini API Key bulunamadi, tarama durduruldu.");
         return;
     }
 
@@ -56,7 +56,7 @@ async function runDailyScreener() {
 
         let potentialSymbols = [];
         if (sp500State.includes("YÜKSEK RİSK")) {
-            console.log("[ALTAY_BEY] Piyasada ÇÖKÜŞ var. Inverse ETF'ler taranacak (SQQQ, SH).");
+            console.log("[HAMDI_BEY] Piyasada ÇÖKÜŞ var. Inverse ETF'ler taranacak (SQQQ, SH).");
             potentialSymbols.push("SQQQ", "SH"); 
         }
         for (const q of queryOptionsList) {
@@ -66,18 +66,18 @@ async function runDailyScreener() {
                     res.quotes.forEach(q => potentialSymbols.push(q.symbol));
                 }
             } catch(err) {
-                 console.error(`[ALTAY_BEY] Screener ${q.scrIds} error:`, err.message);
+                 console.error(`[HAMDI_BEY] Screener ${q.scrIds} error:`, err.message);
             }
         }
         
         // Uniquify symbols
         potentialSymbols = [...new Set(potentialSymbols)].filter(Boolean);
         if (potentialSymbols.length === 0) {
-            console.log("[ALTAY_BEY] Tarayici hisse bulamadi.");
+            console.log("[HAMDI_BEY] Tarayici hisse bulamadi.");
             return;
         }
 
-        console.log(`[ALTAY_BEY] Toplam ${potentialSymbols.length} ham aday bulundu. Yapay zeka filteresine giriyor...`);
+        console.log(`[HAMDI_BEY] Toplam ${potentialSymbols.length} ham aday bulundu. Yapay zeka filteresine giriyor...`);
 
         // Check against existing portfolio assets to only discover NEW ones
         const existingRows = await db.all("SELECT symbol FROM portfolio_assets");
@@ -85,11 +85,11 @@ async function runDailyScreener() {
         const newCandidates = potentialSymbols.filter(s => !existingSet.has(s)).slice(0, 5); // Limit to top 5 fresh candidates per day to respect API limits
 
         if (newCandidates.length === 0) {
-            console.log("[ALTAY_BEY] Yeni hisse adayi bulunamadi.");
+            console.log("[HAMDI_BEY] Yeni hisse adayi bulunamadi.");
             return;
         }
 
-        console.log(`[ALTAY_BEY] Gemini ${newCandidates.length} adayi inisellestiriyor:`, newCandidates);
+        console.log(`[HAMDI_BEY] Gemini ${newCandidates.length} adayi inisellestiriyor:`, newCandidates);
 
         let addedAny = false;
 
@@ -220,7 +220,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
 
                 // AI Approval Threshold check
                 if (parsed.sentimentPercent > 85) {
-                    console.log(`[ALTAY_BEY] ${symbol} basariyla incelendi ve skor: ${parsed.sentimentPercent}. Portfoye ekleniyor.`);
+                    console.log(`[HAMDI_BEY] ${symbol} basariyla incelendi ve skor: ${parsed.sentimentPercent}. Portfoye ekleniyor.`);
                     
                     // Insert into AI Sentiments database
                     await db.run("DELETE FROM ai_sentiments WHERE symbol = ?", [symbol]);
@@ -246,10 +246,10 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
                     
                     addedAny = true;
                 } else {
-                    console.log(`[ALTAY_BEY] ${symbol} skoru dusuk kaldi (${parsed.sentimentPercent}). Elendi.`);
+                    console.log(`[HAMDI_BEY] ${symbol} skoru dusuk kaldi (${parsed.sentimentPercent}). Elendi.`);
                 }
             } catch (evalErr) {
-                console.error(`[ALTAY_BEY] ${symbol} analiz hatasi:`, evalErr.message);
+                console.error(`[HAMDI_BEY] ${symbol} analiz hatasi:`, evalErr.message);
             }
             
             // Wait 5 seconds between evaluating candidates to avoid Rate Limiting
@@ -257,7 +257,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
         }
         
     } catch(err) {
-        console.error("[ALTAY_BEY] Engine Main Error:", err);
+        console.error("[HAMDI_BEY] Engine Main Error:", err);
     }
 }
 
