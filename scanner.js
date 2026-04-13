@@ -1107,9 +1107,12 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
                     // ADX Koruması (Kripto için FOMO Filtresi)
-                    if (currentADX < 30) {
+                    if (currentADX < 24) {
                         console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla çöpe atıldı.`);
                         return null; // Zayıf trendde şişmiş piyasa, işlemi tamamen VETO et
+                    } else if (currentADX >= 24 && currentADX < 30) {
+                        qualityScore -= 10;
+                        warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${Math.round(currentADX)}) -> -10 Ceza`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Rüzgar Arkada (Veto İptal)');
                         // Ceza (-15) uygulanmıyor çünkü Trend > 30 (Güçlü)
@@ -1120,9 +1123,12 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
                     // ADX Koruması (Kripto için)
-                    if (currentADX < 30) {
+                    if (currentADX < 24) {
                         console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla çöpe atıldı.`);
                         return null; 
+                    } else if (currentADX >= 24 && currentADX < 30) {
+                        qualityScore -= 10;
+                        warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${Math.round(currentADX)}) -> -10 Ceza`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Satım ama Düşüş Trendi Güçlü (Veto İptal)');
                     }
