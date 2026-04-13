@@ -1108,11 +1108,11 @@ async function analyzeCoin(symbolInfo) {
                 } else {
                     // ADX Koruması (Kripto için FOMO Filtresi)
                     if (currentADX < 24) {
-                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla çöpe atıldı.`);
+                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı.`);
                         return null; // Zayıf trendde şişmiş piyasa, işlemi tamamen VETO et
                     } else if (currentADX >= 24 && currentADX < 30) {
                         qualityScore -= 10;
-                        warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${Math.round(currentADX)}) -> -10 Ceza`);
+                        warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Rüzgar Arkada (Veto İptal)');
                         // Ceza (-15) uygulanmıyor çünkü Trend > 30 (Güçlü)
@@ -1124,11 +1124,11 @@ async function analyzeCoin(symbolInfo) {
                 } else {
                     // ADX Koruması (Kripto için)
                     if (currentADX < 24) {
-                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla çöpe atıldı.`);
+                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı.`);
                         return null; 
                     } else if (currentADX >= 24 && currentADX < 30) {
                         qualityScore -= 10;
-                        warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${Math.round(currentADX)}) -> -10 Ceza`);
+                        warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Satım ama Düşüş Trendi Güçlü (Veto İptal)');
                     }
