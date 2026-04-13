@@ -757,8 +757,8 @@ async function analyzeCoin(symbolInfo) {
         
         // 2. FVG YARDIMCI KONTROLÜ
         let tempHasFVG = false;
-        const lastIdx = closes.length - 1;
-        for (let i = lastIdx - 2; i <= lastIdx; i++) {
+        const trapLastIdx = closes.length - 1;
+        for (let i = trapLastIdx - 2; i <= trapLastIdx; i++) {
             if (i >= 2) {
                 if (direction === 'LONG' && highs[i-2] < lows[i]) tempHasFVG = true; 
                 if (direction === 'SHORT' && lows[i-2] > highs[i]) tempHasFVG = true; 
