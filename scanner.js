@@ -267,6 +267,9 @@ async function getUsdtPairsAndAssets() {
     try {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
+        if (!symbols || !Array.isArray(symbols)) {
+            throw new Error(`BingX API Geçici Bekleme (Rate Limit/Bağlantı): ${JSON.stringify(response.data)}`);
+        }
         const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT', 'NXPC-USDT'];
         
         let cryptoPairs = [];
