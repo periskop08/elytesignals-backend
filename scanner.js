@@ -1510,6 +1510,26 @@ async function analyzeCoin(symbolInfo) {
             return null;
         }
 
+        // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
+        if (qualityScore >= 55) {
+            const { checkLiquidityAsync } = require('./demir_bey');
+            const demirRes = await Promise.race([
+                checkLiquidityAsync(sym, direction),
+                new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Bypass)" }), 2000))
+            ]);
+            
+            qualityScore += demirRes.scoreMod;
+            if (demirRes.msg) {
+                warnings.push(`[Demir Bey: ${demirRes.msg}]`);
+            }
+
+            // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
+            if (qualityScore < 55) {
+                console.log(`[VETO] ${sym} işlemi Demir Bey'in (Sığ Tahta / Yüksek Spread) cezasıyla sisteme sokulmadı.`);
+                return null;
+            }
+        }
+
         // Log the detailed summary to console exactly as requested for Backtesting
         console.log(JSON.stringify({
             symbol: sym,
