@@ -38,7 +38,8 @@ async function runDailyScreener() {
             const today = new Date();
             const yearAgo = new Date(today);
             yearAgo.setFullYear(today.getFullYear() - 1);
-            const spData = await yahooFinance.historical('^GSPC', { period1: yearAgo.toISOString().split('T')[0], interval: '1d' });
+            const spRes = await yahooFinance.chart('^GSPC', { period1: yearAgo.toISOString().split('T')[0], interval: '1d' });
+            const spData = spRes.quotes;
             if (spData && spData.length > 200) {
                 const spCloses = spData.map(d => d.close);
                 const spEma200 = EMA.calculate({ values: spCloses, period: 200 });
@@ -114,7 +115,8 @@ async function runDailyScreener() {
                     const today = new Date();
                     const yearAgo = new Date(today);
                     yearAgo.setFullYear(today.getFullYear() - 1); 
-                    const hist = await yahooFinance.historical(symbol, { period1: yearAgo.toISOString().split('T')[0], interval: '1d' });
+                    const histRes = await yahooFinance.chart(symbol, { period1: yearAgo.toISOString().split('T')[0], interval: '1d' });
+                    const hist = histRes.quotes;
                     if (hist && hist.length > 200) {
                         const closes = hist.map(h => h.close);
                         const rsiVals = RSI.calculate({ values: closes, period: 14 });
