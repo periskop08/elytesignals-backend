@@ -1354,14 +1354,21 @@ app.post('/api/user-trades/close', async (req, res) => {
 });
 
 // --- ELYTE ASSET PRICE PROXY ---
+let assetPriceCache = {};
+let lastAssetPriceFetch = 0;
+
 app.get('/api/prices/assets', async (req, res) => {
     try {
+        // Ön Bellek Kalkanı (5 Saniye)
+        if (Date.now() - lastAssetPriceFetch < 5000 && Object.keys(assetPriceCache).length > 0) {
+            return res.json(assetPriceCache);
+        }
+
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const prices = {};
-        if (response.data && response.data.data) {
-            
-            // global.BINGX_SYMBOL_MAP -> { "SP500": "NCSISP5002USD-USDT" }
-            // Ters Çevir -> { "NCSISP5002USD-USDT": "SP500" }
+        
+        // BingX API Dizisi Teyidi (Rate Limit Koruma)
+        if (response.data && Array.isArray(response.data.data)) {
             const reverseMap = {};
             if (global.BINGX_SYMBOL_MAP) {
                 Object.keys(global.BINGX_SYMBOL_MAP).forEach(k => {
@@ -1369,7 +1376,6 @@ app.get('/api/prices/assets', async (req, res) => {
                 });
             }
 
-            // Eğer scanner.js henüz çalışmadıysa fallback için statik bir iki harita
             const FALLBACK_BINGX_MAP = {
                 'NCCOGOLD2USD-USDT': 'XAUUSD',
                 'NCCOXAG2USD-USDT': 'XAGUSD'
@@ -1383,9 +1389,21 @@ app.get('/api/prices/assets', async (req, res) => {
                  }
             });
         }
-        res.json(prices);
+        
+        // Sadece geçerli veri varsa belleği güncelle
+        if (Object.keys(prices).length > 0) {
+            assetPriceCache = prices;
+            lastAssetPriceFetch = Date.now();
+        }
+        
+        // Veri boşsa bile cebe dön (Fail-safe)
+        res.json(Object.keys(assetPriceCache).length > 0 ? assetPriceCache : prices);
     } catch (e) {
         console.error("Asset price proxy error:", e.message);
+        // Hata anında son başarılı veriyi döndür (Körlüğü engelle)
+        if (Object.keys(assetPriceCache).length > 0) {
+            return res.json(assetPriceCache);
+        }
         res.status(500).json({error: 'Failed to fetch asset prices from BingX'});
     }
 });
