@@ -1661,7 +1661,11 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                 }
 
                 if (isBlocked) {
-                    console.log(`[SHADOW BLOCK] Sinyal Engellendi: ${signal.symbol} -> ${blockReason}`);
+                    console.log(`[SHADOW BLOCK] Danışman LLM Puan Kırdı: ${signal.symbol} -> ${blockReason}`);
+                    
+                    signal.qualityScore -= 25;
+                    signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + 'LLM VETOSU (-25)';
+
                     await db.run(
                         "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore]
@@ -1670,10 +1674,9 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                     // Telegram Admin'e Uyarı Gönder
                     if (telegramBot && CONFIG.telegramAdminId) {
                         try {
-                            telegramBot.sendMessage(CONFIG.telegramAdminId, `🤖 *Otonom Ajan Sinyali Reddetti (Shadow Mode)* 🤖\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Sebep:* ${blockReason}\n\nBu sinyal veritabanına ve gruba düşmedi. Sadece gölge modunda arka planda PnL takibine alındı.`, { parse_mode: 'Markdown' });
+                            telegramBot.sendMessage(CONFIG.telegramAdminId, `👨‍🏫 *Danışman Ajan Sinyali Notladı (Soft Veto)* 👨‍🏫\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Uyarı:* ${blockReason}\n\nBu sinyal veritabanına kaydedildi ancak Kalite Puanı -25 düşürüldü. Gölge PnL takibine de alındı.`, { parse_mode: 'Markdown' });
                         } catch(e) {}
                     }
-                    continue; // Skip DB insertion and everything else
                 }
                 // +--- END SHADOW BLOCK ---+
 
@@ -1719,7 +1722,9 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                 }
 
                 // --- AUTO TRADING BLOCK START ---
-                if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
+                if (signal.qualityScore < dynamicThreshold) {
+                    console.log(`[AUTO-TRADE] Atlandı: Soft Veto Sonrası Puanı ${signal.qualityScore} (Gerekli: ${dynamicThreshold})`);
+                } else if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
                         // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS ---+
                         let activeTradesList = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
