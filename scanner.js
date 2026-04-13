@@ -1845,11 +1845,7 @@ async function sendNightlyReport() {
             reportText += backupErrorStr;
         }
 
-        if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-            let cleanMsg = reportText.replace(/\*\*/g, '*');
-            await telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, cleanMsg, { parse_mode: 'Markdown' });
-            console.log("[ARIF_BEY] Günlük rapor Telegram'a iletildi.");
-        }
+
 
         // --- GOOGLE SHEETS YEDEKLEME (Yeni Yapı) ---
         try {
