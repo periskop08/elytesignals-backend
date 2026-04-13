@@ -69,6 +69,8 @@ Tüm analizi yaptıktan sonra AŞAĞIDAKİ JSON ŞABLONU İLE yanıt ver (Başka
 }
 `;
 
+const KANTAN_API = 'https://kantan.news/api/news?filter=all&category=&q=&page=1&limit=24';
+
 async function fetchAndProcessNews() {
     console.log("[News Agent] İstihbarat Ağı başlatıldı. Kantan.news taranıyor...");
     try {
