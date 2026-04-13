@@ -1551,7 +1551,7 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= dynamicThreshold) {
+        if (qualityScore >= dynamicThreshold && (!symbolInfo || !symbolInfo.isAsset)) {
             const { checkLiquidityAsync } = require('./demir_bey');
             const demirRes = await Promise.race([
                 checkLiquidityAsync(sym, direction),
