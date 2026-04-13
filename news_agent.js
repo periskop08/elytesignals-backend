@@ -123,8 +123,8 @@ async function fetchAndProcessNews() {
                 console.log(`[News Agent] ATLANDI (İlgisiz Konu): ${article.title}`);
                 // Gemini'ı meşgul etmemek için haberi DB'ye "SKIPPED" olarak yaz, bir dahaki döngüde atlanmasını sağla.
                 await db.run(
-                    `INSERT INTO stock_news (kantanId, slug, title, content, publishedAt, sentiment, impact, relatedAssets, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [article.id, article.slug, article.title, 'SKIPPED_BY_FILTER', article.publishedAt || new Date().toISOString(), 'NEUTRAL', 'NONE', '[]', Date.now()]
+                    `INSERT INTO stock_news (kantanId, title, slug, content, summary, relatedSymbols, sentimentScore) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [article.id, article.title, article.slug, 'SKIPPED_BY_FILTER', "[SKIPPED_BY_FILTER]", "", 50]
                 );
                 continue;
             }
