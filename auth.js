@@ -13,6 +13,12 @@ let bot = null;
 if (token && token.trim() !== '') {
     // Polling mode for the bot
     bot = new TelegramBot(token, { polling: true });
+    
+    // Silence harmless ECONNRESET and polling errors
+    bot.on('polling_error', (error) => {
+        // Silently ignore to avoid console spam
+    });
+
     console.log("Telegram Auth Bot is listening for deep links...");
 
     // Dinleyici: `/start {sessionId}`
