@@ -684,12 +684,12 @@ async function analyzeCoin(symbolInfo) {
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
         
         // ADX Hesaplama (Ranging Limit tespiti)
-        const adxRes = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
-        const currentADX = adxRes.length > 0 ? adxRes[adxRes.length - 1].adx : 25;
-        const isRangingLimit = currentADX < 20;
+        const trapAdxRes = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
+        const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
+        const trapIsRangingLimit = trapCurrentADX < 20;
 
         // HARD-BLOCK VETO KURALI: Ranging Piyasada Makro Trende Karşı İşlem AÇILAMAZ!
-        if (isRangingLimit) {
+        if (trapIsRangingLimit) {
             const btc1d = globalMarketState.btc1dObj;
             if (btc1d && btc1d.trend === 'BEAR' && direction === 'LONG') {
                 console.log(`[VETO] ${sym} LONG işlemi ADX Ranging + BTC Bear çakışması nedeniyle Hard-Block edildi.`);
@@ -781,7 +781,7 @@ async function analyzeCoin(symbolInfo) {
         }
         
         // --- Ranging Limit Cezası ---
-        if (isRangingLimit) {
+        if (trapIsRangingLimit) {
             qualityScore -= 15;
             warnings.push('ADX Ranging Limit (-15)');
         }
@@ -1287,11 +1287,11 @@ async function analyzeCoin(symbolInfo) {
             reward = targetP - currentPrice;
 
             // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
-            let maxReward = isRangingLimit ? (risk * 1.0) : (risk * 3.0);
+            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice + reward;
-                warnings.push(isRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
             }
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
@@ -1311,11 +1311,11 @@ async function analyzeCoin(symbolInfo) {
             reward = currentPrice - targetP;
 
             // 1:3 R:R Cap veya Ranging Limit 1.0R
-            let maxReward = isRangingLimit ? (risk * 1.0) : (risk * 3.0);
+            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice - reward;
-                warnings.push(isRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
             }
         }
 
