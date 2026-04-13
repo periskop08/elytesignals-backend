@@ -191,10 +191,10 @@ function processCandleWindow(symbolObj, allCandles, index) {
         }
     }
 
-    // Ranging Limit Cezası
-    if (isRangingLimit) {
-        qualityScore -= 15;
-    }
+    // Ranging Limit Cezası (Devredışı Bırakıldı - Sadece 1.0R hedeflenecek)
+    // if (isRangingLimit) {
+    //     qualityScore -= 15;
+    // }
 
     // Volatilite Cezası
     if (currentATR > avgATR * 2.0) qualityScore -= 15;
