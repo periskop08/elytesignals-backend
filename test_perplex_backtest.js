@@ -32,7 +32,7 @@ async function getUsdtPairs() {
 
 async function fetchCandles(bingxSymbol, limit = 1000) {
     try {
-        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${bingxSymbol}&interval=60m&limit=${limit}`);
+        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${bingxSymbol}&interval=1h&limit=${limit}`);
         let list = res.data.data || [];
         list.sort((a,b) => a.time - b.time);
         
