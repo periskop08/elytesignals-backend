@@ -140,7 +140,7 @@ Her bir sinyalin, PnL (Kâr/Zarar) dengesini koruması için kurumsal düzeyde k
 **(Sürüm: v4.0.0 - Otonom Ajan Bürokrasisi)**
 *   **(AI Core) Hedge Fon Ajanları Kişiselleştirmesi:** Sistem arkasında koşan düz ve isimsiz kod blokları, "Elyte Ajan Bürokrasisi"ne dönüştürüldü. Her ajanın Telegram'da kimliği ve sabit mesaisi kodlandı: 
     - **Altay Bey:** Teknik Tarama ve Sinyal Bulucu (`scanner_algo_diag.js`).
-    - **Hamdi Bey:** Makro-Ekonomi, Hisse İstihbaratı ve Haber Ajansı yöneticisi (`news_agent.js`).
+    - **Hamdi Bey:** Makro-Ekonomi, Hisse İstihbaratı ve Haber Ajansı yöneticisi (`news_agent.js`). Kendisine **Lokal Drenaj Kalkanı** takılmıştır. (Sadece çip, yapay zeka, enerji, jeopolitik, savunma sanayii, AI dil modelleri gibi haberleri gördüğünde Gemini'yi uyandırır, magazin ve ilgisiz borsa haberlerini kendi içinde çöpe atarak muazzam bir token tasarrufu sağlar).
     - **Börü Bey:** Gölge Sinyal Takipçisi ve Kar/Zarar Esneklik yöneticisi (`shadow_tracker.js`).
     - **Arif Bey:** Kaybeden İşlemler (Loss) tespit ve Otopsi yöneticisi (`arif_bey.js`).
     - **Mercan Bey:** Canlı Anomali Tarama ve Enformasyon yöneticisi (`mercan_bey.js`).
