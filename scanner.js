@@ -1378,12 +1378,22 @@ async function analyzeCoin(symbolInfo) {
         let organicRR = risk > 0 ? (reward / risk) : 0; // Doğal hedef R:R'si
         let finalRR = organicRR;
         
+        // DUAL ENGINE SEÇİMİ (ALPHA vs VOLUME)
+        let operationMode = 'ALPHA';
+        if (breakdown.regime === 'TRENDING_VOLATILE' && currentADX > 30) {
+            operationMode = 'VOLUME';
+        } else if (breakdown.regime === 'TRENDING' && breakdown.rvol > 1.2) {
+            operationMode = 'VOLUME';
+        }
+        breakdown.engineMode = operationMode;
+
         // COST-ADJUSTED RR HESABI (Slippage + Borsa Fee)
         let cost = (currentPrice * 0.0005) + (risk * 0.15); // Tahmini maliyet
         let effectiveRR = risk > 0 ? ((reward) / (risk + cost)) : 0;
         
-        if (effectiveRR < 1.3) {
-            console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) 1.3'ün altında kaldığı için reddedildi.`);
+        let requiredEffectiveRR = operationMode === 'VOLUME' ? 1.12 : 1.30;
+        if (effectiveRR < requiredEffectiveRR) {
+            console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR}) geçemedi.`);
             return null;
         }
 
@@ -1518,10 +1528,17 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // 1. Dinamik Kalite Barajı (Dynamic Threshold)
-        let dynamicThreshold = 55;
-        if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 50;
-        else if (breakdown.regime === 'RANGING') dynamicThreshold = 60;
+        // 1. Dinamik Kalite Barajı (Çift Motor / Dual Engine)
+        let dynamicThreshold = 60;
+        if (operationMode === 'VOLUME') {
+            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 42;
+            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 44;
+            else dynamicThreshold = 58;
+        } else {
+            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 50;
+            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 52;
+            else dynamicThreshold = 60;
+        }
         
         if (qualityScore < dynamicThreshold) {
             return null;
@@ -1861,27 +1878,38 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                                 const tBase = t.symbol.replace('-USDT', '').replace('USDT', '');
                                                 if (sectorMap[tBase] === clusterName) clusterCount++;
                                             });
-                                            if (clusterCount >= 2) {
-                                                skipAutoTrade = true;
-                                                console.log(`[CORRELATION REJECT] ${clusterName} sektöründe zaten ${clusterCount} adet aktif işlem var. Borsaya oto-emir atılmayacak (UI Sinyali Aktif).`);
-                                                if (bot && CONFIG.telegramAdminId) {
-                                                    bot.sendMessage(CONFIG.telegramAdminId, `🛡️ *Sepet Riski Koruma Kalkanı Devrede*
-
-🎯 #${signal.symbol} işlemi için sinyal üretildi ancak **borsaya emir gönderilmedi!**
-Nedeni: Sepette zaten maksimum toleransta (2 adet) açık **${clusterName}** coini bulunuyor.`, { parse_mode: 'Markdown' });
+                                            let isVolMode = signal.breakdown && signal.breakdown.engineMode === 'VOLUME';
+                                            let clusterLimit = isVolMode ? 3 : 2;
+                                            
+                                            if (clusterCount >= clusterLimit) {
+                                                if (isVolMode && clusterCount === 3) {
+                                                    skipAutoTrade = false;
+                                                    signal.qualityScore -= 10;
+                                                    llmRiskPenalty = (typeof llmRiskPenalty !== 'undefined') ? llmRiskPenalty * 0.5 : 0.5;
+                                                } else {
+                                                    skipAutoTrade = true;
+                                                    console.log(`[CORRELATION REJECT] ${clusterName} sektöründe aktif işlem limiti (${clusterCount}/${clusterLimit}).`);
                                                 }
                                             }
                                         }
                                     } catch(e) {}
 
                                     if (!skipAutoTrade) {
-                                        // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
+                                        // +--- DYNAMIC POSITION SIZING (V5.2 DUAL ENGINE) ---+
                                         let riskMultiplier = 1.0;
                                     try {
-                                        if (signal.qualityScore >= 80) riskMultiplier = 1.1;
-                                        else if (signal.qualityScore >= 70) riskMultiplier = 1.0;
-                                        else if (signal.qualityScore >= 60) riskMultiplier = 0.75;
-                                        else riskMultiplier = 0.5;
+                                        let isVol = signal.breakdown && signal.breakdown.engineMode === 'VOLUME';
+                                        if (isVol) {
+                                            if (signal.qualityScore >= 80) riskMultiplier = 1.15;
+                                            else if (signal.qualityScore >= 65) riskMultiplier = 1.0;
+                                            else if (signal.qualityScore >= 50) riskMultiplier = 0.75;
+                                            else riskMultiplier = 0.5;
+                                        } else {
+                                            if (signal.qualityScore >= 80) riskMultiplier = 1.1;
+                                            else if (signal.qualityScore >= 70) riskMultiplier = 1.0;
+                                            else if (signal.qualityScore >= 60) riskMultiplier = 0.75;
+                                            else riskMultiplier = 0.5;
+                                        }
                                         
                                         // LLM Risk Kesintisi (v5.1 Hedge Fund Kuralı)
                                         if (typeof llmRiskPenalty !== 'undefined') {
