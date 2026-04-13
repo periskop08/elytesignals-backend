@@ -10,18 +10,17 @@ const CONFIG = {
 // --- BINGX API HELPERS ---
 async function getUsdtPairs() {
     try {
-        const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
-        const symbols = response.data.data;
-        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT'];
+        const response = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
+        const symbols = response.data;
+        const ignoredStables = ['USDCUSDT', 'USD1USDT', 'USDEUSDT', 'BUSDUSDT', 'TUSDUSDT', 'FDUSDUSDT', 'EURUSDT', 'DAIUSDT', 'USTCUSDT', 'PYUSDUSDT'];
         const usdtPairs = symbols.filter(s => 
-            s.symbol.endsWith('-USDT') && 
-            !s.symbol.startsWith('NC') && 
+            s.symbol.endsWith('USDT') && 
             !ignoredStables.includes(s.symbol) && 
-            parseFloat(s.quoteVolume) >= 2000000 // Min şart Shorts için 2M
+            parseFloat(s.quoteVolume) >= 2000000 
         );
         return usdtPairs.map(s => ({ 
-            symbol: s.symbol.replace('-', ''), 
-            bingxSymbol: s.symbol,
+            symbol: s.symbol, 
+            bingxSymbol: s.symbol.replace('USDT', '-USDT'),
             volume: parseFloat(s.quoteVolume) 
         }));
     } catch (e) {
