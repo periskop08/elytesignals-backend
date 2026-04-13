@@ -743,14 +743,14 @@ async function analyzeCoin(symbolInfo) {
         let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
         
         // 1. ORDER BLOCK (OB) YARDIMCI KONTROLÜ
-        const obZone = direction === 'LONG' ? [rangeLow - (currentATR * 1.5), rangeLow + (currentATR * 1.5)] : [rangeHigh - (currentATR * 1.5), rangeHigh + (currentATR * 1.5)];
-        const obCandlesStart = closes.length - CONFIG.obLookback - 6;
+        const trapObZone = direction === 'LONG' ? [rangeLow - (currentATR * 1.5), rangeLow + (currentATR * 1.5)] : [rangeHigh - (currentATR * 1.5), rangeHigh + (currentATR * 1.5)];
+        const trapObCandlesStart = closes.length - CONFIG.obLookback - 6;
         let tempHasOB = false;
-        for (let i = obCandlesStart; i <= closes.length - 6; i++) {
+        for (let i = trapObCandlesStart; i <= closes.length - 6; i++) {
             if (i < 0) continue;
-            if (direction === 'LONG' && closes[i] < opens[i] && closes[i] <= obZone[1] && closes[i] >= obZone[0]) {
+            if (direction === 'LONG' && closes[i] < opens[i] && closes[i] <= trapObZone[1] && closes[i] >= trapObZone[0]) {
                 if (highs[i+1] > highs[i]) { tempHasOB = true; break; }
-            } else if (direction === 'SHORT' && closes[i] > opens[i] && closes[i] >= obZone[0] && closes[i] <= obZone[1]) {
+            } else if (direction === 'SHORT' && closes[i] > opens[i] && closes[i] >= trapObZone[0] && closes[i] <= trapObZone[1]) {
                 if (lows[i+1] < lows[i]) { tempHasOB = true; break; }
             }
         }
