@@ -4,6 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const axios = require('axios');
 const cron = require('node-cron');
+const { logTokenUsage } = require('./usage_tracker');
 
 const dbPath = path.resolve(__dirname, 'signals.db');
 const db = new sqlite3.Database(dbPath);
@@ -95,13 +96,33 @@ async function generateStrategyReport() {
         - Raporun tamamı kısa, çok net ve tamamen teknik tespitlere odaklansın. Doğrudan başlıklara gir.`;
 
         const result = await model.generateContent(prompt);
+        await logTokenUsage('Ekin Bey', result);
         let response = result.response.text();
 
         console.log("\n=== GEMINI STRATEJİ RAPORU ===\n");
         console.log(response);
 
-        // Send to Telegram
-        let ekinMsg = `👨‍💼 *Merhaba Ben Ekin Bey, görevimin başındayım.*\n\nİşte dünkü analizlere göre yapay zeka tabanlı Strateji Raporum:\n\n${response}\n\nİyi geceler.`;
+        // Query total token usage for the last 24 hours
+        let tokenReportRow = "";
+        try {
+            const usageData = await runQuery(`
+                SELECT agent_name, SUM(total_tokens) as t_tokens 
+                FROM api_usage 
+                WHERE datetime(created_at) > datetime('now', '-24 hours') 
+                GROUP BY agent_name
+            `);
+            if (usageData && usageData.length > 0) {
+                tokenReportRow = "\n\n💰 *Otonom Sistem Token Harcaması (Son 24 Saat)*\n";
+                let grandTotal = 0;
+                usageData.forEach(row => {
+                    tokenReportRow += `• ${row.agent_name}: ${row.t_tokens} Token\n`;
+                    grandTotal += row.t_tokens;
+                });
+                tokenReportRow += `*Genel Toplam:* ${grandTotal} Token`;
+            }
+        } catch (e) { console.error("Token kullanım verisi okunamadı:", e.message); }
+
+        let ekinMsg = `👨‍💼 *Merhaba Ben Ekin Bey, görevimin başındayım.*\n\nİşte dünkü analizlere göre yapay zeka tabanlı Strateji Raporum:\n\n${response}${tokenReportRow}\n\nİyi geceler.`;
         await sendTelegramMessage(ekinMsg);
         console.log("\nTelegram raporu iletildi. Görev tamam.");
     } catch(e) {

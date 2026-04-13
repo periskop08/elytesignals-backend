@@ -2,8 +2,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database');
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-
 let telegramBot = null;
+const { logTokenUsage } = require('./usage_tracker');
 if (process.env.TELEGRAM_BOT_TOKEN) {
     telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 }
@@ -124,6 +124,7 @@ HABER İÇERİĞİ: ${promptContent}
                 });
                 
                 const result = await model.generateContent(prompt);
+                await logTokenUsage('Hamdi Bey', result);
                 let responseText = result.response.text().trim();
                 let parsed;
                 try {
