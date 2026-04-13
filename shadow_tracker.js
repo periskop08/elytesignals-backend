@@ -112,7 +112,7 @@ Son 24 Saatlik Mum Akışı:
 ${candleContext}
 
 Görev: Kuralı tamamen çöpe atmak yerine, bu olayı analiz edip kurala bir "İSTİSNA (Exception)" maddesi ekleyeceksin.
-Bana Orijinal Kuralı tekrar ver, devamına da "İSTİSNA: [Bu şartlar altındaysa kurala uyulmayabilir...]" şeklinde tek bir net uyarı ekle. Laf kalabalığı yapma, direkt kuralı ve istisnasını yaz.`;
+Önce "GEREKÇE:" başlığı altında bu istisnayı NEDEN eklediğini grafik mumlarına bakarak detaylıca anlat. Sonra "YENİ KURAL:" başlığı altında Orijinal Kuralı ve İstisna kısmını birleştirerek yaz.`;
 
                             const aiRes = await model.generateContent(prompt);
                             const exceptionRuleText = aiRes.response.text().trim();
@@ -121,7 +121,7 @@ Bana Orijinal Kuralı tekrar ver, devamına da "İSTİSNA: [Bu şartlar altında
                             console.log(`[BÖRÜ_BEY] Kural güncellendi: ${exceptionRuleText}`);
 
                             if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                                bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden yorumlandı ve "İstisna" alt başlığına sahip esnek bir ağaç yapısına geçildi.\n\n_Yeni Kural:_ ${exceptionRuleText}`, { parse_mode: 'Markdown' });
+                                bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklendi.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
                             }
                         }
                     } catch (err) {
@@ -143,8 +143,8 @@ console.log("[BÖRÜ_BEY] Gölge Takip Ajanı (Börü Bey) Aktif!");
 setInterval(checkShadowTrades, 60000); // Her dakikada bir kontrol et
 checkShadowTrades();
 
-// Her gece 03:10'da Börü Bey'in Telegram raporu
-cron.schedule('10 3 * * *', async () => {
+// Her gece 03:20'de Börü Bey'in Telegram raporu
+cron.schedule('20 3 * * *', async () => {
     try {
         const row = await runQuery(`SELECT count(id) as cnt FROM user_trades WHERE status = 'CLOSED' AND pnl < 0 AND datetime(closedAt) > datetime('now', '-24 hours')`);
         const shadowRow = await runQuery(`SELECT count(id) as cnt FROM shadow_trades WHERE status = 'LOSS' AND datetime(closedAt) > datetime('now', '-24 hours')`);
