@@ -13,8 +13,8 @@ const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 const dbPath = path.resolve(__dirname, 'signals.db');
 const db = new sqlite3.Database(dbPath);
 
-const { TELEGRAM_BOT_TOKEN_ADMIN, TELEGRAM_ADMIN_CHAT_ID } = process.env;
-const bot = TELEGRAM_BOT_TOKEN_ADMIN ? new TelegramBot(TELEGRAM_BOT_TOKEN_ADMIN, { polling: false }) : null;
+const { TELEGRAM_BOT_TOKEN, ADMIN_TELEGRAM_ID } = process.env;
+const bot = TELEGRAM_BOT_TOKEN ? new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false }) : null;
 
 function runQuery(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -122,16 +122,16 @@ Görev: Kuralı tamamen çöpe atmak yerine, bu olayı analiz edip kurala bir "�
                             await runExec("UPDATE ai_lessons SET lessonText = ? WHERE id = ?", [exceptionRuleText, trade.lessonId]);
                             console.log(`[BÖRÜ_BEY] Kural güncellendi: ${exceptionRuleText}`);
 
-                            if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                                bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklendi.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
+                            if (bot && ADMIN_TELEGRAM_ID) {
+                                bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklendi.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
                             }
                         }
                     } catch (err) {
                         console.error("[BÖRÜ_BEY] Error adapting AI lesson:", err.message);
                     }
                 } else {
-                    if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                        bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `⚠️ *Börü Bey Uyarıyor!* \n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ ama biz girmedik!`);
+                    if (bot && ADMIN_TELEGRAM_ID) {
+                        bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey Uyarıyor!* \n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ ama biz girmedik!`);
                     }
                 }
             }
@@ -156,8 +156,8 @@ cron.schedule('20 3 * * *', async () => {
         let totalAutopsy = lostCount; // user_trades represent the actual autopsies that Arif checks
 
         let msg = `🐺 *Merhaba ben Börü Bey; Görevimin başındayım.*\n\nBugün portföyümüzdeki işlemleri saniye saniye takip ederek, stop olan *${totalAutopsy}* adet işlemi incelenmesi için Arif Bey'e (Otopsi) sevk ettim.\n\nNöbete devam ediyorum, iyi geceler.`;
-        if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-            await bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, msg, { parse_mode: 'Markdown' });
+        if (bot && ADMIN_TELEGRAM_ID) {
+            await bot.sendMessage(ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
             console.log("[BÖRÜ_BEY] Günlük rapor Telegram'a iletildi.");
         }
     } catch(e) {
