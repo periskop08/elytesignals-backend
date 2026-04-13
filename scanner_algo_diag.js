@@ -562,12 +562,18 @@ async function analyzeCoin(symbolInfo) {
 
         // MATEMATİKSEL LİKİDİTE KONTROLÜ (SWEEP & RECLAIM ZORUNLU TABAN KURAL)
         let sweepIdxLong = -1;
+        let wickSize = 0;
+        const currentLow = lows[lows.length - 1];
+        const currentHigh = highs[highs.length - 1];
+        const currentOpen = opens[opens.length - 1];
+
         if (recentMin <= rangeLow * 1.005 && currentPrice > rangeLow) {
             let sweepIdx = lows.lastIndexOf(recentMin);
             if (sweepIdx !== -1) {
                 if (currentPrice > highs[sweepIdx]) { // CHOCH
                     dipDeviation = true;
                     sweepIdxLong = sweepIdx;
+                    wickSize = Math.min(currentOpen, currentPrice) - currentLow;
                 }
             }
         }
@@ -579,6 +585,7 @@ async function analyzeCoin(symbolInfo) {
                 if (currentPrice < lows[sweepIdx]) {
                     tepeDeviation = true;
                     sweepIdxShort = sweepIdx;
+                    wickSize = currentHigh - Math.max(currentOpen, currentPrice);
                 }
             }
         }
@@ -593,10 +600,27 @@ async function analyzeCoin(symbolInfo) {
         
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
-        
+
+        // ADX Hesaplama (Ranging Limit tespiti)
+        const adxRes = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
+        const currentADX = adxRes.length > 0 ? adxRes[adxRes.length - 1].adx : 25;
+        const isRangingLimit = currentADX < 20;
+
+        // HARD-BLOCK VETO KURALI: Ranging Piyasada Makro Trende Karşı İşlem AÇILAMAZ!
+        if (isRangingLimit) {
+            const btc1d = globalMarketState.btc1dObj;
+            if (btc1d && btc1d.trend === 'BEAR' && direction === 'LONG') {
+                console.log(`[VETO] ${sym} LONG işlemi ADX Ranging + BTC Bear çakışması nedeniyle Hard-Block edildi.`);
+                return null;
+            }
+            if (btc1d && btc1d.trend === 'BULL' && direction === 'SHORT') {
+                console.log(`[VETO] ${sym} SHORT işlemi ADX Ranging + BTC Bull çakışması nedeniyle Hard-Block edildi.`);
+                return null;
+            }
+        }
+
         // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
         // Hacmi 5M$ üzerinde olan bir coin tek saatte %10'dan fazla hareket etmişse İstihbarat fırlat.
-        const currentOpen = opens[opens.length - 1];
         const diff = (currentPrice - currentOpen) / currentOpen;
         if (Math.abs(diff) >= 0.10 && globalVol >= 5000000) {
             const { fireMercanBey } = require('./mercan_bey');
@@ -639,15 +663,50 @@ async function analyzeCoin(symbolInfo) {
         // --- SKORLAMA (SCORING) ALTYAPISI ---
         let qualityScore = 0;
         let warnings = [];
+        let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral" };
         
-        // --- 200 SMA SOFT FİLTRESİ ---
-        if (direction === 'LONG' && currentPrice < curSma200) {
-            qualityScore -= 15;
-            warnings.push('Bearish 200 SMA (-15)');
+        // 1. ORDER BLOCK (OB) YARDIMCI KONTROLÜ
+        const obZone = direction === 'LONG' ? [rangeLow - (currentATR * 1.5), rangeLow + (currentATR * 1.5)] : [rangeHigh - (currentATR * 1.5), rangeHigh + (currentATR * 1.5)];
+        const obCandlesStart = closes.length - CONFIG.obLookback - 6;
+        let tempHasOB = false;
+        for (let i = obCandlesStart; i <= closes.length - 6; i++) {
+            if (i < 0) continue;
+            if (direction === 'LONG' && closes[i] < opens[i] && closes[i] <= obZone[1] && closes[i] >= obZone[0]) {
+                if (highs[i+1] > highs[i]) { tempHasOB = true; break; }
+            } else if (direction === 'SHORT' && closes[i] > opens[i] && closes[i] >= obZone[0] && closes[i] <= obZone[1]) {
+                if (lows[i+1] < lows[i]) { tempHasOB = true; break; }
+            }
         }
-        if (direction === 'SHORT' && currentPrice > curSma200) {
+        
+        // 2. FVG YARDIMCI KONTROLÜ
+        let tempHasFVG = false;
+        const lastIdx = closes.length - 1;
+        for (let i = lastIdx - 2; i <= lastIdx; i++) {
+            if (i >= 2) {
+                if (direction === 'LONG' && highs[i-2] < lows[i]) tempHasFVG = true; 
+                if (direction === 'SHORT' && lows[i-2] > highs[i]) tempHasFVG = true; 
+            }
+        }
+
+        // --- 200 SMA TUZAĞI (TRAP) BONUSU VEYA STANDART CEZA ---
+        let isOppositeSMA = false;
+        if (direction === 'LONG' && currentPrice < curSma200) isOppositeSMA = true;
+        if (direction === 'SHORT' && currentPrice > curSma200) isOppositeSMA = true;
+
+        if (isOppositeSMA) {
+            if (wickSize > (avgATR * 1.5) && (tempHasOB || tempHasFVG)) {
+                qualityScore += 15;
+                warnings.push('Smart Money Trap (+15 Bonus)');
+            } else {
+                qualityScore -= 15;
+                warnings.push(`${direction === 'LONG' ? 'Bearish' : 'Bullish'} 200 SMA (-15)`);
+            }
+        }
+        
+        // --- Ranging Limit Cezası ---
+        if (isRangingLimit) {
             qualityScore -= 15;
-            warnings.push('Bullish 200 SMA (-15)');
+            warnings.push('ADX Ranging Limit (-15)');
         }
         
         if (eurusdDailyPenalty > 0) {
@@ -1099,12 +1158,12 @@ async function analyzeCoin(symbolInfo) {
             
             reward = targetP - currentPrice;
 
-            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama)
-            let maxReward = risk * 3.0; // Max 3x SL Limits
+            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
+            let maxReward = isRangingLimit ? (risk * 1.0) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice + reward;
-                warnings.push('TP Capped (1:3 Max)');
+                warnings.push(isRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
             }
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
@@ -1123,12 +1182,12 @@ async function analyzeCoin(symbolInfo) {
             
             reward = currentPrice - targetP;
 
-            // 1:3 R:R Cap
-            let maxReward = risk * 3.0;
+            // 1:3 R:R Cap veya Ranging Limit 1.0R
+            let maxReward = isRangingLimit ? (risk * 1.0) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice - reward;
-                warnings.push('TP Capped (1:3 Max)');
+                warnings.push(isRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
             }
         }
         
