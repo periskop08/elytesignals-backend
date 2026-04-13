@@ -1878,10 +1878,15 @@ Nedeni: Sepette zaten maksimum toleransta (2 adet) açık **${clusterName}** coi
                                         // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
                                         let riskMultiplier = 1.0;
                                     try {
-                                        if (signal.qualityScore >= 85) riskMultiplier = 1.3;
-                                        else if (signal.qualityScore >= 75) riskMultiplier = 1.0;
-                                        else if (signal.qualityScore >= 65) riskMultiplier = 0.75;
+                                        if (signal.qualityScore >= 80) riskMultiplier = 1.1;
+                                        else if (signal.qualityScore >= 70) riskMultiplier = 1.0;
+                                        else if (signal.qualityScore >= 60) riskMultiplier = 0.75;
                                         else riskMultiplier = 0.5;
+                                        
+                                        // LLM Risk Kesintisi (v5.1 Hedge Fund Kuralı)
+                                        if (typeof llmRiskPenalty !== 'undefined') {
+                                            riskMultiplier *= llmRiskPenalty;
+                                        }
 
                                         const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 20");
                                         if (history && history.length >= 10) {
