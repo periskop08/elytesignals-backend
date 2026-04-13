@@ -240,7 +240,7 @@ Yanıtını KESİNLİKLE JSON FORMATINDA ver.
 
                     // Send Telegram Alert safely
                     if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-                        const msg = `🚀 *YAPAY ZEKA FIRSAT KEŞFİ!*\n\nAltay Bey, Amerikan borsasındaki taramalarda yüksek potansiyelli bir hisse tespit etti ve portföye  *%5 ağırlıkla* dahil etti!\n\n💎 *Hisse:* GİZLİ (Premium)\n🎯 *AI Skoru:* ${parsed.sentimentPercent}/100\n💼 *Sektör Teknoloji/Inovasyon:* ${parsed.edgeScore}/100\n\n📌 _Hissenin çok kapsamlı Gemini 3.1 Pro detaylı fon raporu an itibariyle Varlık Yöneticisi sekmesine yüklendi, hemen siteye göz atabilirsiniz._`;
+                        const msg = `🚀 *YAPAY ZEKA FIRSAT KEŞFİ!*\n\nHamdi Bey, Amerikan borsasındaki taramalarda yüksek potansiyelli bir hisse (veya Ters ETF) tespit etti ve Varlık Fonumuza  *%5 ağırlıkla* dahil etti!\n\n💎 *Hisse:* GİZLİ (Premium)\n🎯 *AI Skoru:* ${parsed.sentimentPercent}/100\n💼 *Teknik/Trend Uyumu:* ${parsed.edgeScore}/100\n\n📌 _Hissenin çok kapsamlı Gemini 3.1 Pro detaylı fon raporu an itibariyle Varlık Yöneticisi sekmesine yüklendi, hemen siteye göz atabilirsiniz._`;
                         telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' }).catch(e => console.error("Telegram error:", e));
                     }
                     
