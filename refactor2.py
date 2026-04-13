@@ -91,22 +91,21 @@ c_new = """                                } else {
 
 code = code.replace(c_old, c_new)
 
-# Add closing bracket for the if (!skipAutoTrade) block 
-b_old = """                                        } catch (e) {
-                                            console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
+# Match the catch block closing for Auto-Trade
+b_old = """                                            console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                         }
-                                    }"""
-# Wait, the closing of `if (!skipAutoTrade)` should go AFTER the order placement. 
-# It currently is: } catch (e) { console.error... }
-b_new = """                                        } catch (e) {
-                                            console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
+                                    }
+                                } else {"""
+                                
+b_new = """                                            console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                         }
-                                    } // End of !skipAutoTrade
-                                    }"""
-# The above logic to inject closing brace might fail depending on what lines match. 
-# Let me just inject it by replacing the catch block. Let's see the context.
+                                    } // End !skipAutoTrade
+                                    }
+                                } else {"""
+
+code = code.replace(b_old, b_new)
 
 with open('/Users/periskop/.gemini/antigravity/scratch/crypto-signal-app/backend/scanner.js', 'w', encoding='utf-8') as f:
     f.write(code)
 
-print("Phase 2 Python refactoring injected.")
+print("Phase 2 Python refactoring saved successfully.")
