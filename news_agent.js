@@ -75,14 +75,14 @@ async function fetchAndProcessNews() {
     console.log("[News Agent] İstihbarat Ağı başlatıldı. Kantan.news taranıyor...");
     try {
         const response = await fetch(KANTAN_API);
-        
+
         if (!response.ok) {
             console.error("[News Agent] Kantan.news'e bağlanılamadı. Kod:", response.status);
             return;
         }
 
         const data = await response.json();
-        
+
         // Gelen listeyi işle (en sondan en başa gibi, kronolojik sıra için)
         if (!data || !data.data || !Array.isArray(data.data)) {
             console.error("[News Agent] Hatalı veri formatı geldi.");
@@ -104,19 +104,19 @@ async function fetchAndProcessNews() {
             }
 
             processedCount++;
-            
+
             // Eğer yoksa işle
             console.log(`[News Agent] Yeni haber bulundu: ${article.title}`);
-            const fullContent = article.content ? article.content.replace(/<[^>]+>/g, ' ').trim() : article.title; 
-            
+            const fullContent = article.content ? article.content.replace(/<[^>]+>/g, ' ').trim() : article.title;
+
             // 🚨 HASH/KELİME DRENAJ KALKANI (Lokal Filtre) 🚨
             const textToTest = (article.title + " " + fullContent).toLowerCase();
             const keywords = [
                 'çip', 'chip', 'yarı iletken', 'semiconductor', 'yapay zeka', 'ai ', // 'ai ' with space to avoid capturing words with 'ai' inside
-                'enerji', 'jeopolitik', 'savunma sanayi', 'yazılım', 
+                'enerji', 'jeopolitik', 'savunma sanayi', 'yazılım',
                 'anthropic', 'open ai', 'openai', 'meta', 'gemini', 'chatgpt', 'claude', 'nvidia', 'amd', 'intel'
             ];
-            
+
             const isRelevant = keywords.some(kw => textToTest.includes(kw));
 
             if (!isRelevant) {
@@ -130,27 +130,27 @@ async function fetchAndProcessNews() {
             }
 
             const promptContent = fullContent.substring(0, 3000); // Sadece AI'ın okuyacağı kısmı kısalt (Maliyet/Hız için)
-            
+
             const prompt = `${extractAssetsRules}
 ---
 HABER BAŞLIĞI: ${article.title}
 HABER İÇERİĞİ: ${promptContent}
 ---
 `;
-            
+
             try {
-                const model = genAI.getGenerativeModel({ 
+                const model = genAI.getGenerativeModel({
                     model: "gemini-2.5-flash",
                     generationConfig: { responseMimeType: "application/json" }
                 });
-                
+
                 const result = await model.generateContent(prompt);
                 await logTokenUsage('Hamdi Bey', result);
                 let responseText = result.response.text().trim();
                 let parsed;
                 try {
                     parsed = JSON.parse(responseText);
-                } catch(e) {
+                } catch (e) {
                     console.error("[News Agent] AI parse hatası. Ham dönüş:", responseText);
                     continue;
                 }
@@ -176,7 +176,7 @@ HABER İÇERİĞİ: ${promptContent}
                 console.error(`[News Agent] Gemini hatası (${article.title}):`, aiErr.message);
                 // Bekleme süresi
             }
-            
+
             // Limit takılmamak için 1 saniye bekle
             await new Promise(resolve => setTimeout(resolve, 1500));
         }
@@ -200,15 +200,15 @@ async function sendDailyNewsReport() {
                 else resolve(res);
             });
         });
-        
+
         const total = row ? row.totalCount : 0;
         const symbols = row ? row.symbolsCount : 0;
 
         const msg = `📰 *Merhaba ben Hamdi Bey; Görevimin başındayım.*\n\nBugün Kantan News altyapısından toplam *${total}* adet haber çektim ve bu haberler arasından gizli etkilenecek olan *${symbols}* adet hisse bilgisi yazdım.\n\nÇalışmaya devam ediyorum, iyi geceler.`;
-        
+
         await telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
         console.log("[News Agent] Günlük rapor Telegram'a iletildi.");
-    } catch(e) {
+    } catch (e) {
         console.error("[News Agent] Günlük rapor hatası:", e.message);
     }
 }
