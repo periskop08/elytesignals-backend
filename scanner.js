@@ -1378,7 +1378,16 @@ async function analyzeCoin(symbolInfo) {
         let organicRR = risk > 0 ? (reward / risk) : 0; // Doğal hedef R:R'si
         let finalRR = organicRR;
         
-        breakdown.rr = parseFloat(finalRR.toFixed(2));
+        // COST-ADJUSTED RR HESABI (Slippage + Borsa Fee)
+        let cost = (currentPrice * 0.0005) + (risk * 0.15); // Tahmini maliyet
+        let effectiveRR = risk > 0 ? ((reward) / (risk + cost)) : 0;
+        
+        if (effectiveRR < 1.3) {
+            console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) 1.3'ün altında kaldığı için reddedildi.`);
+            return null;
+        }
+
+        breakdown.rr = parseFloat(effectiveRR.toFixed(2));
 
         // --- PERPLEXITY ELITE FILTER (v2.0) + CHATGPT SWEEP/ENGULFING ---
         let currentJ = closes.length - 1;
@@ -1632,7 +1641,7 @@ async function runScan() {
                 const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? `${formattedVol} (${signal.breakdown.rvol}x)` : formattedVol;
                 
                 // +--- SHADOW BLOCK CHECK (AI MEMORY) ---+
-                let isBlocked = false;
+                let llmRiskPenalty = 1.0;
                 let blockReason = "";
                 let blockLessonId = null;
                 let telegramLimitWarning = "";
@@ -1653,29 +1662,45 @@ Yön: ${signal.type}
 Toplam Kalite Skoru: ${signal.qualityScore}
 Grafik Bileşenleri (Uyarılar): ${signal.warnings}
 
-Soru: Yeni oluşan bu sinyal, Aktif Derslerdeki bir hataya/tuzağa çok benziyor mu?
-Eğer bu işlemi RİSKLİ/HATALI buluyorsan ve engellemek istiyorsan sadece "ENGEL: [Hangi Ders ID'si nedeniyle engellediğini ve 1 kısa Cümle Sebebini Yaz]" formatında cevap ver.
-Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
+Soru: Yeni oluşan bu sinyal, Aktif Derslerdeki bir hataya/tuzağa ne kadar benziyor? Ne kadar riskli?
+Cevabını SADECE aşağıdaki JSON formatında ver:
+{
+  "risk_level": "LOW" | "MEDIUM" | "HIGH",
+  "reason": "1 kısa Cümle Sebebini Yaz",
+  "lesson_id": "İlgili ders ID (yoksa null)"
+}`;
 
-                        const blockRes = await aiModel.generateContent(prompt);
-                        const blockText = blockRes.response.text();
+                        const blockRes = await aiModel.generateContent({
+                            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        });
+                        const blockJson = JSON.parse(blockRes.response.text());
                         
-                        if (blockText.includes("ENGEL:")) {
-                            isBlocked = true;
-                            blockReason = blockText.split("ENGEL:")[1].trim();
-                            const match = blockText.match(/Ders ID:?\s*(\d+)/i) || blockText.match(/Ders.(\d+)/i);
-                            if (match) blockLessonId = parseInt(match[1]);
+                        if (blockJson.risk_level === "HIGH") {
+                            llmRiskPenalty = 0.70;
+                            signal.qualityScore -= 30;
+                            blockReason = `Yüksek Risk: ${blockJson.reason}`;
+                            blockLessonId = blockJson.lesson_id;
+                        } else if (blockJson.risk_level === "MEDIUM") {
+                            llmRiskPenalty = 0.75;
+                            signal.qualityScore -= 20;
+                            blockReason = `Orta Risk: ${blockJson.reason}`;
+                            blockLessonId = blockJson.lesson_id;
+                        } else if (blockJson.risk_level === "LOW") {
+                            llmRiskPenalty = 1.0;
+                            signal.qualityScore -= 10;
+                            blockReason = `Düşük Risk (Küçük Pürüz): ${blockJson.reason}`;
+                            // if it's strictly LOW risk and no major lesson trigger, we don't block.
                         }
                     }
                 } catch (err) {
                     console.error("[SHADOW] Error checking AI memory:", err.message);
                 }
 
-                if (isBlocked) {
+                if (llmRiskPenalty < 1.0 || blockLessonId) {
                     console.log(`[SHADOW BLOCK] Danışman LLM Puan Kırdı: ${signal.symbol} -> ${blockReason}`);
                     
-                    signal.qualityScore -= 25;
-                    signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + 'LLM VETOSU (-25)';
+                    signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + `LLM RİSK İNDİRİMİ: ${blockReason}`;
 
                     await db.run(
                         "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore) VALUES (?, ?, ?, ?, ?, ?, ?)",
