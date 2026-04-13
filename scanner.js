@@ -755,6 +755,13 @@ async function analyzeCoin(symbolInfo) {
 
         // --- SKORLAMA (SCORING) ALTYAPISI ---
         let qualityScore = 0, s_struct = 0, s_trig = 0, s_vol = 0, s_trend = 0, s_pat = 0;
+        let bonusCounter = 0;
+        
+        const applyBonus = (pts) => {
+            if (bonusCounter === 0) { bonusCounter++; return pts; } // 100%
+            if (bonusCounter === 1) { bonusCounter++; return pts * 0.5; } // 50%
+            return pts * 0.25; // 25% for subsequent
+        };
         let warnings = [];
         let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
         
@@ -1165,7 +1172,8 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        qualityScore += Math.min(s_struct, 30) + Math.min(s_trig, 15) + Math.min(s_vol, 15) + Math.min(s_trend, 20) + Math.min(s_pat, 15);
+        let baseGroups = Math.min(s_struct, 25) + Math.min(s_trig, 15) + Math.min(s_vol, 15) + Math.min(s_trend, 20) + Math.min(s_pat, 15);
+        qualityScore += baseGroups;
 
         // 5. Günlük MA Golden Cross (+10 Puan) (Sadece kalite skoru yüksek olanlara API tasarrufu için sorulur)
         if (qualityScore >= 25) {
