@@ -1498,16 +1498,17 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 55 (Ticari Hacmi Koruma Refleksi)
-        if (direction === 'LONG' && qualityScore < 55) {
-            return null;
-        }
-        if (direction === 'SHORT' && qualityScore < 55) {
+        // 1. Dinamik Kalite Barajı (Dynamic Threshold)
+        let dynamicThreshold = 55;
+        if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 50;
+        else if (breakdown.regime === 'RANGING') dynamicThreshold = 60;
+        
+        if (qualityScore < dynamicThreshold) {
             return null;
         }
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 55) {
+        if (qualityScore >= dynamicThreshold) {
             const { checkLiquidityAsync } = require('./demir_bey');
             const demirRes = await Promise.race([
                 checkLiquidityAsync(sym, direction),
@@ -1626,7 +1627,7 @@ async function runScan() {
                 let telegramLimitWarning = "";
 
                 try {
-                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 15");
+                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' AND datetime(createdAt) >= datetime('now', '-30 days') ORDER BY id DESC LIMIT 15");
                     
                     if (activeLessons && activeLessons.length > 0) {
                         const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] - ${l.lessonText}`).join('\n');
@@ -1787,7 +1788,9 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                     if (res.data && res.data.data && res.data.data.lastPrice) {
                                         currentLivePrice = parseFloat(res.data.data.lastPrice);
                                         const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
-                                        if (slippage > 0.003) {
+                                        const riskWidth = Math.abs(signal.entryPrice - signal.stopPrice) / signal.entryPrice;
+                                        const maxSlippage = Math.max(0.002, riskWidth * 0.15); // Stop'un %15'ine kadar müsaade (min binde 2)
+                                        if (slippage > maxSlippage) {
                                             slippageExceeded = true;
                                         }
                                     }
@@ -1799,8 +1802,40 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                         bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
-                                    // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
-                                    let riskMultiplier = 1.0;
+                                    // +--- SEPET KORELASYON MOTORU ---+
+                                    let skipAutoTrade = false;
+                                    try {
+                                        const sectorMap = {
+                                            "BTC": "L1", "ETH": "L1", "SOL": "L1", "AVAX": "L1", "BNB": "L1",
+                                            "FET": "AI", "AGIX": "AI", "WLD": "AI", "RENDER": "AI", "NEAR": "AI", "TAO": "AI",
+                                            "DOGE": "MEME", "SHIB": "MEME", "PEPE": "MEME", "BOME": "MEME", "FLOKI": "MEME", "WIF":"MEME"
+                                        };
+                                        const baseSymbol = signal.symbol.replace('-USDT', '').replace('USDT', '');
+                                        const clusterName = sectorMap[baseSymbol] || 'OTHER';
+                                        
+                                        if (clusterName !== 'OTHER') {
+                                            const activeTrades = await db.all("SELECT symbol FROM user_trades WHERE status = 'ACTIVE'");
+                                            let clusterCount = 0;
+                                            activeTrades.forEach(t => {
+                                                const tBase = t.symbol.replace('-USDT', '').replace('USDT', '');
+                                                if (sectorMap[tBase] === clusterName) clusterCount++;
+                                            });
+                                            if (clusterCount >= 2) {
+                                                skipAutoTrade = true;
+                                                console.log(`[CORRELATION REJECT] ${clusterName} sektöründe zaten ${clusterCount} adet aktif işlem var. Borsaya oto-emir atılmayacak (UI Sinyali Aktif).`);
+                                                if (bot && CONFIG.telegramAdminId) {
+                                                    bot.sendMessage(CONFIG.telegramAdminId, `🛡️ *Sepet Riski Koruma Kalkanı Devrede*
+
+🎯 #${signal.symbol} işlemi için sinyal üretildi ancak **borsaya emir gönderilmedi!**
+Nedeni: Sepette zaten maksimum toleransta (2 adet) açık **${clusterName}** coini bulunuyor.`, { parse_mode: 'Markdown' });
+                                                }
+                                            }
+                                        }
+                                    } catch(e) {}
+
+                                    if (!skipAutoTrade) {
+                                        // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
+                                        let riskMultiplier = 1.0;
                                     try {
                                         if (signal.qualityScore >= 85) riskMultiplier = 1.3;
                                         else if (signal.qualityScore >= 75) riskMultiplier = 1.0;
@@ -1841,6 +1876,7 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                         } catch (e) {
                                             console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                         }
+                                    } // End !skipAutoTrade
                                     }
                                 } else {
                                     console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
