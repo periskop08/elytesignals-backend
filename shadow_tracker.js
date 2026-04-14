@@ -34,8 +34,26 @@ function runExec(sql, params = []) {
     });
 }
 
-async function fetchCurrentPrice(symbol) {
+const ASSET_MAP = {
+    'XAUUSD': 'NCCOGOLD2USD-USDT',
+    'XAGUSD': 'NCCOXAG2USD-USDT',
+    'EURUSD': 'NCFXEUR2USD-USDT',
+    'AAPL': 'NCSKAAPL2USD-USDT',
+    'TSLA': 'NCSKTSLA2USD-USDT',
+    'NASDAQ': 'NCSINASDAQ1002USD-USDT',
+    'SP500': 'NCSISP5002USD-USDT',
+    'DOW': 'NCSIDJI2USD-USDT'
+};
+
+function resolveBingxSymbol(rawSymbol) {
+    if (!rawSymbol) return rawSymbol;
+    if (ASSET_MAP[rawSymbol]) return ASSET_MAP[rawSymbol];
+    return rawSymbol.includes('-') ? rawSymbol : rawSymbol.replace('USDT', '-USDT');
+}
+
+async function fetchCurrentPrice(rawSymbol) {
     try {
+        const symbol = resolveBingxSymbol(rawSymbol);
         const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${symbol}`);
         if (res.data && res.data.data && res.data.data.lastPrice) {
             return parseFloat(res.data.data.lastPrice);
@@ -44,8 +62,9 @@ async function fetchCurrentPrice(symbol) {
     return null;
 }
 
-async function fetchBingxCandles(symbol, intervalMinutes, limit) {
+async function fetchBingxCandles(rawSymbol, intervalMinutes, limit) {
     try {
+        const symbol = resolveBingxSymbol(rawSymbol);
         const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${symbol}&interval=1h&limit=${limit}`);
         let list = res.data.data;
         list.sort((a, b) => a.time - b.time);
