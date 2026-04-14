@@ -1617,6 +1617,7 @@ async function analyzeCoin(symbolInfo) {
         if (requiredEffectiveRR < 1.05) requiredEffectiveRR = 1.05; // Minimum güvenlik tabanı
 
         if (effectiveRR < requiredEffectiveRR) {
+            console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < ${requiredEffectiveRR.toFixed(2)}`);
             console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR.toFixed(2)}) geçemedi.`);
             return null;
         }
@@ -1979,55 +1980,130 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                     autoTradeBlocked = true;
                 } else if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
-                        // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS ---+
+                        // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS (v5.5) ---+
                         let activeTradesList = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
                         let activeCount = activeTradesList.length;
                         
-                        let dominantDirection = null; // 'LONG' or 'SHORT'
-                        let maxAllowedInThisDirection = 2; // Default if choppy/no leaders
+                        function getDirectionalBucket(leaderDir, candidateDir) {
+                            if (!leaderDir) return 'SAME';
+                            return leaderDir === candidateDir ? 'SAME' : 'OPPOSITE';
+                        }
 
-                        let btcEthProfitableLong = false;
-                        let btcEthProfitableShort = false;
-
+                        let btcTrade = null;
+                        let ethTrade = null;
                         for (const trade of activeTradesList) {
-                            if (trade.symbol === 'BTCUSDT' || trade.symbol === 'ETHUSDT') {
-                                try {
-                                    let cp = null;
-                                    if (trade.symbol === 'BTCUSDT') cp = globalBtcPrice;
-                                    if (trade.symbol === 'ETHUSDT') cp = globalEthPrice;
-                                    
-                                    if (cp) {
-                                        if (trade.type === 'LONG' && cp > trade.entryPrice) btcEthProfitableLong = true;
-                                        if (trade.type === 'SHORT' && cp < trade.entryPrice) btcEthProfitableShort = true;
-                                    }
-                                } catch(e) {
-                                    console.error("[SCANNER] Sessiz Hata (Portfolio):", e.message);
-                                }
-                            }
+                            if (trade.symbol === 'BTCUSDT') btcTrade = trade;
+                            if (trade.symbol === 'ETHUSDT') ethTrade = trade;
                         }
 
-                        if (btcEthProfitableLong) dominantDirection = 'LONG';
-                        else if (btcEthProfitableShort) dominantDirection = 'SHORT';
+                        let dominantTrade = null;
+                        let dominantLeaderSymbol = 'NONE';
+                        let leaderState = 'PROBING';
+                        let leaderRMultiple = 0;
+                        let leaderDirection = null;
 
-                        let currentDirectionCount = activeTradesList.filter(t => t.type === signal.type).length;
+                        let btcR = null;
+                        if (btcTrade && globalBtcPrice) {
+                             const risk = Math.abs(btcTrade.entryPrice - btcTrade.stopPrice) || 1;
+                             btcR = btcTrade.type === 'LONG' ? (globalBtcPrice - btcTrade.entryPrice)/risk : (btcTrade.entryPrice - globalBtcPrice)/risk;
+                        }
                         
-                        if (dominantDirection) {
-                            if (signal.type === dominantDirection) {
-                                maxAllowedInThisDirection = 5; // Trend Riding
-                            } else {
-                                maxAllowedInThisDirection = 3; // Hedging (Sigorta)
-                            }
+                        let ethR = null;
+                        if (ethTrade && globalEthPrice) {
+                             const risk = Math.abs(ethTrade.entryPrice - ethTrade.stopPrice) || 1;
+                             ethR = ethTrade.type === 'LONG' ? (globalEthPrice - ethTrade.entryPrice)/risk : (ethTrade.entryPrice - globalEthPrice)/risk;
                         }
 
-                        if (currentDirectionCount >= maxAllowedInThisDirection) {
-                            telegramLimitWarning = `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda maksimum limite ulaştığımız için (${currentDirectionCount} adet aktif ${signal.type} işlem), bu elit sinyal borsa hesabınızda otomatik olarak AÇILMADI. Riski yönetmek kaydıyla isterseniz işlemi kendiniz manuel olarak açabilirsiniz.`;
-                            console.log(`[AUTO-TRADE] Limit (${currentDirectionCount}/${maxAllowedInThisDirection}) dolu! Sinyal Yönü: ${signal.type}. Sinyal havuza eklendi (Macro limit kısıtlaması).`);
+                        if (ethTrade && btcTrade) {
+                             if (ethTrade.type === btcTrade.type) {
+                                 if (ethR !== null && btcR !== null && btcR > ethR) {
+                                      dominantTrade = btcTrade; leaderRMultiple = btcR; dominantLeaderSymbol = 'BTCUSDT';
+                                 } else {
+                                      dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
+                                 }
+                             } else {
+                                 dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
+                             }
+                        } else if (ethTrade) {
+                             dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
+                        } else if (btcTrade) {
+                             dominantTrade = btcTrade; leaderRMultiple = btcR; dominantLeaderSymbol = 'BTCUSDT';
+                        }
+
+                        if (dominantTrade) {
+                             leaderDirection = dominantTrade.type;
+                             if (leaderRMultiple >= 0.4) leaderState = 'CONFIRMED';
+                             else if (leaderRMultiple <= -0.4) leaderState = 'STRESSED';
+                             else leaderState = 'PROBING';
+                        }
+
+                        const breadthState = globalMarketState && globalMarketState.breadthState ? globalMarketState.breadthState : 'NEUTRAL';
+                        
+                        let maxSame = 2;
+                        let maxOpposite = 2;
+                        let matrixScenarioApplied = 'DEFAULT';
+
+                        if (leaderState === 'CONFIRMED') {
+                             if (breadthState === 'STRONG') { maxSame = 5; maxOpposite = 1; matrixScenarioApplied = 'CONFIRMED_STRONG'; }
+                             else if (breadthState === 'NEUTRAL') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_NEUTRAL'; }
+                             else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_WEAK'; }
+                        } else if (leaderState === 'PROBING') {
+                             if (breadthState === 'STRONG') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'PROBING_STRONG'; }
+                             else if (breadthState === 'NEUTRAL') { maxSame = 3; maxOpposite = 2; matrixScenarioApplied = 'PROBING_NEUTRAL'; }
+                             else if (breadthState === 'WEAK') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'PROBING_WEAK'; }
+                        } else if (leaderState === 'STRESSED') {
+                             if (breadthState === 'STRONG') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_STRONG'; }
+                             else if (breadthState === 'NEUTRAL') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_NEUTRAL'; }
+                             else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 3; matrixScenarioApplied = 'STRESSED_WEAK'; }
+                        }
+
+                        const candidateBucket = getDirectionalBucket(leaderDirection, signal.type);
+                        
+                        let currentOpenSame = 0;
+                        let currentOpenOpposite = 0;
+
+                        if (!leaderDirection) {
+                            currentOpenSame = activeTradesList.filter(t => t.type === signal.type).length;
+                            currentOpenOpposite = activeTradesList.filter(t => t.type !== signal.type).length;
+                        } else {
+                            currentOpenSame = activeTradesList.filter(t => t.type === leaderDirection).length;
+                            currentOpenOpposite = activeTradesList.filter(t => t.type !== leaderDirection).length;
+                        }
+
+                        let autoTradeBlockedByLimit = false;
+
+                        if (candidateBucket === 'SAME' && currentOpenSame >= maxSame) { autoTradeBlockedByLimit = true; }
+                        if (candidateBucket === 'OPPOSITE' && currentOpenOpposite >= maxOpposite) { autoTradeBlockedByLimit = true; }
+
+                        let finalAutoTradeBlocked = autoTradeBlockedByLimit;
+                        let eliteExceptionTriggered = false;
+
+                        if (autoTradeBlockedByLimit && signal.qualityScore >= 75) {
+                             finalAutoTradeBlocked = false;
+                             eliteExceptionTriggered = true;
+                        }
+
+                        // --- TELEMETRY LOGGING ---
+                        console.log(`[TELEMETRY] ${signal.symbol} | Matrix: ${matrixScenarioApplied} | Leader: ${dominantLeaderSymbol}(${leaderState}, R:${leaderRMultiple.toFixed(2)}) | Breadth: ${breadthState}`);
+                        if (globalMarketState && globalMarketState.breadthComponents) {
+                            console.log(`[TELEMETRY] Breadth Comps -> 24h: ${globalMarketState.breadthComponents.s24h.toFixed(2)}, 1h: ${globalMarketState.breadthComponents.s1h.toFixed(2)}, Rel: ${globalMarketState.breadthComponents.sRel.toFixed(2)}`);
+                        }
+                        console.log(`[TELEMETRY] Bucket: ${candidateBucket} | Same Limit: ${currentOpenSame}/${maxSame} | Opp Limit: ${currentOpenOpposite}/${maxOpposite}`);
+                        if (eliteExceptionTriggered) {
+                            console.log(`[TELEMETRY] elite_exception_triggered! Reason: Score ${signal.qualityScore} >= 75 | Dir: ${signal.type}`);
+                        }
+                        if (matrixScenarioApplied === 'PROBING_STRONG') {
+                            console.log(`[TELEMETRY] scenario_tag = PROBING_STRONG (Özel İzleme - Erken Agresyon Testi)`);
+                        }
+
+                        if (finalAutoTradeBlocked) {
+                            console.log(`[AUTO-TRADE] Limit Dolu. Matrix: ${matrixScenarioApplied} | Bucket: ${candidateBucket}. Auto-Trade KAPATILDI!`);
+                            console.log(`[TELEMETRY] blocked_by_limit_count +1`);
                             if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
-                                telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
+                                telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda limit (${candidateBucket === 'SAME'? maxSame:maxOpposite}) dolduğu için #${signal.symbol} borsa emri AÇILMADI.\nMatris: ${matrixScenarioApplied}`);
                             }
                         } else if (activeCount >= CONFIG.maxActiveTrades) {
-                            // Genel borsa API patlaması olmasın diye global üst limit de 15 vs olarak korunabilir, ama şimdilik limitleri biz ayarladık.
-                            console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal havuza eklendi.`);
+                            console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu!`);
                         } else {
                             // Aynı gün içinde aynı coine girildi mi? (Sinyal 2. veya 3. kez mi düşüyor?)
                             const todayStr = new Date().toISOString().split('T')[0];
@@ -2067,6 +2143,7 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                 } catch (err) {}
 
                                 if (slippageExceeded) {
+                                    console.log(`[TELEMETRY] blocked_by_slippage +1 | Symbol: ${signal.symbol} | Slippage Exceeded`);
                                     console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
                                     if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
                                         telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\\n\\n🎯 İşlem: #${signal.symbol} (${signal.type})\\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\\n\\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
