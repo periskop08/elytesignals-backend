@@ -1557,12 +1557,12 @@ async function analyzeCoin(symbolInfo) {
         // 1. Dinamik Kalite Barajı (Çift Motor / Dual Engine)
         let dynamicThreshold = 60;
         if (operationMode === 'VOLUME') {
-            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 42;
+            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 40;
             else if (breakdown.regime === 'TRENDING') dynamicThreshold = 44;
-            else dynamicThreshold = 58;
+            else dynamicThreshold = 55;
         } else {
             if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 50;
-            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 52;
+            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 55;
             else dynamicThreshold = 60;
         }
         
@@ -1898,7 +1898,17 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                         const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
                                         const riskWidth = Math.abs(signal.entryPrice - signal.stopPrice) / signal.entryPrice;
                                         let atrPercent = (signal.atr && signal.entryPrice) ? (signal.atr / signal.entryPrice) : 0.02;
-                                        const maxSlippage = Math.min(riskWidth * 0.15, atrPercent * 0.25, 0.005); // Dinamik Kayma: max %0.5
+                                        
+                                        let tierMaxSlippage = 0.003; // Tier 1 (Majörler - ATR <%1.5) -> Max %0.3 kayma
+                                        if (atrPercent >= 0.03) {
+                                            tierMaxSlippage = 0.0075; // Tier 3 (Meme/Sığ Tahtalar - ATR >= %3) -> Max %0.75 kayma
+                                        } else if (atrPercent >= 0.015) {
+                                            tierMaxSlippage = 0.005; // Tier 2 (Altcoinler - ATR %1.5 - %3) -> Max %0.5 kayma
+                                        }
+
+                                        // Edge (Matematiksel Üstünlük) Koruması: Kayma, asla Stop mesafesinin (Risk) %25'ini geçemez.
+                                        const edgeProtectionMax = riskWidth * 0.25; 
+                                        const maxSlippage = Math.min(tierMaxSlippage, edgeProtectionMax);
                                         if (slippage > maxSlippage) {
                                             slippageExceeded = true;
                                         }
