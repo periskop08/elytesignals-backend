@@ -49,8 +49,13 @@ function recordBypass() {
 
 async function checkLiquidityAsync(symbol, direction) {
     try {
+        if (symbol === 'BTCUSDT' || symbol === 'ETHUSDT' || symbol === 'BTC-USDT' || symbol === 'ETH-USDT') {
+            recordBypass();
+            return { scoreMod: 0, msg: "Lider Muafiyeti (Bypass)" };
+        }
+
         let fetchSymbol = symbol.includes('-') ? symbol : symbol.replace('USDT', '-USDT');
-        const url = `https://open-api.bingx.com/openApi/swap/v2/quote/depth?symbol=${fetchSymbol}&limit=5`;
+        const url = `https://open-api.bingx.com/openApi/swap/v2/quote/depth?symbol=${fetchSymbol}&limit=30`;
         const response = await axios.get(url, { timeout: 1500 }); // 1.5 Saniye hard-timeout
         
         if (response.data && response.data.code === 0 && response.data.data) {
