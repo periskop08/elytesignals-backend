@@ -86,15 +86,18 @@ async function checkSandboxRules(lessonId) {
     if (l.status !== 'TEST') return;
     
     if (l.matchCount >= 15) {
-        if (l.successCount / l.matchCount >= 0.60) {
+        const missedWins = l.matchCount - l.successCount;
+        const netR = l.successCount - (missedWins * 1.25);
+        
+        if (netR > 0) {
              await runExec("UPDATE ai_lessons SET status = 'ACTIVE', reliability = 100, missCount = 0 WHERE id = ?", [lessonId]);
              if (bot && process.env.ADMIN_TELEGRAM_ID) {
-                 bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🐺 *Börü Bey: Sandbox Kuralı Başarıyla Mezun Oldu!* 🐺\n\n🎯 Ders ID: ${lessonId}\n📊 15 Sinyal Testinde Win Rate: %${((l.successCount/l.matchCount)*100).toFixed(0)}\nAna sisteme 'ACTIVE' olarak eklendi! Artık canlı işlemleri filtreleyecek.\n\n_Kural:_ ${l.lessonText}`);
+                 bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🐺 *Börü Bey: Sandbox Kuralı Başarıyla Mezun Oldu!* 🐺\n\n🎯 Ders ID: ${lessonId}\n📊 15 Sinyal Testinde Net Beklenti (R-Expectancy): +${netR.toFixed(2)}R\nAna sisteme 'ACTIVE' olarak eklendi! Artık canlı işlemleri filtreleyecek.\n\n_Kural:_ ${l.lessonText}`);
              }
         } else {
              await runExec("UPDATE ai_lessons SET status = 'ARCHIVED' WHERE id = ?", [lessonId]);
              if (bot && process.env.ADMIN_TELEGRAM_ID) {
-                 bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🗑️ *Börü Bey: Sandbox Kuralı Çöpe Atıldı!* 🗑️\n\n🎯 Ders ID: ${lessonId}\n📊 15 Sinyal Testinde başarı oranı yetersiz kaldı (%${((l.successCount/l.matchCount)*100).toFixed(0)}). Kural ana sistemi bozmaması için Arşive (ARCHIVED) alındı.`);
+                 bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🗑️ *Börü Bey: Sandbox Kuralı Çöpe Atıldı!* 🗑️\n\n🎯 Ders ID: ${lessonId}\n📊 15 Sinyal Testinde Fırsat Maliyeti (False Veto) ağır bastı! (Net R: ${netR.toFixed(2)}R). Kural uzun vadede zarar ettireceği için Arşive (ARCHIVED) alındı.`);
              }
         }
     }
