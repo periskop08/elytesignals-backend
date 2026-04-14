@@ -185,7 +185,7 @@ async function checkShadowTrades() {
                                 }
 
                                 const prompt = `Sen profesyonel bir Kurumsal Hedge Fon Analisti ve Risk Yöneticisisin. Aşağıdaki işlem, daha önce kendi ürettiğin BİR KURAL (Lesson) sebebiyle GİRİLMEYEREK ENGELLENDİ.
-Fakat işlem şaşırtıcı şekilde HEDEFE ULAŞTI (Win). Kuralımız çok katı davranmış.
+Fakat işlem şaşırtıcı şekilde HEDEFE ULAŞTI (Win). Kuralımız çok katı davranmış. (Not: Sistemimizin maksimum teknik Kalite Başarı Puanı 85 üzerinden değerlendirilmektedir).
 
 Engelleyici Orijinal Kuralımız:
 ${originalLesson}
