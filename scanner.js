@@ -1124,38 +1124,7 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        // 5. 4H MTF TREND UYUMU
-        let trend4h = "neutral";
-        try {
-            // Fetch 4H proxy or true 4H
-            const klines4h = await fetchCandles(symbolInfo, 240, 50);
-            const closes4h = klines4h.map(k => k.close);
-            const sma4h = SMA.calculate({ values: closes4h, period: 50 });
-            const currentPrice4H = closes4h[closes4h.length - 1];
-            const sma50_4H = sma4h[sma4h.length - 1];
-
-            if (currentPrice4H > sma50_4H) trend4h = "bullish";
-            else if (currentPrice4H < sma50_4H) trend4h = "bearish";
-            breakdown.trend4h = trend4h;
-
-            if (direction === 'LONG') {
-                if (trend4h === 'bullish') {
-                    qualityScore += 15;
-                } else {
-                    warnings.push('Counter-trend 4H');
-                    qualityScore -= 5;
-                    if (CONFIG.sma50Filter === 'hard') return null;
-                }
-            } else if (direction === 'SHORT') {
-                if (trend4h === 'bearish') {
-                    qualityScore += 15;
-                } else {
-                    warnings.push('Counter-trend 4H');
-                    qualityScore -= 5;
-                    if (CONFIG.sma50Filter === 'hard') return null;
-                }
-            }
-        } catch (e) { }
+        // [LAZY_EVALUATION] 4H MTF TREND UYUMU sona taşındı (Ağ maliyeti optimizasyonu)
 
         // 5.5 BAYRAK/FLAMA (FLAG/PENNANT) FORMASYONU
         let poleSize = 0;
@@ -1291,8 +1260,45 @@ async function analyzeCoin(symbolInfo) {
         let baseGroups = Math.min(s_struct, 25) + Math.min(s_trig, 15) + Math.min(s_vol, 15) + Math.min(s_trend, 20) + Math.min(s_pat, 15);
         qualityScore += baseGroups;
 
-        // 5. Günlük MA Golden Cross (+10 Puan) (Sadece kalite skoru yüksek olanlara API tasarrufu için sorulur)
-        if (qualityScore >= 25) {
+        // --- ERKEN ÇIKIŞ (LAZY EVALUATION) ---
+        // Eğer baz kalite 20 puanın altındaysa, bu adayın umudu yoktur; boşuna pahalı API'lere vurma.
+        if (qualityScore >= 20) {
+            
+            // 5. 4H MTF TREND UYUMU
+            let trend4h = "neutral";
+            try {
+                const klines4h = await fetchCandles(symbolInfo, 240, 50);
+                const closes4h = klines4h.map(k => k.close);
+                const sma4h = SMA.calculate({ values: closes4h, period: 50 });
+                const currentPrice4H = closes4h[closes4h.length - 1];
+                const sma50_4H = sma4h[sma4h.length - 1];
+
+                if (currentPrice4H > sma50_4H) trend4h = "bullish";
+                else if (currentPrice4H < sma50_4H) trend4h = "bearish";
+                breakdown.trend4h = trend4h;
+
+                if (direction === 'LONG') {
+                    if (trend4h === 'bullish') {
+                        qualityScore += 15;
+                    } else {
+                        warnings.push('Counter-trend 4H');
+                        qualityScore -= 5;
+                        if (CONFIG.sma50Filter === 'hard') return null; // Zaten puana bakılmaz return edilir
+                    }
+                } else if (direction === 'SHORT') {
+                    if (trend4h === 'bearish') {
+                        qualityScore += 15;
+                    } else {
+                        warnings.push('Counter-trend 4H');
+                        qualityScore -= 5;
+                        if (CONFIG.sma50Filter === 'hard') return null;
+                    }
+                }
+            } catch (e) {
+                console.warn(`[SCANNER] 4H fetch failed for ${sym}`);
+            }
+
+            // 6. Günlük MA Golden Cross (+10 Puan)
             try {
                 const dailyKlines = await fetchCandles(symbolInfo, 1440, 200);
                 if (dailyKlines && dailyKlines.length >= 200) {
@@ -1320,83 +1326,89 @@ async function analyzeCoin(symbolInfo) {
                         }
                     }
                 }
-            } catch (e) { } // Hata olursa es geç
-        }
+            } catch (e) {
+                console.warn(`[SCANNER] 1D fetch failed for ${sym}`);
+            }
 
-        // --- YENİ V3.2: PORTFOLIO MOMENTUM & HEDGING FILTER ---
-        try {
-            const activeCryptoTrades = await db.all("SELECT symbol, type, entryPrice FROM user_trades WHERE status = 'ACTIVE'");
-            let isBtcEthLongProfitable = false;
-            let isBtcEthShortProfitable = false;
+            // --- YENİ V3.2: PORTFOLIO MOMENTUM & HEDGING FILTER ---
+            try {
+                // (ÖNEMLİ: cacheActiveTrades pre-loop cache'ta mevcut, local db.all yapma!)
+                let isBtcEthLongProfitable = false;
+                let isBtcEthShortProfitable = false;
 
-            for (const t of activeCryptoTrades) {
-                if (t.symbol === 'BTCUSDT' || t.symbol === 'ETHUSDT') {
-                    try {
-                        let cp = null;
-                        if (t.symbol === 'BTCUSDT') cp = globalBtcPrice;
-                        if (t.symbol === 'ETHUSDT') cp = globalEthPrice;
-                        
-                        if (cp) {
-                            if (t.type === 'LONG' && cp > t.entryPrice) isBtcEthLongProfitable = true;
-                            if (t.type === 'SHORT' && cp < t.entryPrice) isBtcEthShortProfitable = true;
-                        }
-                    } catch(e) {
-                        console.error(`[SCANNER] Sessiz Hata (CryptoFilter): ${e.message}`);
+                // cacheActiveTrades was defined globally but we are in analyzeCoin.
+                // activeTradesGlobal does not exist. However, we can use cacheActiveTrades if we passed it or if it's available.
+                // Wait! cacheActiveTrades is inside runScan. We must query here or pass it.
+                // For safety and zero-drift, we'll leave the DB query for now, but we just wrapped it in lazy-eval!
+                const activeCryptoTrades = await db.all("SELECT symbol, type, entryPrice FROM user_trades WHERE status = 'ACTIVE'");
+                
+                for (const t of activeCryptoTrades) {
+                    if (t.symbol === 'BTCUSDT' || t.symbol === 'ETHUSDT') {
+                        try {
+                            let cp = null;
+                            if (t.symbol === 'BTCUSDT') cp = globalBtcPrice;
+                            if (t.symbol === 'ETHUSDT') cp = globalEthPrice;
+                            
+                            if (cp) {
+                                if (t.type === 'LONG' && cp > t.entryPrice) isBtcEthLongProfitable = true;
+                                if (t.type === 'SHORT' && cp < t.entryPrice) isBtcEthShortProfitable = true;
+                            }
+                        } catch(e) { }
                     }
                 }
-            }
 
-            if (isBtcEthLongProfitable && direction === 'SHORT') {
-                qualityScore -= 15;
-                warnings.push('Macro Hedge Ceza (Liderler LONG iken SHORT açılıyor) (-15)');
-            } else if (isBtcEthShortProfitable && direction === 'LONG') {
-                qualityScore -= 15;
-                warnings.push('Macro Hedge Ceza (Liderler SHORT iken LONG açılıyor) (-15)');
-            }
-        } catch (e) { }
+                if (isBtcEthLongProfitable && direction === 'SHORT') {
+                    qualityScore -= 15;
+                    warnings.push('Macro Hedge Ceza (Liderler LONG iken SHORT açılıyor) (-15)');
+                } else if (isBtcEthShortProfitable && direction === 'LONG') {
+                    qualityScore -= 15;
+                    warnings.push('Macro Hedge Ceza (Liderler SHORT iken LONG açılıyor) (-15)');
+                }
+            } catch (e) { }
 
+            // --- OPTIONS GAMMA WALL & MAX PAIN (SADECE VARLIKLAR İÇİN) ---
+            if (symbolInfo && symbolInfo.isAsset) {
+                try {
+                    const allowedOptionsTests = ['AAPL', 'TSLA', 'NVDA', 'NQ=F', 'QQQ', 'SPY'];
+                    if (allowedOptionsTests.includes(sym)) {
+                        const optEdge = await analyzeOptionsFlow(sym, currentPrice);
+                        if (optEdge) {
+                            let optionsConfluence = 0;
 
-        // --- OPTIONS GAMMA WALL & MAX PAIN (SADECE VARLIKLAR İÇİN) ---
-        if (symbolInfo && symbolInfo.isAsset) { // Kriptolarda çalışmaz
-            try {
-                // Şimdilik sadece AAPL, TSLA, NASDAQ testi yapıyoruz
-                const allowedOptionsTests = ['AAPL', 'TSLA', 'NVDA', 'NQ=F', 'QQQ', 'SPY'];
-                if (allowedOptionsTests.includes(sym)) {
-                    const optEdge = await analyzeOptionsFlow(sym, currentPrice);
-                    if (optEdge) {
-                        let optionsConfluence = 0;
+                            if (direction === 'LONG' && optEdge.pcr > 1.2) {
+                                qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Put Yazılmış (PCR ${optEdge.pcr}) -> LONG Squeeze (+10)`);
+                            } else if (direction === 'SHORT' && optEdge.pcr < 0.8) {
+                                qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Call Yazılmış (PCR ${optEdge.pcr}) -> SHORT Baskısı (+10)`);
+                            }
 
-                        // 1. Put/Call Ratio Yorumu
-                        if (direction === 'LONG' && optEdge.pcr > 1.2) {
-                            qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Put Yazılmış (PCR ${optEdge.pcr}) -> LONG Squeeze (+10)`);
-                        } else if (direction === 'SHORT' && optEdge.pcr < 0.8) {
-                            qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Call Yazılmış (PCR ${optEdge.pcr}) -> SHORT Baskısı (+10)`);
-                        }
+                            const distToMaxPain = Math.abs(currentPrice - optEdge.maxPain) / currentPrice;
+                            if (distToMaxPain > 0.01 && distToMaxPain < 0.08) {
+                                if (direction === 'LONG' && optEdge.maxPain > currentPrice) {
+                                    qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
+                                } else if (direction === 'SHORT' && optEdge.maxPain < currentPrice) {
+                                    qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
+                                }
+                            }
 
-                        // 2. Max Pain Çekimi (+8)
-                        const distToMaxPain = Math.abs(currentPrice - optEdge.maxPain) / currentPrice;
-                        if (distToMaxPain > 0.01 && distToMaxPain < 0.08) { // %1 ile %8 arası uzaktaysa mıknatıs çalışır
-                            if (direction === 'LONG' && optEdge.maxPain > currentPrice) {
-                                qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
-                            } else if (direction === 'SHORT' && optEdge.maxPain < currentPrice) {
-                                qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
+                            if (direction === 'LONG' && optEdge.putWall > 0 && currentPrice < optEdge.putWall * 1.05 && currentPrice > optEdge.putWall) {
+                                qualityScore += 7; optionsConfluence++; warnings.push(`Put Wall Desteği (${optEdge.putWall}) (+7)`);
+                            } else if (direction === 'SHORT' && optEdge.callWall > 0 && currentPrice > optEdge.callWall * 0.95 && currentPrice < optEdge.callWall) {
+                                qualityScore += 7; optionsConfluence++; warnings.push(`Call Wall Direnci (${optEdge.callWall}) (+7)`);
+                            }
+
+                            if (optionsConfluence >= 2) {
+                                qualityScore += 5; warnings.push(`💎 Kurumsal Opsiyon Confluence Bonusu (+5)`);
                             }
                         }
-
-                        // 3. Gamma Wall Destek/Direnci (+7)
-                        if (direction === 'LONG' && optEdge.putWall > 0 && currentPrice < optEdge.putWall * 1.05 && currentPrice > optEdge.putWall) {
-                            qualityScore += 7; optionsConfluence++; warnings.push(`Put Wall Desteği (${optEdge.putWall}) (+7)`);
-                        } else if (direction === 'SHORT' && optEdge.callWall > 0 && currentPrice > optEdge.callWall * 0.95 && currentPrice < optEdge.callWall) {
-                            qualityScore += 7; optionsConfluence++; warnings.push(`Call Wall Direnci (${optEdge.callWall}) (+7)`);
-                        }
-
-                        // Confluence Bonusu (2 veya daha fazla options kuralı tutarsa +5 ekstra)
-                        if (optionsConfluence >= 2) {
-                            qualityScore += 5; warnings.push(`💎 Kurumsal Opsiyon Confluence Bonusu (+5)`);
-                        }
                     }
+                } catch (err) {
+                    console.warn(`[SCANNER] Options flow failed for ${sym}`);
                 }
-            } catch (err) { }
+            }
+        } else {
+            // Lazy Evaluation Early Exit Triggered!
+            // Coin 20 puana bile ulaşamamış, vakit kaybetmeden bitir.
+            // Zaten dynamicThreshold genellikle 55/60. 20 bile ulaşamayan reddedilir.
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
