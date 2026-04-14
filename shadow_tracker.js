@@ -246,16 +246,49 @@ checkShadowTrades();
 cron.schedule('20 3 * * *', async () => {
     try {
         const row = await runQuery(`SELECT count(id) as cnt FROM user_trades WHERE status = 'CLOSED' AND pnl < 0 AND datetime(closedAt) > datetime('now', '-24 hours')`);
-        const shadowRow = await runQuery(`SELECT count(id) as cnt FROM shadow_trades WHERE status = 'LOSS' AND datetime(closedAt) > datetime('now', '-24 hours')`);
-        
-        let lostCount = (row && row.length > 0) ? row[0].cnt : 0;
-        let shadowCount = (shadowRow && shadowRow.length > 0) ? shadowRow[0].cnt : 0;
-        let totalAutopsy = lostCount; // user_trades represent the actual autopsies that Arif checks
+        let totalAutopsy = (row && row.length > 0) ? row[0].cnt : 0;
 
-        let msg = `🐺 *Merhaba ben Börü Bey; Görevimin başındayım.*\n\nBugün portföyümüzdeki işlemleri saniye saniye takip ederek, stop olan *${totalAutopsy}* adet işlemi incelenmesi için Arif Bey'e (Otopsi) sevk ettim.\n\nNöbete devam ediyorum, iyi geceler.`;
-        if (bot && ADMIN_TELEGRAM_ID) {
-            await bot.sendMessage(ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
-            console.log("[BÖRÜ_BEY] Günlük rapor Telegram'a iletildi.");
+        // Shadow İstatistiklerini Topla
+        const shadowsToday = await runQuery(`SELECT * FROM shadow_trades WHERE status IN ('WIN', 'SHADOW_TEST_WIN', 'LOSS', 'SHADOW_TEST_LOSS') AND datetime(closedAt) > datetime('now', '-24 hours')`);
+        
+        let winC = 0, lossC = 0;
+        let totalR = 0;
+
+        if (shadowsToday && shadowsToday.length > 0) {
+            for (let st of shadowsToday) {
+                if (st.status.includes('WIN')) {
+                    winC++;
+                    // Calculate R Reward
+                    const risk = Math.abs(st.entryPrice - st.stopPrice);
+                    const reward = Math.abs(st.targetPrice - st.entryPrice);
+                    const R = risk > 0 ? (parseFloat((reward / risk).toFixed(2))) : 0;
+                    totalR += R;
+                } else if (st.status.includes('LOSS')) {
+                    lossC++;
+                    totalR -= 1.0; // 1 R Loss
+                }
+            }
+        }
+
+        let totalSCount = winC + lossC;
+        let wr = totalSCount > 0 ? ((winC / totalSCount) * 100).toFixed(1) : 0;
+        let theoGrowth = totalR > 0 ? `+%${totalR.toFixed(2)}` : `%${totalR.toFixed(2)}`;
+
+        let msg = `🐺 *Merhaba ben Börü Bey; Görevimin başındayım.*\n\nBugün ana portföyümüzdeki işlemleri saniye saniye takip ederek, stop olan *${totalAutopsy}* adet işlemi incelenmesi için Arif Bey'e (Otopsi) sevk ettim.\n\n`;
+        
+        msg += `📊 *BÖRÜ BEY GÖLGE (SHADOW) PERFORMANSI (Son 24s)* 📊\n`;
+        msg += `_Sistemin reddettiği ama benim arka planda sanal olarak işlemeye devam ettiğim sinyallerin durumu:_\n\n`;
+        msg += `🔹 *Takip Edilen:* ${totalSCount} İşlem\n`;
+        msg += `✅ *Hedefe Ulaşan (Win):* ${winC}\n`;
+        msg += `❌ *Patlayan (Loss):* ${lossC}\n`;
+        msg += `🎯 *Win Rate:* %${wr}\n`;
+        msg += `📏 *Kazanılan Net R:* ${totalR.toFixed(2)} R\n`;
+        msg += `💰 *Teorik Kasa Etkisi:* ${theoGrowth} (İşlem başı %1 risk ile)\n\n`;
+        msg += `Nöbete devam ediyorum, iyi geceler.`;
+
+        if (bot && process.env.ADMIN_TELEGRAM_ID) {
+            await bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, msg, { parse_mode: 'Markdown' });
+            console.log("[BÖRÜ_BEY] Günlük detaylı rapor Telegram'a iletildi.");
         }
     } catch(e) {
         console.error("[BÖRÜ_BEY] Günlük rapor hatası:", e.message);
