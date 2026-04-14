@@ -1517,8 +1517,15 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('Sinerji: Keskin Nişancı Bonusu (+10)');
         }
 
-        // 3. Çatışma Cezası (İptal Edildi - VETO Kuralları Yeterli)
-        // V3.3: ADX < 20 veya StochRSI extreme durumları üst satırlarda doğrudan reddedildiği için redundant ceza kaldırıldı.
+        // 3. SCORE NORMALIZATION & TRADFI DIVERGENCE (v5.4)
+        if (symbolInfo && symbolInfo.isAsset) {
+            qualityScore = Math.floor(qualityScore * 0.85); // TradFi assets receive 15% penalty to normalize against crypto-native volatility spikes
+        }
+        
+        if (qualityScore > 85) {
+            qualityScore = 85;
+            warnings.push('Norm: Puan Normalize Edildi (Max 85)');
+        }
         
         // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
         // --- END PERPLEXITY & CHATGPT FILTER ---
@@ -1890,7 +1897,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                         currentLivePrice = parseFloat(res.data.data.lastPrice);
                                         const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
                                         const riskWidth = Math.abs(signal.entryPrice - signal.stopPrice) / signal.entryPrice;
-                                        const maxSlippage = Math.max(0.002, riskWidth * 0.15); // Stop'un %15'ine kadar müsaade (min binde 2)
+                                        let atrPercent = (signal.atr && signal.entryPrice) ? (signal.atr / signal.entryPrice) : 0.02;
+                                        const maxSlippage = Math.min(riskWidth * 0.15, atrPercent * 0.25, 0.005); // Dinamik Kayma: max %0.5
                                         if (slippage > maxSlippage) {
                                             slippageExceeded = true;
                                         }
