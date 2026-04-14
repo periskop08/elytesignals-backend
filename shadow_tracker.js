@@ -233,7 +233,8 @@ Görev: Kuralı tamamen çöpe atmak yerine, bu olayı analiz edip kurala bir "�
                 }
             }
         }
-    } catch (e) {
+    }
+} catch (e) {
         console.error("[BÖRÜ_BEY] Shadow check error:", e);
     }
 }
