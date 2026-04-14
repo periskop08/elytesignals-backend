@@ -84,7 +84,12 @@ async function analyzeOptionsFlow(fetchId, currentPrice) {
 
 async function fetchCandles(symbolInfo, intervalMinutes, limit) {
     try {
-        const interval = intervalMinutes === 60 ? '1h' : (intervalMinutes + 'm');
+        let interval = intervalMinutes + 'm';
+        if (intervalMinutes === 60) interval = '1h';
+        else if (intervalMinutes === 240) interval = '4h';
+        else if (intervalMinutes === 1440) interval = '1d';
+        else if (intervalMinutes === 10080) interval = '1w';
+
         let fetchSym = '';
 
         if (typeof symbolInfo === 'string') {
