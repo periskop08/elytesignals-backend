@@ -2435,6 +2435,7 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                         }
                                     } // End finalRiskMultiplier else
                                     } // End !skipAutoTrade
+                                } // End slippageExceeded else
                                 } else {
                                     blockReasonsAll.push('SAME_DAY_DUPLICATE');
                                     finalBlockReasonPrimary = 'SPAM_PROTECTION';
