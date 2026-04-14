@@ -1713,7 +1713,14 @@ async function runScan() {
             if (signal) {
                 if (signal.adxVetoOnly || signal.demirVetoOnly) {
                     const breakdownStr = JSON.stringify(signal.breakdown || {});
-                    const lId = signal.demirVetoOnly ? -998 : -999;
+                    let lId = -999;
+                    if (signal.demirVetoOnly) {
+                        if (signal.demirMsg && signal.demirMsg.includes("Sığ")) {
+                            lId = -997; // Sığ Tahta
+                        } else {
+                            lId = -998; // Yüksek Makas veya diğer
+                        }
+                    }
                     await db.run(
                         "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, lId, signal.qualityScore, breakdownStr, 'PENDING']
