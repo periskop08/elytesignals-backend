@@ -1706,7 +1706,7 @@ ${lessonsText}
 GÜNCEL SİNYAL GİRİŞ HARİTASI:
 Varlık: ${signal.symbol}
 Yön: ${signal.type}
-Toplam Kalite Skoru: ${signal.qualityScore}
+Toplam Kalite Skoru: ${signal.qualityScore} (Maksimum Sınır: 85 üzerinden)
 Grafik Bileşenleri (Uyarılar): ${signal.warnings}
 
 Soru: Yeni oluşan bu sinyal, Aktif Derslerdeki bir hataya/tuzağa ne kadar benziyor? Ne kadar riskli?
