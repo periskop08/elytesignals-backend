@@ -1195,11 +1195,11 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
                     // ADX Koruması (Kripto için)
-                    if (currentADX < 24) {
+                    if (currentADX < 20) {
                         console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
                         breakdown.adxVeto = true;
                         qualityScore -= 200; 
-                    } else if (currentADX >= 24 && currentADX < 30) {
+                    } else if (currentADX >= 20 && currentADX < 30) {
                         qualityScore -= 10;
                         warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
                     } else {
