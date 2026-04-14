@@ -217,17 +217,85 @@ function calculateTrendFromKlines(klines) {
     return { trend, rsi: lastRsi, ema: lastEma, sma: lastSma, close: lastClose };
 }
 
+// --- BREADTH ENGINE START ---
+const BREADTH_COINS = ['SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LINKUSDT', 'SUIUSDT', 'DOTUSDT', 'BCHUSDT', 'PEPEUSDT', 'WIFUSDT', 'ONDOUSDT', 'FETUSDT', 'INJUSDT'];
+
+async function calculateBreadthBasket() {
+    try {
+        console.log('[BREADTH ENGINE] Calculating Market Breadth over 13-Coin High-Beta Basket...');
+        // We can get 24h ticker for all coins in one BingX call
+        const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
+        const tickers = res.data.data || [];
+        const tickerMap = {};
+        tickers.forEach(t => {
+            tickerMap[t.symbol.replace('-', '')] = parseFloat(t.priceChangePercent) || 0;
+        });
+
+        let positive24hCount = 0;
+        let positive1hCount = 0;
+        let basketTotalChange = 0;
+        let validCoinsCount = 0;
+        
+        const btc24hChange = tickerMap['BTCUSDT'] || 0;
+
+        for (const coin of BREADTH_COINS) {
+            const change24h = tickerMap[coin] || 0;
+            basketTotalChange += change24h;
+            if (change24h > 0) positive24hCount++;
+            
+            const klines = await fetchBybitKlinesGlobal(coin, '60');
+            if (klines && klines.length >= 20) {
+                const closes = klines.map(k => k.close);
+                const sma20 = SMA.calculate({period: 20, values: closes});
+                if (sma20.length > 0) {
+                    const lastClose = closes[closes.length - 1];
+                    const lastOpen = klines[klines.length - 1].open;
+                    const lastSMA = sma20[sma20.length - 1];
+                    
+                    if (lastClose > lastOpen && lastClose > lastSMA) {
+                        positive1hCount++;
+                    }
+                }
+            }
+            validCoinsCount++;
+        }
+
+        const participation24hScore = validCoinsCount > 0 ? (positive24hCount / validCoinsCount) : 0;
+        const momentum1hScore = validCoinsCount > 0 ? (positive1hCount / validCoinsCount) : 0;
+        const avgBasketChange = validCoinsCount > 0 ? (basketTotalChange / validCoinsCount) : 0;
+        const relativeStrengthScore = (avgBasketChange > btc24hChange) ? 1.0 : (avgBasketChange > 0 ? 0.5 : 0.0);
+
+        // Ağırlıklar: 35 / 35 / 30
+        const breadthScore = (participation24hScore * 0.35) + (momentum1hScore * 0.35) + (relativeStrengthScore * 0.30);
+        let breadthState = 'NEUTRAL';
+        if (breadthScore > 0.6) breadthState = 'STRONG';
+        else if (breadthScore < 0.4) breadthState = 'WEAK';
+
+        return {
+            score: breadthScore,
+            state: breadthState,
+            components: { s24h: participation24hScore, s1h: momentum1hScore, sRel: relativeStrengthScore }
+        };
+
+    } catch(e) {
+        console.error("[BREADTH ENGINE] Error:", e.message);
+        return { score: 0.5, state: 'NEUTRAL', components: {s24h: 0, s1h: 0, sRel: 0} };
+    }
+}
+// --- BREADTH ENGINE END ---
+
 async function analyzeGlobalMarket() {
     try {
         console.log('[GLOBAL SENSOR] Fetching macro market and dominance data...');
-        const [btc1h, btc4h, btc1d, eth4h, eth1d, dom4h, cgDom] = await Promise.all([
+        const [btc1h, btc4h, btc1d, eth4h, eth1d, dom4h, cgDom, breadthData] = await Promise.all([
             fetchBybitKlinesGlobal('BTCUSDT', '60'),
             fetchBybitKlinesGlobal('BTCUSDT', '240'),
             fetchBybitKlinesGlobal('BTCUSDT', 'D'),
             fetchBybitKlinesGlobal('ETHUSDT', '240'),
             fetchBybitKlinesGlobal('ETHUSDT', 'D'),
             fetchBinanceKlines('BTCDOMUSDT', '4h'),
-            fetchCoinGeckoDominance()
+            fetchCoinGeckoDominance(),
+            calculateBreadthBasket()
         ]);
 
         const btc1hObj = calculateTrendFromKlines(btc1h);
@@ -254,9 +322,12 @@ async function analyzeGlobalMarket() {
             eth1dObj: eth1dObj,
             btcDomTrend: dom4hObj.trend,
             cgDom: cgDom,
+            breadthScore: breadthData.score,
+            breadthState: breadthData.state,
+            breadthComponents: breadthData.components,
             timestamp: Date.now()
         };
-        console.log(`[GLOBAL SENSOR] BTC: ${globalMarketState.btcTrend} | USDT.D: %${globalMarketState.cgDom.usdt.toFixed(1)} | ETH: ${globalMarketState.ethTrend}`);
+        console.log(`[GLOBAL SENSOR] BTC: ${globalMarketState.btcTrend} | USDT.D: %${globalMarketState.cgDom.usdt.toFixed(1)} | ETH: ${globalMarketState.ethTrend} | BREADTH: ${globalMarketState.breadthState}`);
     } catch (e) {
         console.error('[GLOBAL SENSOR] Error:', e.message);
     }
