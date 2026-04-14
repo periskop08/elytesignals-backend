@@ -1599,6 +1599,7 @@ async function analyzeCoin(symbolInfo) {
             targetPrice: targetP,
             stopPrice: dynamicStop,
             qualityScore: qualityScore,
+            dynamicThreshold: dynamicThreshold,
             warnings: JSON.stringify(warnings),
             macroState: globalMarketState,
             breakdown: breakdown,
@@ -1794,8 +1795,10 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                 }
 
                 // --- AUTO TRADING BLOCK START ---
-                if (signal.qualityScore < dynamicThreshold) {
-                    console.log(`[AUTO-TRADE] Atlandı: Soft Veto Sonrası Puanı ${signal.qualityScore} (Gerekli: ${dynamicThreshold})`);
+                let autoTradeBlocked = false;
+                if (signal.qualityScore < signal.dynamicThreshold) {
+                    console.log(`[AUTO-TRADE] Atlandı: Soft Veto Sonrası Puanı ${signal.qualityScore} (Gerekli: ${signal.dynamicThreshold})`);
+                    autoTradeBlocked = true;
                 } else if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
                         // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS ---+
