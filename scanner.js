@@ -1603,6 +1603,7 @@ async function analyzeCoin(symbolInfo) {
             warnings: JSON.stringify(warnings),
             macroState: globalMarketState,
             breakdown: breakdown,
+            atr: currentATR,
             isAsset: symbolInfo.isAsset || false
         };
     } catch (e) {
@@ -1684,10 +1685,12 @@ async function runScan() {
                 let telegramLimitWarning = "";
 
                 try {
-                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' AND datetime(createdAt) >= datetime('now', '-30 days') ORDER BY id DESC LIMIT 15");
+                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status IN ('ACTIVE', 'TEST') AND datetime(createdAt) >= datetime('now', '-30 days') ORDER BY id DESC LIMIT 15");
                     
+                    let isTestRule = false;
+
                     if (activeLessons && activeLessons.length > 0) {
-                        const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] - ${l.lessonText}`).join('\n');
+                        const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] (${l.status}) - ${l.lessonText}`).join('\n');
                         const prompt = `Sen PeriskopAI Otonom Fon Yöneticisisin. Sana geçmişteki zararlarımızdan çıkardığımız "KARA LİSTE" dersleri ve şu an girmeyi planladığımız GÜNCEL BİR SİNYAL gönderiyorum.
                         
 AKTİF DERSLER (Hafıza):
@@ -1713,43 +1716,60 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         });
                         const blockJson = JSON.parse(blockRes.response.text());
                         
+                        if (blockJson.lesson_id) {
+                            const matchedLesson = activeLessons.find(l => l.id == blockJson.lesson_id);
+                            if (matchedLesson && matchedLesson.status === 'TEST') {
+                                isTestRule = true;
+                            }
+                        }
+                        
                         if (blockJson.risk_level === "HIGH") {
-                            llmRiskPenalty = 0.70;
-                            signal.qualityScore -= 30;
+                            if (!isTestRule) {
+                                llmRiskPenalty = 0.70;
+                                signal.qualityScore -= 30;
+                            }
                             blockReason = `Yüksek Risk: ${blockJson.reason}`;
                             blockLessonId = blockJson.lesson_id;
                         } else if (blockJson.risk_level === "MEDIUM") {
-                            llmRiskPenalty = 0.75;
-                            signal.qualityScore -= 20;
+                            if (!isTestRule) {
+                                llmRiskPenalty = 0.75;
+                                signal.qualityScore -= 20;
+                            }
                             blockReason = `Orta Risk: ${blockJson.reason}`;
                             blockLessonId = blockJson.lesson_id;
                         } else if (blockJson.risk_level === "LOW") {
-                            llmRiskPenalty = 1.0;
-                            signal.qualityScore -= 10;
+                            if (!isTestRule) {
+                                llmRiskPenalty = 1.0;
+                                signal.qualityScore -= 10;
+                            }
                             blockReason = `Düşük Risk (Küçük Pürüz): ${blockJson.reason}`;
-                            // if it's strictly LOW risk and no major lesson trigger, we don't block.
                         }
                     }
                 } catch (err) {
                     console.error("[SHADOW] Error checking AI memory:", err.message);
                 }
 
-                if (llmRiskPenalty < 1.0 || blockLessonId) {
-                    console.log(`[SHADOW BLOCK] Danışman LLM Puan Kırdı: ${signal.symbol} -> ${blockReason}`);
+                if (llmRiskPenalty < 1.0 || (blockLessonId && signal.qualityScore)) { 
+                    // Only trigger if real penalty applied OR if a lesson matched (even if test)
+                    console.log(`[SHADOW BLOCK] Danışman LLM Yakaladı: ${signal.symbol} -> ${blockReason} (Test Modu: ${isTestRule})`);
                     
-                    signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + `LLM RİSK İNDİRİMİ: ${blockReason}`;
+                    if (!isTestRule) {
+                        signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + `LLM RİSK İNDİRİMİ: ${blockReason}`;
+                    }
 
                     const breakdownJson = JSON.stringify(signal.breakdown || {});
+                    const shadowStatus = isTestRule ? 'SHADOW_TEST_PENDING' : 'PENDING';
+
                     await db.run(
-                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore, breakdownJson]
+                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore, breakdownJson, shadowStatus]
                     );
 
-                            if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
-                                try {
-                                    telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `👨‍🏫 *Danışman Ajan Sinyali Notladı (Soft Veto)* 👨‍🏫\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Uyarı:* ${blockReason}\n\nBu sinyal veritabanına kaydedildi ancak Kalite Puanı -25 düşürüldü. Gölge PnL takibine de alındı.`, { parse_mode: 'Markdown' });
-                                } catch(e) {}
-                            }
+                    if (telegramBot && process.env.ADMIN_TELEGRAM_ID && !isTestRule) {
+                        try {
+                            telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `👨‍🏫 *Danışman Ajan Sinyali Notladı (Soft Veto)* 👨‍🏫\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Uyarı:* ${blockReason}\n\nBu sinyal veritabanına kaydedildi ancak Kalite Puanı düşürüldü. Gölge PnL takibine de alındı.`, { parse_mode: 'Markdown' });
+                        } catch(e) {}
+                    }
                 }
                 // +--- END SHADOW BLOCK ---+
 
