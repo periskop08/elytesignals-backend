@@ -1718,6 +1718,27 @@ async function runScan() {
                         "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, lId, signal.qualityScore, breakdownStr, 'PENDING']
                     );
+
+                    try {
+                        const pendingShadows = await db.all("SELECT symbol, type, lessonId FROM shadow_trades WHERE status IN ('PENDING', 'SHADOW_TEST_PENDING')");
+                        let reasonAdded = lId === -999 ? 'ADX/Kalite' : 'Demir Bey (Sığ Tahta)';
+                        let msg = `🐺 *Börü Bey: Yeni Sanal İşlem Yakaladım!* 🐺\n\n📌 *Takibe Alınan:* #${signal.symbol} (${signal.type})\n🚫 *Veto Sebebi:* ${reasonAdded}\n\n📋 *Şu Anki Karanlık Oda Takip Listesi (${pendingShadows.length} işlem):*\n`;
+                        for (let s of pendingShadows) {
+                            let currReason = s.lessonId === -999 ? 'ADX Veto' : (s.lessonId === -998 ? 'Likidite Veto' : `Ders ${s.lessonId}`);
+                            msg += `• ${s.symbol} (${s.type}) [${currReason}]\n`;
+                        }
+                        const axios = require('axios');
+                        if (process.env.ADMIN_TELEGRAM_ID && process.env.TELEGRAM_BOT_TOKEN) {
+                           await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                               chat_id: process.env.ADMIN_TELEGRAM_ID,
+                               text: msg,
+                               parse_mode: 'Markdown'
+                           });
+                        }
+                    } catch(tgEr) {
+                         console.error("Shadow notification error:", tgEr.message);
+                    }
+
                     continue;
                 }
                 
