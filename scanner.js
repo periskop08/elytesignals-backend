@@ -1993,10 +1993,15 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         
                         let tierTag = signal.qualityScore >= 65 ? '💎 Elit Kurumsal Sinyal' : '⚠️ Standart PA Sinyali';
                         
+                        let extraNote = "";
+                        if (autoTradeBlocked) {
+                            extraNote = `⚠️ *Uyarı:* Bu işlem borsa hesabında AÇILMADI!\nSebep: Arif Bey'in geçmiş öğrenim defteri (Dersler) kontrolü sonucu ${blockReason ? '_' + blockReason + '_' : 'Riskli'} olarak etiketlendi.\n\n`;
+                        }
+
                         const msg = `🚨 *Elyte Sinyal Uygulaması Üzerinde '${categoryTag}' Kategorisinde Yeni Bir Sinyal Düştü!*\n\n` +
                             `⭐ Kalite Derecesi: *${tierTag}* (Skor: ${signal.qualityScore})\n` +
                             `🎯 Yön: *${signal.type}*\n\n` + flagPart +
-                            (telegramLimitWarning ? telegramLimitWarning + `\n\n` : ``) +
+                            (telegramLimitWarning ? telegramLimitWarning + `\n\n` : ``) + extraNote +
                             `_Detaylar ve seviyeler için Elyte aplikasyonuna girebilirsiniz..._ 🔭\n\n` +
                             `🔗 Web Platformu:\nhttps://www.elytesignals.com/dashboard`;
                         telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
