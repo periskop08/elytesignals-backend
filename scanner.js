@@ -2125,8 +2125,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                 // +--- END SHADOW BLOCK ---+
 
                 const insertResult = await db.run(
-                    "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
+                    "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol, engineMode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb, signal.breakdown?.engineMode || 'ALPHA']
                 );
                 const signalId = insertResult.id;
                 console.log(`[SCANNER] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
