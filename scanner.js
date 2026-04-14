@@ -1744,12 +1744,11 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore, breakdownJson]
                     );
 
-                    // Telegram Admin'e Uyarı Gönder
-                    if (telegramBot && CONFIG.telegramAdminId) {
-                        try {
-                            telegramBot.sendMessage(CONFIG.telegramAdminId, `👨‍🏫 *Danışman Ajan Sinyali Notladı (Soft Veto)* 👨‍🏫\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Uyarı:* ${blockReason}\n\nBu sinyal veritabanına kaydedildi ancak Kalite Puanı -25 düşürüldü. Gölge PnL takibine de alındı.`, { parse_mode: 'Markdown' });
-                        } catch(e) {}
-                    }
+                            if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
+                                try {
+                                    telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `👨‍🏫 *Danışman Ajan Sinyali Notladı (Soft Veto)* 👨‍🏫\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Uyarı:* ${blockReason}\n\nBu sinyal veritabanına kaydedildi ancak Kalite Puanı -25 düşürüldü. Gölge PnL takibine de alındı.`, { parse_mode: 'Markdown' });
+                                } catch(e) {}
+                            }
                 }
                 // +--- END SHADOW BLOCK ---+
 
