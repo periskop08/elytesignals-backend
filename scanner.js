@@ -1395,8 +1395,8 @@ async function analyzeCoin(symbolInfo) {
         }
         breakdown.engineMode = operationMode;
 
-        // COST-ADJUSTED RR HESABI (Slippage + Borsa Fee)
-        let cost = (currentPrice * 0.0005) + (risk * 0.15); // Tahmini maliyet
+        // COST-ADJUSTED RR HESABI (Sadece gerçek işlem maliyetleri - Fee + Spread)
+        let cost = (currentPrice * 0.0005); // Taker Fee tahmini (Kayma payı execution'da kalacak)
         let effectiveRR = risk > 0 ? ((reward) / (risk + cost)) : 0;
         
         // R:R Barajı değerlendirmesi Ekin Bey VIP İndirimi için aşağıya taşındı.
@@ -1542,7 +1542,7 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('VIP Ekin Bey İndirimi (-0.15 R:R Barajı)');
         }
 
-        let requiredEffectiveRR = operationMode === 'VOLUME' ? (1.12 - vipDiscount) : (1.30 - vipDiscount);
+        let requiredEffectiveRR = operationMode === 'VOLUME' ? (1.10 - vipDiscount) : (1.22 - vipDiscount);
         if (requiredEffectiveRR < 1.05) requiredEffectiveRR = 1.05; // Minimum güvenlik tabanı
 
         if (effectiveRR < requiredEffectiveRR) {
