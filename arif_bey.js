@@ -165,3 +165,5 @@ cron.schedule('0 3 * * *', async () => {
 });
 
 console.log("=== Arif Bey (Otopsi Ajanı) servisi başlatıldı (Nöbette) ===");
+
+module.exports = { runArifBey };
