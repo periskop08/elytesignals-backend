@@ -1720,12 +1720,22 @@ async function runScan() {
                     );
 
                     try {
-                        const pendingShadows = await db.all("SELECT symbol, type, lessonId FROM shadow_trades WHERE status IN ('PENDING', 'SHADOW_TEST_PENDING')");
+                        const pendingShadows = await db.all(`
+                            SELECT s.symbol, s.type, s.lessonId, a.lessonText 
+                            FROM shadow_trades s 
+                            LEFT JOIN ai_lessons a ON s.lessonId = a.id 
+                            WHERE s.status IN ('PENDING', 'SHADOW_TEST_PENDING')
+                        `);
                         let reasonAdded = lId === -999 ? 'ADX/Kalite' : 'Demir Bey (Sığ Tahta)';
-                        let msg = `🐺 *Börü Bey: Yeni Sanal İşlem Yakaladım!* 🐺\n\n📌 *Takibe Alınan:* #${signal.symbol} (${signal.type})\n🚫 *Veto Sebebi:* ${reasonAdded}\n\n📋 *Şu Anki Karanlık Oda Takip Listesi (${pendingShadows.length} işlem):*\n`;
+                        let msg = `🐺 *Börü Bey: Yeni Sanal İşlem Yakaladım!* 🐺\n\n📌 *Takibe Alınan:* #${signal.symbol} (${signal.type})\n🚫 *Veto Sebebi:* ${reasonAdded}\n\n📋 *Şu Anki Karanlık Oda Takip Listesi (${pendingShadows.length} işlem):*\n\n`;
                         for (let s of pendingShadows) {
-                            let currReason = s.lessonId === -999 ? 'ADX Veto' : (s.lessonId === -998 ? 'Likidite Veto' : `Ders ${s.lessonId}`);
-                            msg += `• ${s.symbol} (${s.type}) [${currReason}]\n`;
+                            let currReason = "";
+                            if (s.lessonId === -999) currReason = "Yetersiz ADX / Düşük Kalite Skoru (Sabit Motor Kuralı)";
+                            else if (s.lessonId === -998) currReason = "Demir Bey Tahta Koruması (Sığ Tahta / Yüksek Makas)";
+                            else if (s.lessonText) currReason = `Ders ID: ${s.lessonId} - "${s.lessonText}"`;
+                            else currReason = `Ders ID: ${s.lessonId}`;
+                            
+                            msg += `🔹 *${s.symbol}* (${s.type})\n_Sebep:_ ${currReason}\n\n`;
                         }
                         const axios = require('axios');
                         if (process.env.ADMIN_TELEGRAM_ID && process.env.TELEGRAM_BOT_TOKEN) {
