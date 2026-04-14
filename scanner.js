@@ -1102,8 +1102,8 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('Market Regime: Trending (+5)');
         } else if (currentADX < 15) {
             regime = 'RANGING';
-            qualityScore -= 5; // Yatay piyasalarda yanlış kırılım (fakeout) cezası
-            warnings.push('Market Regime: Ranging Limit (-5)');
+            qualityScore -= 2; // Eskiden -5'ti, Context Engine devreye girdiği için çifte ceza olmasın diye yumuşatıldı
+            warnings.push('Market Regime: Ranging Limit (-2)');
         }
         breakdown.regime = regime;
 
@@ -1835,6 +1835,48 @@ function resolveMatrixLimits(leaderState, breadthState) {
     return { maxSame, maxOpposite, matrixScenarioApplied };
 }
 
+function evaluateContextCompression(leaderState, breadthState, adxMetric, mtfBias, signalType, baseMaxSame, baseMaxOpposite) {
+    let contextScore = 0;
+    let contextComps = { breadth: 0, leader: 0, adx: 0, mtf: 0 };
+    
+    if (breadthState === 'WEAK') { contextScore -= 1; contextComps.breadth = -1; }
+    else if (breadthState === 'STRONG') { contextScore += 1; contextComps.breadth = 1; }
+
+    if (leaderState === 'STRESSED') { contextScore -= 1; contextComps.leader = -1; }
+    else if (leaderState === 'CONFIRMED') { contextScore += 1; contextComps.leader = 1; }
+
+    if (adxMetric < 15) { contextScore -= 1; contextComps.adx = -1; }
+    else if (adxMetric >= 25) { contextScore += 1; contextComps.adx = 1; }
+
+    if (mtfBias !== 'neutral') {
+        if ((signalType === 'LONG' && mtfBias === 'bearish') || (signalType === 'SHORT' && mtfBias === 'bullish')) {
+            contextScore -= 1; contextComps.mtf = -1;
+        } else if ((signalType === 'LONG' && mtfBias === 'bullish') || (signalType === 'SHORT' && mtfBias === 'bearish')) {
+            contextScore += 1; contextComps.mtf = 1;
+        }
+    }
+
+    let finalMaxSame = baseMaxSame;
+    let finalMaxOpposite = baseMaxOpposite;
+    let contextVeto = false;
+    let penaltyApplied = 0;
+
+    if (contextScore <= -3) {
+        contextVeto = true;
+    } else if (contextScore === -2) {
+        penaltyApplied = -10;
+        finalMaxSame = Math.min(finalMaxSame, 2);
+        finalMaxOpposite = Math.min(finalMaxOpposite, 2);
+    } else if (contextScore >= 2) {
+        finalMaxSame = Math.max(finalMaxSame, 4);
+        if (leaderState === 'CONFIRMED' && breadthState === 'STRONG') {
+            finalMaxSame = 5;
+        }
+    }
+
+    return { contextScore, contextComps, contextVeto, penaltyApplied, finalMaxSame, finalMaxOpposite };
+}
+
 function getDirectionalBucket(leaderDir, candidateDir) {
     if (!leaderDir) return 'SAME';
     return leaderDir === candidateDir ? 'SAME' : 'OPPOSITE';
@@ -2116,7 +2158,20 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
 
                         const { leaderState, leaderRMultiple, leaderDirection, dominantLeaderSymbol } = selectLeaderState(btcTrade, ethTrade, globalBtcPrice, globalEthPrice);
                         const breadthState = globalMarketState && globalMarketState.breadthState ? globalMarketState.breadthState : 'NEUTRAL';
-                        const { maxSame, maxOpposite, matrixScenarioApplied } = resolveMatrixLimits(leaderState, breadthState);
+                        const { maxSame: baseMaxSame, maxOpposite: baseMaxOpposite, matrixScenarioApplied } = resolveMatrixLimits(leaderState, breadthState);
+                        
+                        const adxMetric = signal.breakdown && typeof signal.breakdown.adx !== 'undefined' ? signal.breakdown.adx : 25;
+                        const mtfBias = signal.breakdown && typeof signal.breakdown.trend4h !== 'undefined' ? signal.breakdown.trend4h : 'neutral';
+                        
+                        const contextRes = evaluateContextCompression(leaderState, breadthState, adxMetric, mtfBias, signal.type, baseMaxSame, baseMaxOpposite);
+
+                        const maxSame = contextRes.finalMaxSame;
+                        const maxOpposite = contextRes.finalMaxOpposite;
+
+                        if (contextRes.penaltyApplied < 0) {
+                            signal.qualityScore += contextRes.penaltyApplied;
+                        }
+
                         const candidateBucket = getDirectionalBucket(leaderDirection, signal.type);
                         
                         let currentOpenSame = 0;
@@ -2134,27 +2189,35 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         let finalBlockReasonPrimary = 'NONE';
                         let autoTradeBlockedByLimit = false;
 
-                        if (candidateBucket === 'SAME' && currentOpenSame >= maxSame) { 
+                        if (contextRes.contextVeto) {
                             autoTradeBlockedByLimit = true;
-                            blockReasonsAll.push('LIMIT_SAME_CAP_REACHED');
-                            finalBlockReasonPrimary = 'LIMIT_BLOCK';
-                        }
-                        if (candidateBucket === 'OPPOSITE' && currentOpenOpposite >= maxOpposite) { 
-                            autoTradeBlockedByLimit = true; 
-                            blockReasonsAll.push('LIMIT_OPPOSITE_CAP_REACHED');
-                            finalBlockReasonPrimary = 'LIMIT_BLOCK';
+                            blockReasonsAll.push('CONTEXT_COMPRESSION_VETO');
+                            finalBlockReasonPrimary = 'CONTEXT_BLOCK';
+                        } else {
+                            if (candidateBucket === 'SAME' && currentOpenSame >= maxSame) { 
+                                autoTradeBlockedByLimit = true;
+                                blockReasonsAll.push('LIMIT_SAME_CAP_REACHED');
+                                finalBlockReasonPrimary = 'LIMIT_BLOCK';
+                            }
+                            if (candidateBucket === 'OPPOSITE' && currentOpenOpposite >= maxOpposite) { 
+                                autoTradeBlockedByLimit = true; 
+                                blockReasonsAll.push('LIMIT_OPPOSITE_CAP_REACHED');
+                                finalBlockReasonPrimary = 'LIMIT_BLOCK';
+                            }
                         }
 
                         let finalAutoTradeBlocked = autoTradeBlockedByLimit;
                         let eliteExceptionTriggered = false;
 
-                        if (autoTradeBlockedByLimit && signal.qualityScore >= 75) {
+                        if (autoTradeBlockedByLimit && signal.qualityScore >= 75 && finalBlockReasonPrimary !== 'CONTEXT_BLOCK') {
                              finalAutoTradeBlocked = false;
                              eliteExceptionTriggered = true;
                         }
 
                         // --- TELEMETRY LOGGING ---
                         console.log(`[TELEMETRY] ${signal.symbol} | Matrix: ${matrixScenarioApplied} | Leader: ${dominantLeaderSymbol}(${leaderState}, R:${leaderRMultiple.toFixed(2)}) | Breadth: ${breadthState}`);
+                        console.log(`[TELEMETRY] Context Score: ${contextRes.contextScore} | Comps: ${JSON.stringify(contextRes.contextComps)}`);
+                        console.log(`[TELEMETRY] Base Limits: ${baseMaxSame}/${baseMaxOpposite} | Final Limits: ${maxSame}/${maxOpposite}`);
                         if (globalMarketState && globalMarketState.breadthComponents) {
                             console.log(`[TELEMETRY] Breadth Comps -> 24h: ${globalMarketState.breadthComponents.s24h.toFixed(2)}, 1h: ${globalMarketState.breadthComponents.s1h.toFixed(2)}, Rel: ${globalMarketState.breadthComponents.sRel.toFixed(2)}`);
                         }
