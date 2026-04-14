@@ -1178,11 +1178,11 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
                     // ADX Koruması (Kripto için FOMO Filtresi)
-                    if (currentADX < 24) {
+                    if (currentADX < 20) {
                         console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
                         breakdown.adxVeto = true;
                         qualityScore -= 200; // Son aşamada kesin veto yemesi için
-                    } else if (currentADX >= 24 && currentADX < 30) {
+                    } else if (currentADX >= 20 && currentADX < 30) {
                         qualityScore -= 10;
                         warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
                     } else {
