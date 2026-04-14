@@ -1604,7 +1604,7 @@ async function analyzeCoin(symbolInfo) {
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
             if (qualityScore < 55) {
-                console.log(`[VETO] ${sym} işlemi Demir Bey'in (Sığ Tahta / Yüksek Spread) cezasıyla sisteme sokulmadı.`);
+                console.log(`[VETO] ${sym} işlemi Demir Bey cezasıyla (${demirRes.msg}) sisteme sokulmadı.`);
                 return null;
             }
         }
