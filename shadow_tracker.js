@@ -134,15 +134,22 @@ async function checkShadowTrades() {
                     await runExec("UPDATE shadow_trades SET status = 'LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
                     console.log(`[BÖRÜ_BEY] Sistem Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS).`);
                     let reliabilityMsg = "";
+                    let lessonDescription = `Ders ID:${trade.lessonId}`;
                     if (trade.lessonId === -999) {
-                        // Sistem vetosu başarılı oldu, spama gerek yok, ADX bizi korumuş.
+                        lessonDescription = `"Yetersiz ADX / Düşük Kalite Skoru (Sabit Motor Kuralı)"`;
                     } else if (trade.lessonId) {
                         await runExec("UPDATE ai_lessons SET reliability = reliability + 10 WHERE id = ?", [trade.lessonId]);
                         reliabilityMsg = " (Kural Güvenilirliği +10 Puan Arttı!)";
+                        try {
+                            const lRow = await runQuery("SELECT lessonText FROM ai_lessons WHERE id = ?", [trade.lessonId]);
+                            if (lRow && lRow.length > 0) {
+                                lessonDescription = `(Ders ID:${trade.lessonId})\n_${lRow[0].lessonText}_`;
+                            }
+                        } catch(err) {}
                     }
                     
                     if (bot && process.env.ADMIN_TELEGRAM_ID) {
-                        bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.${reliabilityMsg}`);
+                        bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine şu sebeple girmemiştik:\n${lessonDescription}\n\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.${reliabilityMsg}`, { parse_mode: 'Markdown' });
                     }
                 }
             } else if (hitWin) {
@@ -171,7 +178,7 @@ async function checkShadowTrades() {
                                 // 3-Strike Kuralı: Hemen kuralı bozma, sadece uyar ve güveni düşür.
                                 await runExec("UPDATE ai_lessons SET missCount = missCount + 1, reliability = reliability - 5 WHERE id = ?", [trade.lessonId]);
                                 if (bot && ADMIN_TELEGRAM_ID) {
-                                    bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey Uyarıyor! (Fırsat Kaçtı)* ⚠️\n\n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ ama biz Ders ID:${trade.lessonId} yüzünden girmedik.\n\n_Bu kuralın ${currentMissCount + 1}. falsosu! Hata payı (Miss) arttırıldı. Bir daha hata yaparsa yapay zeka tarafından revize edilecek._`);
+                                    bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey Uyarıyor! (Fırsat Kaçtı)* ⚠️\n\n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ ama biz şu kural yüzünden girmedik:\n_${originalLesson}_\n\n_Bu kuralın ${currentMissCount + 1}. falsosu! Hata payı (Miss) arttırıldı. Bir daha hata yaparsa yapay zeka tarafından revize edilecek._`, { parse_mode: 'Markdown' });
                                 }
                             } else {
                                 // Strike 3! Kuralı revize et ve Miss Count'u sıfırla
