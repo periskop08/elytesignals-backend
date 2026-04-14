@@ -1777,6 +1777,70 @@ let globalBtcPrice = null;
 let globalEthPrice = null;
 let isScanning = false;
 
+// --- AUTO-TRADE HELPER FUNCTIONS ---
+function selectLeaderState(btcTrade, ethTrade, globalBtcPrice, globalEthPrice) {
+    let dominantTrade = null;
+    let dominantLeaderSymbol = 'NONE';
+    let leaderState = 'PROBING';
+    let leaderRMultiple = 0;
+    let leaderDirection = null;
+
+    let btcR = null;
+    if (btcTrade && globalBtcPrice) {
+        const risk = Math.abs(btcTrade.entryPrice - btcTrade.stopPrice) || 1;
+        btcR = btcTrade.type === 'LONG' ? (globalBtcPrice - btcTrade.entryPrice)/risk : (btcTrade.entryPrice - globalBtcPrice)/risk;
+    }
+    
+    let ethR = null;
+    if (ethTrade && globalEthPrice) {
+        const risk = Math.abs(ethTrade.entryPrice - ethTrade.stopPrice) || 1;
+        ethR = ethTrade.type === 'LONG' ? (globalEthPrice - ethTrade.entryPrice)/risk : (ethTrade.entryPrice - globalEthPrice)/risk;
+    }
+
+    if (ethTrade) { // ETH her zaman BTC'den öncelikli
+        dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
+    } else if (btcTrade) {
+        dominantTrade = btcTrade; leaderRMultiple = btcR; dominantLeaderSymbol = 'BTCUSDT';
+    }
+
+    if (dominantTrade) {
+        leaderDirection = dominantTrade.type;
+        if (leaderRMultiple >= 0.4) leaderState = 'CONFIRMED';
+        else if (leaderRMultiple <= -0.4) leaderState = 'STRESSED';
+        else leaderState = 'PROBING';
+    }
+
+    return { leaderState, leaderRMultiple, leaderDirection, dominantLeaderSymbol };
+}
+
+function resolveMatrixLimits(leaderState, breadthState) {
+    let maxSame = 2;
+    let maxOpposite = 2;
+    let matrixScenarioApplied = 'DEFAULT';
+
+    if (leaderState === 'CONFIRMED') {
+         if (breadthState === 'STRONG') { maxSame = 5; maxOpposite = 1; matrixScenarioApplied = 'CONFIRMED_STRONG'; }
+         else if (breadthState === 'NEUTRAL') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_NEUTRAL'; }
+         else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_WEAK'; }
+    } else if (leaderState === 'PROBING') {
+         if (breadthState === 'STRONG') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'PROBING_STRONG'; }
+         else if (breadthState === 'NEUTRAL') { maxSame = 3; maxOpposite = 2; matrixScenarioApplied = 'PROBING_NEUTRAL'; }
+         else if (breadthState === 'WEAK') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'PROBING_WEAK'; }
+    } else if (leaderState === 'STRESSED') {
+         if (breadthState === 'STRONG') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_STRONG'; }
+         else if (breadthState === 'NEUTRAL') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_NEUTRAL'; }
+         else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 3; matrixScenarioApplied = 'STRESSED_WEAK'; }
+    }
+
+    return { maxSame, maxOpposite, matrixScenarioApplied };
+}
+
+function getDirectionalBucket(leaderDir, candidateDir) {
+    if (!leaderDir) return 'SAME';
+    return leaderDir === candidateDir ? 'SAME' : 'OPPOSITE';
+}
+// --- END AUTO-TRADE HELPERS ---
+
 async function runScan() {
     if (isScanning) {
         console.log('[SCANNER] Tarama zaten devam ediyor, atlanıyor...');
@@ -2043,12 +2107,6 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS (v5.5) ---+
                         let activeTradesList = cacheActiveTrades;
                         let activeCount = activeTradesList.length;
-                        
-                        function getDirectionalBucket(leaderDir, candidateDir) {
-                            if (!leaderDir) return 'SAME';
-                            return leaderDir === candidateDir ? 'SAME' : 'OPPOSITE';
-                        }
-
                         let btcTrade = null;
                         let ethTrade = null;
                         for (const trade of activeTradesList) {
@@ -2056,67 +2114,9 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                             if (trade.symbol === 'ETHUSDT') ethTrade = trade;
                         }
 
-                        let dominantTrade = null;
-                        let dominantLeaderSymbol = 'NONE';
-                        let leaderState = 'PROBING';
-                        let leaderRMultiple = 0;
-                        let leaderDirection = null;
-
-                        let btcR = null;
-                        if (btcTrade && globalBtcPrice) {
-                             const risk = Math.abs(btcTrade.entryPrice - btcTrade.stopPrice) || 1;
-                             btcR = btcTrade.type === 'LONG' ? (globalBtcPrice - btcTrade.entryPrice)/risk : (btcTrade.entryPrice - globalBtcPrice)/risk;
-                        }
-                        
-                        let ethR = null;
-                        if (ethTrade && globalEthPrice) {
-                             const risk = Math.abs(ethTrade.entryPrice - ethTrade.stopPrice) || 1;
-                             ethR = ethTrade.type === 'LONG' ? (globalEthPrice - ethTrade.entryPrice)/risk : (ethTrade.entryPrice - globalEthPrice)/risk;
-                        }
-
-                        if (ethTrade && btcTrade) {
-                             if (ethTrade.type === btcTrade.type) {
-                                 if (ethR !== null && btcR !== null && btcR > ethR) {
-                                      dominantTrade = btcTrade; leaderRMultiple = btcR; dominantLeaderSymbol = 'BTCUSDT';
-                                 } else {
-                                      dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
-                                 }
-                             } else {
-                                 dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
-                             }
-                        } else if (ethTrade) {
-                             dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
-                        } else if (btcTrade) {
-                             dominantTrade = btcTrade; leaderRMultiple = btcR; dominantLeaderSymbol = 'BTCUSDT';
-                        }
-
-                        if (dominantTrade) {
-                             leaderDirection = dominantTrade.type;
-                             if (leaderRMultiple >= 0.4) leaderState = 'CONFIRMED';
-                             else if (leaderRMultiple <= -0.4) leaderState = 'STRESSED';
-                             else leaderState = 'PROBING';
-                        }
-
+                        const { leaderState, leaderRMultiple, leaderDirection, dominantLeaderSymbol } = selectLeaderState(btcTrade, ethTrade, globalBtcPrice, globalEthPrice);
                         const breadthState = globalMarketState && globalMarketState.breadthState ? globalMarketState.breadthState : 'NEUTRAL';
-                        
-                        let maxSame = 2;
-                        let maxOpposite = 2;
-                        let matrixScenarioApplied = 'DEFAULT';
-
-                        if (leaderState === 'CONFIRMED') {
-                             if (breadthState === 'STRONG') { maxSame = 5; maxOpposite = 1; matrixScenarioApplied = 'CONFIRMED_STRONG'; }
-                             else if (breadthState === 'NEUTRAL') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_NEUTRAL'; }
-                             else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_WEAK'; }
-                        } else if (leaderState === 'PROBING') {
-                             if (breadthState === 'STRONG') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'PROBING_STRONG'; }
-                             else if (breadthState === 'NEUTRAL') { maxSame = 3; maxOpposite = 2; matrixScenarioApplied = 'PROBING_NEUTRAL'; }
-                             else if (breadthState === 'WEAK') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'PROBING_WEAK'; }
-                        } else if (leaderState === 'STRESSED') {
-                             if (breadthState === 'STRONG') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_STRONG'; }
-                             else if (breadthState === 'NEUTRAL') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_NEUTRAL'; }
-                             else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 3; matrixScenarioApplied = 'STRESSED_WEAK'; }
-                        }
-
+                        const { maxSame, maxOpposite, matrixScenarioApplied } = resolveMatrixLimits(leaderState, breadthState);
                         const candidateBucket = getDirectionalBucket(leaderDirection, signal.type);
                         
                         let currentOpenSame = 0;
@@ -2130,10 +2130,20 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                             currentOpenOpposite = activeTradesList.filter(t => t.type !== leaderDirection).length;
                         }
 
+                        let blockReasonsAll = [];
+                        let finalBlockReasonPrimary = 'NONE';
                         let autoTradeBlockedByLimit = false;
 
-                        if (candidateBucket === 'SAME' && currentOpenSame >= maxSame) { autoTradeBlockedByLimit = true; }
-                        if (candidateBucket === 'OPPOSITE' && currentOpenOpposite >= maxOpposite) { autoTradeBlockedByLimit = true; }
+                        if (candidateBucket === 'SAME' && currentOpenSame >= maxSame) { 
+                            autoTradeBlockedByLimit = true;
+                            blockReasonsAll.push('LIMIT_SAME_CAP_REACHED');
+                            finalBlockReasonPrimary = 'LIMIT_BLOCK';
+                        }
+                        if (candidateBucket === 'OPPOSITE' && currentOpenOpposite >= maxOpposite) { 
+                            autoTradeBlockedByLimit = true; 
+                            blockReasonsAll.push('LIMIT_OPPOSITE_CAP_REACHED');
+                            finalBlockReasonPrimary = 'LIMIT_BLOCK';
+                        }
 
                         let finalAutoTradeBlocked = autoTradeBlockedByLimit;
                         let eliteExceptionTriggered = false;
