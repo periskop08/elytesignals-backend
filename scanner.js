@@ -1738,9 +1738,10 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                     
                     signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + `LLM RİSK İNDİRİMİ: ${blockReason}`;
 
+                    const breakdownJson = JSON.stringify(signal.breakdown || {});
                     await db.run(
-                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore]
+                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore, breakdownJson]
                     );
 
                     // Telegram Admin'e Uyarı Gönder

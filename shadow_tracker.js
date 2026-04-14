@@ -101,24 +101,50 @@ async function checkShadowTrades() {
             if (hitLoss) {
                 await runExec("UPDATE shadow_trades SET status = 'LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
                 console.log(`[BÖRÜ_BEY] Sistem Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS).`);
+                let reliabilityMsg = "";
+                if (trade.lessonId) {
+                    await runExec("UPDATE ai_lessons SET reliability = reliability + 10 WHERE id = ?", [trade.lessonId]);
+                    reliabilityMsg = " (Kural Güvenilirliği +10 Puan Arttı!)";
+                }
+                
                 if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                    bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.`);
+                    bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.${reliabilityMsg}`);
                 }
             } else if (hitWin) {
                 await runExec("UPDATE shadow_trades SET status = 'WIN', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
                 console.log(`[BÖRÜ_BEY] Sistem Yanıldı! Engellediğimiz ${trade.symbol} (${trade.type}) işlemi hedefe ulaştı (WIN).`);
                 if (trade.lessonId) {
                     try {
-                        const lessonData = await runQuery("SELECT lessonText FROM ai_lessons WHERE id = ?", [trade.lessonId]);
+                        const lessonData = await runQuery("SELECT lessonText, missCount FROM ai_lessons WHERE id = ?", [trade.lessonId]);
                         if (lessonData && lessonData.length > 0) {
                             const originalLesson = lessonData[0].lessonText;
-                            const candles = await fetchBingxCandles(trade.symbol, 60, 24);
-                            let candleContext = "Son 24 Saatlik Veri Mevcut Değil.";
-                            if (candles && candles.length > 0) {
-                                candleContext = candles.map((c, i) => `H${i+1}: Açılış=${c.open.toFixed(4)}, Kapanış=${c.close.toFixed(4)}, Hacim=${c.volume.toFixed(0)}`).join('\n');
-                            }
+                            const currentMissCount = lessonData[0].missCount || 0;
 
-                            const prompt = `Sen profesyonel bir Kurumsal Hedge Fon Analisti ve Risk Yöneticisisin. Aşağıdaki işlem, daha önce kendi ürettiğin BİR KURAL (Lesson) sebebiyle GİRİLMEYEREK ENGELLENDİ.
+                            if (currentMissCount < 2) {
+                                // 3-Strike Kuralı: Hemen kuralı bozma, sadece uyar ve güveni düşür.
+                                await runExec("UPDATE ai_lessons SET missCount = missCount + 1, reliability = reliability - 5 WHERE id = ?", [trade.lessonId]);
+                                if (bot && ADMIN_TELEGRAM_ID) {
+                                    bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey Uyarıyor! (Fırsat Kaçtı)* ⚠️\n\n🎯 #${trade.symbol} işlemi HEDEFE GİTTİ ama biz Ders ID:${trade.lessonId} yüzünden girmedik.\n\n_Bu kuralın ${currentMissCount + 1}. falsosu! Hata payı (Miss) arttırıldı. Bir daha hata yaparsa yapay zeka tarafından revize edilecek._`);
+                                }
+                            } else {
+                                // Strike 3! Kuralı revize et ve Miss Count'u sıfırla
+                                await runExec("UPDATE ai_lessons SET missCount = 0, reliability = reliability - 10 WHERE id = ?", [trade.lessonId]);
+                                
+                                const candles = await fetchBingxCandles(trade.symbol, 60, 24);
+                                let candleContext = "Son 24 Saatlik Veri Mevcut Değil.";
+                                if (candles && candles.length > 0) {
+                                    candleContext = candles.map((c, i) => `H${i+1}: Açılış=${c.open.toFixed(4)}, Kapanış=${c.close.toFixed(4)}, Hacim=${c.volume.toFixed(0)}`).join('\n');
+                                }
+
+                                let breakdownContext = "Teknik Veri Yok.";
+                                if (trade.breakdownData) {
+                                    try {
+                                        const bd = JSON.parse(trade.breakdownData);
+                                        breakdownContext = `Market Rejimi: ${bd.regime || 'Bilinmiyor'}, ADX (Trend Gücü): ${bd.adx || 0}, Göreceli Hacim (RVöl): ${bd.rvol || 0}`;
+                                    } catch(e) {}
+                                }
+
+                                const prompt = `Sen profesyonel bir Kurumsal Hedge Fon Analisti ve Risk Yöneticisisin. Aşağıdaki işlem, daha önce kendi ürettiğin BİR KURAL (Lesson) sebebiyle GİRİLMEYEREK ENGELLENDİ.
 Fakat işlem şaşırtıcı şekilde HEDEFE ULAŞTI (Win). Kuralımız çok katı davranmış.
 
 Engelleyici Orijinal Kuralımız:
@@ -128,21 +154,26 @@ ${originalLesson}
 Varlık: ${trade.symbol} (${trade.type})
 Giriş Fiyatı: ${trade.entryPrice}
 Ulaştığı Hedef: ${trade.targetPrice}
+
+O Anki İşlem Teknik Durum Raporu:
+${breakdownContext}
+
 Son 24 Saatlik Mum Akışı:
 ${candleContext}
 
 Görev: Kuralı tamamen çöpe atmak yerine, bu olayı analiz edip kurala bir "İSTİSNA (Exception)" maddesi ekleyeceksin.
-Önce "GEREKÇE:" başlığı altında bu istisnayı NEDEN eklediğini grafik mumlarına bakarak detaylıca anlat. Sonra "YENİ KURAL:" başlığı altında Orijinal Kuralı ve İstisna kısmını birleştirerek yaz.`;
+Önce "GEREKÇE:" başlığı altında bu istisnayı NEDEN eklediğini (özellikle gönderilen Teknik Durum Raporunu ve ADX değerini kullanarak) detaylıca anlat. Sonra "YENİ KURAL:" başlığı altında Orijinal Kuralı ve İstisna kısmını birleştirerek yaz.`;
 
-                            const aiRes = await model.generateContent(prompt);
-                            await logTokenUsage('Börü Bey', aiRes);
-                            const exceptionRuleText = aiRes.response.text().trim();
+                                const aiRes = await model.generateContent(prompt);
+                                await logTokenUsage('Börü Bey', aiRes);
+                                const exceptionRuleText = aiRes.response.text().trim();
 
-                            await runExec("UPDATE ai_lessons SET lessonText = ? WHERE id = ?", [exceptionRuleText, trade.lessonId]);
-                            console.log(`[BÖRÜ_BEY] Kural güncellendi: ${exceptionRuleText}`);
+                                await runExec("UPDATE ai_lessons SET lessonText = ? WHERE id = ?", [exceptionRuleText, trade.lessonId]);
+                                console.log(`[BÖRÜ_BEY] Kural 3. hatasında güncellendi: ${exceptionRuleText}`);
 
-                            if (bot && ADMIN_TELEGRAM_ID) {
-                                bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kurallar Revize Edildi)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmemiştik ancak işlem HEDEFE GİTTİ!\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklendi.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
+                                if (bot && ADMIN_TELEGRAM_ID) {
+                                    bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kural Revize Edildi!)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmedik ve işlem HEDEFE GİTTİ! (Bu kuralın 3. ciddi hatası).\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklendi.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
+                                }
                             }
                         }
                     } catch (err) {
