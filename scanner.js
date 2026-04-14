@@ -2433,7 +2433,7 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                         } catch (e) {
                                             console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                         }
-                                    }
+                                    } // End finalRiskMultiplier else
                                     } // End !skipAutoTrade
                                 } else {
                                     blockReasonsAll.push('SAME_DAY_DUPLICATE');
