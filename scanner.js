@@ -1397,13 +1397,7 @@ async function analyzeCoin(symbolInfo) {
         let cost = (currentPrice * 0.0005) + (risk * 0.15); // Tahmini maliyet
         let effectiveRR = risk > 0 ? ((reward) / (risk + cost)) : 0;
         
-        let requiredEffectiveRR = operationMode === 'VOLUME' ? 1.12 : 1.30;
-        if (effectiveRR < requiredEffectiveRR) {
-            console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR}) geçemedi.`);
-            return null;
-        }
-
-        breakdown.rr = parseFloat(effectiveRR.toFixed(2));
+        // R:R Barajı değerlendirmesi Ekin Bey VIP İndirimi için aşağıya taşındı.
 
         // --- PERPLEXITY ELITE FILTER (v2.0) + CHATGPT SWEEP/ENGULFING ---
         let currentJ = closes.length - 1;
@@ -1528,6 +1522,25 @@ async function analyzeCoin(symbolInfo) {
         
         // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
         // --- END PERPLEXITY & CHATGPT FILTER ---
+
+        // --- VIP EKIN BEY R:R DISCOUNT HESAPLAMASI ---
+        let vipDiscount = 0;
+        let isCounterTrendVIP = isCounterTrend && hasOrderBlock && hasVolSpike;
+        let isVolatileSynergy = breakdown.regime === 'TRENDING_VOLATILE' && checkFVG;
+        
+        if (isCounterTrendVIP || checkKillerWick || isVolatileSynergy) {
+            vipDiscount = 0.15;
+            warnings.push('VIP Ekin Bey İndirimi (-0.15 R:R Barajı)');
+        }
+
+        let requiredEffectiveRR = operationMode === 'VOLUME' ? (1.12 - vipDiscount) : (1.30 - vipDiscount);
+        if (requiredEffectiveRR < 1.05) requiredEffectiveRR = 1.05; // Minimum güvenlik tabanı
+
+        if (effectiveRR < requiredEffectiveRR) {
+            console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR.toFixed(2)}) geçemedi.`);
+            return null;
+        }
+        breakdown.rr = parseFloat(effectiveRR.toFixed(2));
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
         // Eski Sınırlar: LONG 55 | SHORT CONFIG.minScore (55)
