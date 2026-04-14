@@ -1809,18 +1809,25 @@ async function runScan() {
         const allPairs = [...cryptoPairs, ...assetsToScan];
         console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan${!isActiveTradFiSession ? ' (TradFi Sleep Mode)' : ''}.`);
 
+        BREADTH_CACHE = null;
+
+        // PRE-LOOP BATCH CACHING
+        const activeSignalsRows = await db.all("SELECT symbol FROM signals WHERE status = 'ACTIVE'");
+        const cacheActiveSignals = new Set(activeSignalsRows.map(r => r.symbol));
+
+        const activeShadowsRows = await db.all("SELECT symbol FROM shadow_trades WHERE status IN ('PENDING', 'SHADOW_TEST_PENDING')");
+        const cacheActiveShadows = new Set(activeShadowsRows.map(r => r.symbol));
+
+        const cacheActiveTrades = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
+
         let signalCount = 0;
 
         for (let i = 0; i < allPairs.length; i++) {
             const symbolInfo = allPairs[i];
             const symbol = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
 
-            // Aktif sinyali olan coini tekrar tarayıp yeni sinyal üretmeye gerek yok (Spam önleme)
-            const existingActive = await db.get("SELECT id FROM signals WHERE symbol = ? AND status = 'ACTIVE'", [symbol]);
-            if (existingActive) continue;
-
-            const existingShadow = await db.get("SELECT id FROM shadow_trades WHERE symbol = ? AND status IN ('PENDING', 'SHADOW_TEST_PENDING')", [symbol]);
-            if (existingShadow) continue;
+            if (cacheActiveSignals.has(symbol)) continue;
+            if (cacheActiveShadows.has(symbol)) continue;
 
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
@@ -2022,7 +2029,7 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                 } else if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
                         // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS (v5.5) ---+
-                        let activeTradesList = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
+                        let activeTradesList = cacheActiveTrades;
                         let activeCount = activeTradesList.length;
                         
                         function getDirectionalBucket(leaderDir, candidateDir) {
