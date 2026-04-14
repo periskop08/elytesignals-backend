@@ -1841,8 +1841,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         if (currentDirectionCount >= maxAllowedInThisDirection) {
                             telegramLimitWarning = `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda maksimum limite ulaştığımız için (${currentDirectionCount} adet aktif ${signal.type} işlem), bu elit sinyal borsa hesabınızda otomatik olarak AÇILMADI. Riski yönetmek kaydıyla isterseniz işlemi kendiniz manuel olarak açabilirsiniz.`;
                             console.log(`[AUTO-TRADE] Limit (${currentDirectionCount}/${maxAllowedInThisDirection}) dolu! Sinyal Yönü: ${signal.type}. Sinyal havuza eklendi (Macro limit kısıtlaması).`);
-                            if (bot && CONFIG.telegramAdminId) {
-                                bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
+                            if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
+                                telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
                             }
                         } else if (activeCount >= CONFIG.maxActiveTrades) {
                             // Genel borsa API patlaması olmasın diye global üst limit de 15 vs olarak korunabilir, ama şimdilik limitleri biz ayarladık.
@@ -1876,8 +1876,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
 
                                 if (slippageExceeded) {
                                     console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
-                                    if (bot && CONFIG.telegramAdminId) {
-                                        bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\\n\\n🎯 İşlem: #${signal.symbol} (${signal.type})\\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\\n\\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
+                                    if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
+                                        telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\\n\\n🎯 İşlem: #${signal.symbol} (${signal.type})\\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\\n\\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
                                     // +--- SEPET KORELASYON MOTORU ---+
