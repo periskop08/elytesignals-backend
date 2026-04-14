@@ -134,7 +134,9 @@ async function checkShadowTrades() {
                     await runExec("UPDATE shadow_trades SET status = 'LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
                     console.log(`[BÖRÜ_BEY] Sistem Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS).`);
                     let reliabilityMsg = "";
-                    if (trade.lessonId) {
+                    if (trade.lessonId === -999) {
+                        // Sistem vetosu başarılı oldu, spama gerek yok, ADX bizi korumuş.
+                    } else if (trade.lessonId) {
                         await runExec("UPDATE ai_lessons SET reliability = reliability + 10 WHERE id = ?", [trade.lessonId]);
                         reliabilityMsg = " (Kural Güvenilirliği +10 Puan Arttı!)";
                     }
@@ -153,7 +155,12 @@ async function checkShadowTrades() {
                 } else {
                     await runExec("UPDATE shadow_trades SET status = 'WIN', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
                 console.log(`[BÖRÜ_BEY] Sistem Yanıldı! Engellediğimiz ${trade.symbol} (${trade.type}) işlemi hedefe ulaştı (WIN).`);
-                if (trade.lessonId) {
+                
+                if (trade.lessonId === -999) {
+                    if (bot && process.env.ADMIN_TELEGRAM_ID) {
+                        bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Sistem Vetosu (ADX) İhlali!* ⚠️\n\n🎯 #${trade.symbol} işlemi için ADX düşük diye koda koyduğumuz sabit kural işlemi iptal etmişti.\nFakat işlem HEDEFE GİTTİ (WIN)!\n\n_Bu işlem yapay zeka tarafından değil, 'scanner.js' sabit ADX kuralı tarafından engellenmişti. ADX barajını gözden geçirmek isteyebilirsin._`, { parse_mode: 'Markdown' });
+                    }
+                } else if (trade.lessonId) {
                     try {
                         const lessonData = await runQuery("SELECT lessonText, missCount FROM ai_lessons WHERE id = ?", [trade.lessonId]);
                         if (lessonData && lessonData.length > 0) {

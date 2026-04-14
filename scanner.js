@@ -1108,8 +1108,9 @@ async function analyzeCoin(symbolInfo) {
                 } else {
                     // ADX Koruması (Kripto için FOMO Filtresi)
                     if (currentADX < 24) {
-                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı.`);
-                        return null; // Zayıf trendde şişmiş piyasa, işlemi tamamen VETO et
+                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
+                        breakdown.adxVeto = true;
+                        qualityScore -= 200; // Son aşamada kesin veto yemesi için
                     } else if (currentADX >= 24 && currentADX < 30) {
                         qualityScore -= 10;
                         warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
@@ -1124,8 +1125,9 @@ async function analyzeCoin(symbolInfo) {
                 } else {
                     // ADX Koruması (Kripto için)
                     if (currentADX < 24) {
-                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı.`);
-                        return null; 
+                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
+                        breakdown.adxVeto = true;
+                        qualityScore -= 200; 
                     } else if (currentADX >= 24 && currentADX < 30) {
                         qualityScore -= 10;
                         warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
@@ -1567,6 +1569,23 @@ async function analyzeCoin(symbolInfo) {
         }
         
         if (qualityScore < dynamicThreshold) {
+            if (breakdown.adxVeto) {
+                return {
+                    adxVetoOnly: true,
+                    symbol: sym,
+                    type: direction,
+                    entryPrice: currentPrice,
+                    targetPrice: targetP,
+                    stopPrice: dynamicStop,
+                    qualityScore: qualityScore + 200, // Eksi puanı geri verdik göstermelik
+                    dynamicThreshold: dynamicThreshold,
+                    warnings: JSON.stringify(warnings),
+                    macroState: globalMarketState,
+                    breakdown: breakdown,
+                    atr: currentATR,
+                    isAsset: symbolInfo.isAsset || false
+                };
+            }
             return null;
         }
 
@@ -1679,6 +1698,15 @@ async function runScan() {
 
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
+                if (signal.adxVetoOnly) {
+                    const breakdownStr = JSON.stringify(signal.breakdown || {});
+                    await db.run(
+                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, -999, signal.qualityScore, breakdownStr, 'PENDING']
+                    );
+                    continue;
+                }
+                
                 let formattedVol = '-';
                 if (signal.breakdown && signal.breakdown.globalVol) {
                     formattedVol = (signal.breakdown.globalVol / 1000000).toFixed(1) + 'M';
