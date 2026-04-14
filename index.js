@@ -1269,6 +1269,14 @@ app.post('/api/favorites/close', async (req, res) => {
                 "UPDATE favorites SET customStatus = ?, customPnl = ?, netPnlUsd = ?, closedAt = CURRENT_TIMESTAMP WHERE id = ?", 
                 [customStatus, pnl, netUsd, existing.id]
             );
+
+            if (isAdmin) {
+                const manualStatus = pnl >= 0 ? 'CLOSED_WIN' : 'CLOSED_LOSS';
+                await db.run(
+                    "UPDATE user_trades SET status = ?, pnl = ?, netPnlUsd = ?, closeReason = 'MANUAL_CLOSE', closedAt = CURRENT_TIMESTAMP WHERE symbol = ? AND type = ? AND status = 'ACTIVE'",
+                    [manualStatus, pnl, netUsd, existing.symbol, existing.type]
+                );
+            }
             res.json({ success: true, customStatus, customPnl: pnl, netPnlUsd: netUsd });
         } else {
             res.status(404).json({ error: 'Favori kayıt bulunamadı.' });
