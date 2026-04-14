@@ -2169,11 +2169,17 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         if (finalAutoTradeBlocked) {
                             console.log(`[AUTO-TRADE] Limit Dolu. Matrix: ${matrixScenarioApplied} | Bucket: ${candidateBucket}. Auto-Trade KAPATILDI!`);
                             console.log(`[TELEMETRY] blocked_by_limit_count +1`);
+                            console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
+                            console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                             if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
                                 telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda limit (${candidateBucket === 'SAME'? maxSame:maxOpposite}) dolduğu için #${signal.symbol} borsa emri AÇILMADI.\nMatris: ${matrixScenarioApplied}`);
                             }
                         } else if (activeCount >= CONFIG.maxActiveTrades) {
+                            blockReasonsAll.push('GLOBAL_LIMIT_REACHED');
+                            finalBlockReasonPrimary = 'GLOBAL_LIMIT';
                             console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu!`);
+                            console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
+                            console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                         } else {
                             // Aynı gün içinde aynı coine girildi mi? (Sinyal 2. veya 3. kez mi düşüyor?)
                             const todayStr = new Date().toISOString().split('T')[0];
@@ -2213,10 +2219,14 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                 } catch (err) {}
 
                                 if (slippageExceeded) {
+                                    blockReasonsAll.push('SLIPPAGE_EXCEEDED');
+                                    finalBlockReasonPrimary = 'SLIPPAGE_BLOCK';
                                     console.log(`[TELEMETRY] blocked_by_slippage +1 | Symbol: ${signal.symbol} | Slippage Exceeded`);
+                                    console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
+                                    console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                     console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
                                     if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
-                                        telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\\n\\n🎯 İşlem: #${signal.symbol} (${signal.type})\\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\\n\\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
+                                        telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
                                     // +--- SEPET KORELASYON MOTORU ---+
@@ -2247,6 +2257,10 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                                     llmRiskPenalty = (typeof llmRiskPenalty !== 'undefined') ? llmRiskPenalty * 0.5 : 0.5;
                                                 } else {
                                                     skipAutoTrade = true;
+                                                    blockReasonsAll.push('SECTOR_LIMIT_REACHED');
+                                                    finalBlockReasonPrimary = 'SECTOR_CORRELATION_BLOCK';
+                                                    console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
+                                                    console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                                     console.log(`[CORRELATION REJECT] ${clusterName} sektöründe aktif işlem limiti (${clusterCount}/${clusterLimit}).`);
                                                 }
                                             }
@@ -2305,6 +2319,16 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                                     await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
                                                 }
                                                 console.log(`[AUTO-TRADE] Başarılı! Favorilere kayıt edildi.`);
+                                                
+                                                console.log(`[TELEMETRY] TELEMETRY GÖNDERİLİYOR: SUCCESS - ${signal.symbol}`);
+                                                console.log(`[TELEMETRY] final_block_reason_primary: NONE`);
+                                                console.log(`[TELEMETRY] block_reasons_all: NONE`);
+                                            } else {
+                                                console.error("[AUTO-TRADE] Emir gerçekleştirilemedi (bybit/bingx yanıt vermedi).");
+                                                blockReasonsAll.push('API_ORDER_FAILED');
+                                                finalBlockReasonPrimary = 'EXCHANGE_ERROR';
+                                                console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
+                                                console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                             }
                                         } catch (e) {
                                             console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
@@ -2312,7 +2336,11 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                     } // End !skipAutoTrade
                                     }
                                 } else {
+                                    blockReasonsAll.push('SAME_DAY_DUPLICATE');
+                                    finalBlockReasonPrimary = 'SPAM_PROTECTION';
                                     console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
+                                    console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
+                                    console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                 }
                         }
                     } catch (e) {
