@@ -78,9 +78,31 @@ async function fetchBingxCandles(rawSymbol, intervalMinutes, limit) {
     } catch (e) { return null; }
 }
 
+async function checkSandboxRules(lessonId) {
+    if (!lessonId) return;
+    const lessonData = await runQuery("SELECT status, matchCount, successCount, lessonText FROM ai_lessons WHERE id = ?", [lessonId]);
+    if (!lessonData || lessonData.length === 0) return;
+    const l = lessonData[0];
+    if (l.status !== 'TEST') return;
+    
+    if (l.matchCount >= 15) {
+        if (l.successCount / l.matchCount >= 0.60) {
+             await runExec("UPDATE ai_lessons SET status = 'ACTIVE', reliability = 100, missCount = 0 WHERE id = ?", [lessonId]);
+             if (bot && process.env.ADMIN_TELEGRAM_ID) {
+                 bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🐺 *Börü Bey: Sandbox Kuralı Başarıyla Mezun Oldu!* 🐺\n\n🎯 Ders ID: ${lessonId}\n📊 15 Sinyal Testinde Win Rate: %${((l.successCount/l.matchCount)*100).toFixed(0)}\nAna sisteme 'ACTIVE' olarak eklendi! Artık canlı işlemleri filtreleyecek.\n\n_Kural:_ ${l.lessonText}`);
+             }
+        } else {
+             await runExec("UPDATE ai_lessons SET status = 'ARCHIVED' WHERE id = ?", [lessonId]);
+             if (bot && process.env.ADMIN_TELEGRAM_ID) {
+                 bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🗑️ *Börü Bey: Sandbox Kuralı Çöpe Atıldı!* 🗑️\n\n🎯 Ders ID: ${lessonId}\n📊 15 Sinyal Testinde başarı oranı yetersiz kaldı (%${((l.successCount/l.matchCount)*100).toFixed(0)}). Kural ana sistemi bozmaması için Arşive (ARCHIVED) alındı.`);
+             }
+        }
+    }
+}
+
 async function checkShadowTrades() {
     try {
-        const pending = await runQuery("SELECT * FROM shadow_trades WHERE status = 'PENDING'");
+        const pending = await runQuery("SELECT * FROM shadow_trades WHERE status IN ('PENDING', 'SHADOW_TEST_PENDING')");
         if (!pending || pending.length === 0) return;
 
         for (const trade of pending) {
@@ -99,19 +121,34 @@ async function checkShadowTrades() {
             }
 
             if (hitLoss) {
-                await runExec("UPDATE shadow_trades SET status = 'LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
-                console.log(`[BÖRÜ_BEY] Sistem Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS).`);
-                let reliabilityMsg = "";
-                if (trade.lessonId) {
-                    await runExec("UPDATE ai_lessons SET reliability = reliability + 10 WHERE id = ?", [trade.lessonId]);
-                    reliabilityMsg = " (Kural Güvenilirliği +10 Puan Arttı!)";
-                }
-                
-                if (bot && TELEGRAM_ADMIN_CHAT_ID) {
-                    bot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.${reliabilityMsg}`);
+                if (trade.status === 'SHADOW_TEST_PENDING') {
+                    await runExec("UPDATE shadow_trades SET status = 'SHADOW_TEST_LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
+                    if (trade.lessonId) {
+                        await runExec("UPDATE ai_lessons SET matchCount = matchCount + 1, successCount = successCount + 1 WHERE id = ?", [trade.lessonId]);
+                        await checkSandboxRules(trade.lessonId);
+                    }
+                } else {
+                    await runExec("UPDATE shadow_trades SET status = 'LOSS', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
+                    console.log(`[BÖRÜ_BEY] Sistem Haklı Çıktı! Uzak durduğumuz ${trade.symbol} (${trade.type}) işlemi patladı (LOSS).`);
+                    let reliabilityMsg = "";
+                    if (trade.lessonId) {
+                        await runExec("UPDATE ai_lessons SET reliability = reliability + 10 WHERE id = ?", [trade.lessonId]);
+                        reliabilityMsg = " (Kural Güvenilirliği +10 Puan Arttı!)";
+                    }
+                    
+                    if (bot && process.env.ADMIN_TELEGRAM_ID) {
+                        bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🐺 *Börü Bey Haklı Çıktı! (Ders Onaylandı)* 🐺\n\n⛔ ${trade.symbol} işlemine Ders ID:${trade.lessonId} nedeniyle girmemiştik.\nİyi ki girmemişiz, işlem grafikte STOP-LOSS noktasına vurdu! Otonom takım çalışması başarılı.${reliabilityMsg}`);
+                    }
                 }
             } else if (hitWin) {
-                await runExec("UPDATE shadow_trades SET status = 'WIN', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
+                if (trade.status === 'SHADOW_TEST_PENDING') {
+                    await runExec("UPDATE shadow_trades SET status = 'SHADOW_TEST_WIN', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
+                    if (trade.lessonId) {
+                        await runExec("UPDATE ai_lessons SET matchCount = matchCount + 1 WHERE id = ?", [trade.lessonId]);
+                        await checkSandboxRules(trade.lessonId);
+                    }
+                } else {
+                    await runExec("UPDATE shadow_trades SET status = 'WIN', closedAt = CURRENT_TIMESTAMP WHERE id = ?", [trade.id]);
                 console.log(`[BÖRÜ_BEY] Sistem Yanıldı! Engellediğimiz ${trade.symbol} (${trade.type}) işlemi hedefe ulaştı (WIN).`);
                 if (trade.lessonId) {
                     try {
@@ -168,11 +205,11 @@ Görev: Kuralı tamamen çöpe atmak yerine, bu olayı analiz edip kurala bir "�
                                 await logTokenUsage('Börü Bey', aiRes);
                                 const exceptionRuleText = aiRes.response.text().trim();
 
-                                await runExec("UPDATE ai_lessons SET lessonText = ? WHERE id = ?", [exceptionRuleText, trade.lessonId]);
-                                console.log(`[BÖRÜ_BEY] Kural 3. hatasında güncellendi: ${exceptionRuleText}`);
+                                await runExec("UPDATE ai_lessons SET lessonText = ?, status = 'TEST', matchCount = 0, successCount = 0 WHERE id = ?", [exceptionRuleText, trade.lessonId]);
+                                console.log(`[BÖRÜ_BEY] Kural 3. hatasında güncellendi ve TEST (Sandbox) moduna alındı: ${exceptionRuleText}`);
 
                                 if (bot && ADMIN_TELEGRAM_ID) {
-                                    bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey (Arka Plan Ajanı) Uyarıyor! (Kural Revize Edildi!)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmedik ve işlem HEDEFE GİTTİ! (Bu kuralın 3. ciddi hatası).\n\n🧠 *Kural Silinmedi, İstisna Eklendi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklendi.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
+                                    bot.sendMessage(ADMIN_TELEGRAM_ID, `⚠️ *Börü Bey (Sandbox) Uyarıyor! (Kural Test Moduna Alındı!)* ⚠️\n\n🎯 #${trade.symbol} işlemine "Ders ID:${trade.lessonId}" nedeniyle girmedik ve işlem HEDEFE GİTTİ! (Bu kuralın 3. ciddi hatası).\n\n🧠 *Kural Silinmedi, İstisna Eklendi ve TEST'e Çekildi:*\nSistemin analizi sonucu Ders ${trade.lessonId} yeniden incelendi ve "İstisna" eklenerek Sandbox'a (TEST) itildi. 15 Başarılı Gölge işlem (Win Rate %60) görmeden Ana Sistemi etkileyemeyecek.\n\n_Börü Bey'in Otopsi Analizi:_\n${exceptionRuleText}`, { parse_mode: 'Markdown' });
                                 }
                             }
                         }
