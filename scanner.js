@@ -1617,9 +1617,13 @@ async function analyzeCoin(symbolInfo) {
         if (requiredEffectiveRR < 1.05) requiredEffectiveRR = 1.05; // Minimum güvenlik tabanı
 
         if (effectiveRR < requiredEffectiveRR) {
-            console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < ${requiredEffectiveRR.toFixed(2)}`);
-            console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR.toFixed(2)}) geçemedi.`);
-            return null;
+            if (breakdown.adxVeto) {
+                console.log(`[BÖRÜ BEY] ${sym} R:R yetersiz olsa da ADX Veto kuralı için Gölge Test'e zorunlu sevk ediliyor...`);
+            } else {
+                console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < ${requiredEffectiveRR.toFixed(2)}`);
+                console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR.toFixed(2)}) geçemedi.`);
+                return null;
+            }
         }
         breakdown.rr = parseFloat(effectiveRR.toFixed(2));
 
