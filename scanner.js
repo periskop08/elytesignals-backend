@@ -2406,7 +2406,7 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                     } else {
                                         console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${finalRiskMultiplier.toFixed(2)})`);
                                     try {
-                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
+                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, finalRiskMultiplier);
                                             if (orderId) {
                                                 await db.run(
                                                     "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
@@ -2433,8 +2433,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                         } catch (e) {
                                             console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                         }
-                                    } // End !skipAutoTrade
                                     }
+                                    } // End !skipAutoTrade
                                 } else {
                                     blockReasonsAll.push('SAME_DAY_DUPLICATE');
                                     finalBlockReasonPrimary = 'SPAM_PROTECTION';
