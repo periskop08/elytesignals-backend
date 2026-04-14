@@ -137,6 +137,8 @@ async function checkShadowTrades() {
                     let lessonDescription = `Ders ID:${trade.lessonId}`;
                     if (trade.lessonId === -999) {
                         lessonDescription = `"Yetersiz ADX / Düşük Kalite Skoru (Sabit Motor Kuralı)"`;
+                    } else if (trade.lessonId === -998) {
+                        lessonDescription = `"Demir Bey Tahta Koruması (Sığ Tahta / Yüksek Makas)"`;
                     } else if (trade.lessonId) {
                         await runExec("UPDATE ai_lessons SET reliability = reliability + 10 WHERE id = ?", [trade.lessonId]);
                         reliabilityMsg = " (Kural Güvenilirliği +10 Puan Arttı!)";
@@ -166,6 +168,10 @@ async function checkShadowTrades() {
                 if (trade.lessonId === -999) {
                     if (bot && process.env.ADMIN_TELEGRAM_ID) {
                         bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Sistem Vetosu (ADX) İhlali!* ⚠️\n\n🎯 #${trade.symbol} işlemi için ADX düşük diye koda koyduğumuz sabit kural işlemi iptal etmişti.\nFakat işlem HEDEFE GİTTİ (WIN)!\n\n_Bu işlem yapay zeka tarafından değil, 'scanner.js' sabit ADX kuralı tarafından engellenmişti. ADX barajını gözden geçirmek isteyebilirsin._`, { parse_mode: 'Markdown' });
+                    }
+                } else if (trade.lessonId === -998) {
+                    if (bot && process.env.ADMIN_TELEGRAM_ID) {
+                        bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Demir Bey (Sığ Tahta) İhlali!* ⚠️\n\n🎯 #${trade.symbol} işlemi "Sığ Tahta/Yüksek Spread" diye Demir Bey tarafından çöpe atılmıştı.\nFakat işlem HEDEFE GİTTİ (WIN)!\n\n_Eğer bu uyarıları çok sık görüyorsan, Demir Bey'in Likidite makasını daraltmayı düşünebilirsin._`, { parse_mode: 'Markdown' });
                     }
                 } else if (trade.lessonId) {
                     try {

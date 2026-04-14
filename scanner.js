@@ -1605,7 +1605,17 @@ async function analyzeCoin(symbolInfo) {
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
             if (qualityScore < 55) {
                 console.log(`[VETO] ${sym} işlemi Demir Bey cezasıyla (${demirRes.msg}) sisteme sokulmadı.`);
-                return null;
+                return {
+                    demirVetoOnly: true,
+                    symbol: sym,
+                    type: direction,
+                    entryPrice: currentPrice,
+                    targetPrice: targetP,
+                    stopPrice: dynamicStop,
+                    qualityScore: qualityScore + 15,
+                    demirMsg: demirRes.msg,
+                    breakdown: breakdown
+                };
             }
         }
 
@@ -1698,11 +1708,12 @@ async function runScan() {
 
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
-                if (signal.adxVetoOnly) {
+                if (signal.adxVetoOnly || signal.demirVetoOnly) {
                     const breakdownStr = JSON.stringify(signal.breakdown || {});
+                    const lId = signal.demirVetoOnly ? -998 : -999;
                     await db.run(
                         "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, -999, signal.qualityScore, breakdownStr, 'PENDING']
+                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, lId, signal.qualityScore, breakdownStr, 'PENDING']
                     );
                     continue;
                 }
