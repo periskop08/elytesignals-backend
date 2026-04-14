@@ -1706,6 +1706,9 @@ async function runScan() {
             const existingActive = await db.get("SELECT id FROM signals WHERE symbol = ? AND status = 'ACTIVE'", [symbol]);
             if (existingActive) continue;
 
+            const existingShadow = await db.get("SELECT id FROM shadow_trades WHERE symbol = ? AND status IN ('PENDING', 'SHADOW_TEST_PENDING')", [symbol]);
+            if (existingShadow) continue;
+
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
                 if (signal.adxVetoOnly || signal.demirVetoOnly) {
