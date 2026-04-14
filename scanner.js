@@ -1453,12 +1453,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = targetP - currentPrice;
 
-            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
-            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
+            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.1R
+            let maxReward = trapIsRangingLimit ? (risk * 1.1) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice + reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.1R Ranging)' : 'TP Capped (1:3 Max)');
             }
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
@@ -1477,12 +1477,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = currentPrice - targetP;
 
-            // 1:3 R:R Cap veya Ranging Limit 1.0R
-            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
+            // 1:3 R:R Cap veya Ranging Limit 1.1R
+            let maxReward = trapIsRangingLimit ? (risk * 1.1) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice - reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.1R Ranging)' : 'TP Capped (1:3 Max)');
             }
         }
 
@@ -1659,22 +1659,48 @@ async function analyzeCoin(symbolInfo) {
         
         if (isCounterTrendVIP || checkKillerWick || isVolatileSynergy) {
             vipDiscount = 0.15;
-            warnings.push('VIP Ekin Bey İndirimi (-0.15 R:R Barajı)');
+            warnings.push('VIP Ekin Bey İndirimi (+0.15 RR Toleransı)');
         }
 
-        let requiredEffectiveRR = operationMode === 'VOLUME' ? (1.10 - vipDiscount) : (1.22 - vipDiscount);
-        if (requiredEffectiveRR < 1.05) requiredEffectiveRR = 1.05; // Minimum güvenlik tabanı
+        // --- YENİ 4 KADEMELİ RR BANT KONTROLÜ ---
+        let rr_modifier = 1.0;
+        let effective_rr_band = 'NORMAL_ACCEPT';
 
-        if (effectiveRR < requiredEffectiveRR) {
-            if (breakdown.adxVeto) {
-                console.log(`[BÖRÜ BEY] ${sym} R:R yetersiz olsa da ADX Veto kuralı için Gölge Test'e zorunlu sevk ediliyor...`);
-            } else {
-                console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < ${requiredEffectiveRR.toFixed(2)}`);
-                console.log(`[VETO] ${sym} işlemi Cost-Adjusted R:R (${effectiveRR.toFixed(2)}) Barajı (${requiredEffectiveRR.toFixed(2)}) geçemedi.`);
-                return null;
-            }
+        // İşlem özel indirim sayesinde (ör. vipDiscount 0.15) suni olarak RR'i yüksek gibi muamele görecek
+        let adjustedRR = effectiveRR + vipDiscount;
+
+        if (adjustedRR < 0.90) {
+             if (breakdown.adxVeto) {
+                 console.log(`[BÖRÜ BEY] ${sym} R:R yetersiz olsa da ADX Veto kuralı için Gölge Test'e zorunlu sevk ediliyor...`);
+                 effective_rr_band = 'HARD_REJECT_SAVED_BY_ADX';
+             } else {
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} (Adj: ${adjustedRR.toFixed(2)}) < 0.90 (Hard Reject)`);
+                 return null;
+             }
+        } else if (adjustedRR >= 0.90 && adjustedRR < 1.00) {
+             if (operationMode === 'VOLUME') {
+                 effective_rr_band = 'SOFT_0.4';
+                 rr_modifier = 0.4;
+             } else {
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ${operationMode} (Soft Reject)`);
+                 return null;
+             }
+        } else if (adjustedRR >= 1.00 && adjustedRR < 1.15) {
+             if (operationMode === 'VOLUME') {
+                 effective_rr_band = 'SOFT_0.5';
+                 rr_modifier = 0.5;
+             } else {
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.15 but Mode is ${operationMode} (Soft Reject)`);
+                 return null;
+             }
+        } else {
+             effective_rr_band = 'NORMAL_ACCEPT';
+             rr_modifier = 1.0;
         }
+
         breakdown.rr = parseFloat(effectiveRR.toFixed(2));
+        breakdown.effective_rr_band = effective_rr_band;
+        breakdown.rr_modifier = rr_modifier;
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
         // Eski Sınırlar: LONG 55 | SHORT CONFIG.minScore (55)
@@ -2331,26 +2357,29 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                     } catch(e) {}
 
                                     if (!skipAutoTrade) {
-                                        // +--- DYNAMIC POSITION SIZING (V5.2 DUAL ENGINE) ---+
+                                        // +--- DYNAMIC POSITION SIZING (V5.2 DUAL ENGINE & R:R MULTI-BAND) ---+
+                                        let baseRiskMultiplier = 1.0;
                                         let riskMultiplier = 1.0;
+                                        let llmRiskModifier = typeof llmRiskPenalty !== 'undefined' ? llmRiskPenalty : 1.0;
+                                        let historyModifier = 1.0;
+                                        let rrModifier = signal.breakdown && signal.breakdown.rr_modifier ? signal.breakdown.rr_modifier : 1.0;
+                                        let opMode = signal.breakdown && signal.breakdown.engineMode === 'VOLUME' ? 'VOLUME' : 'ALPHA';
+                                        let rrBand = signal.breakdown && signal.breakdown.effective_rr_band ? signal.breakdown.effective_rr_band : 'NORMAL_ACCEPT';
+
                                     try {
-                                        let isVol = signal.breakdown && signal.breakdown.engineMode === 'VOLUME';
-                                        if (isVol) {
-                                            if (signal.qualityScore >= 80) riskMultiplier = 1.15;
-                                            else if (signal.qualityScore >= 65) riskMultiplier = 1.0;
-                                            else if (signal.qualityScore >= 50) riskMultiplier = 0.75;
-                                            else riskMultiplier = 0.5;
+                                        if (opMode === 'VOLUME') {
+                                            if (signal.qualityScore >= 80) baseRiskMultiplier = 1.15;
+                                            else if (signal.qualityScore >= 65) baseRiskMultiplier = 1.0;
+                                            else if (signal.qualityScore >= 50) baseRiskMultiplier = 0.75;
+                                            else baseRiskMultiplier = 0.5;
                                         } else {
-                                            if (signal.qualityScore >= 80) riskMultiplier = 1.1;
-                                            else if (signal.qualityScore >= 70) riskMultiplier = 1.0;
-                                            else if (signal.qualityScore >= 60) riskMultiplier = 0.75;
-                                            else riskMultiplier = 0.5;
+                                            if (signal.qualityScore >= 80) baseRiskMultiplier = 1.1;
+                                            else if (signal.qualityScore >= 70) baseRiskMultiplier = 1.0;
+                                            else if (signal.qualityScore >= 60) baseRiskMultiplier = 0.75;
+                                            else baseRiskMultiplier = 0.5;
                                         }
                                         
-                                        // LLM Risk Kesintisi (v5.1 Hedge Fund Kuralı)
-                                        if (typeof llmRiskPenalty !== 'undefined') {
-                                            riskMultiplier *= llmRiskPenalty;
-                                        }
+                                        riskMultiplier = baseRiskMultiplier * llmRiskModifier;
 
                                         const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 20");
                                         if (history && history.length >= 10) {
@@ -2358,16 +2387,24 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                             const winRate = wins / history.length;
                                             
                                             if (winRate < 0.35) {
-                                                riskMultiplier *= 0.5;
+                                                historyModifier = 0.5;
+                                                riskMultiplier *= historyModifier;
                                                 console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Portföy Defansa Çekildi.`);
                                             } else if (winRate > 0.60) {
-                                                riskMultiplier *= 1.5;
+                                                historyModifier = 1.5;
+                                                riskMultiplier *= historyModifier;
                                                 console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Momentum Sürülüyor.`);
                                             }
                                         }
                                     } catch(e) {}
 
-                                    console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${riskMultiplier})`);
+                                    let finalRiskMultiplier = riskMultiplier * rrModifier;
+                                    console.log(`[TELEMETRY] Mode: ${opMode} | RR Band: ${rrBand} | Base: ${baseRiskMultiplier}x | LLM: ${llmRiskModifier}x | RR_Mod: ${rrModifier}x | Final Risk: ${finalRiskMultiplier.toFixed(2)}x`);
+
+                                    if (finalRiskMultiplier < 0.30) {
+                                        console.log(`[MIN_RISK_FLOOR_REJECT] ${signal.symbol} Final risk size (${finalRiskMultiplier.toFixed(2)}x) is < 0.30. İşlem anlamsız fee makasına girmemek için iptal edildi.`);
+                                    } else {
+                                        console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${finalRiskMultiplier.toFixed(2)})`);
                                     try {
                                         const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
                                             if (orderId) {
