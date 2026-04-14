@@ -220,10 +220,17 @@ function calculateTrendFromKlines(klines) {
 // --- BREADTH ENGINE START ---
 const BREADTH_COINS = ['SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LINKUSDT', 'SUIUSDT', 'DOTUSDT', 'BCHUSDT', 'PEPEUSDT', 'WIFUSDT', 'ONDOUSDT', 'FETUSDT', 'INJUSDT'];
 
+let BREADTH_CACHE = null;
+
 async function calculateBreadthBasket() {
+    if (BREADTH_CACHE) {
+        console.log('[BREADTH ENGINE] Using cached breadth data for this cycle.');
+        return BREADTH_CACHE;
+    }
+    
     try {
-        console.log('[BREADTH ENGINE] Calculating Market Breadth over 13-Coin High-Beta Basket...');
-        // We can get 24h ticker for all coins in one BingX call
+        console.log('[BREADTH ENGINE] Calculating Market Breadth over 13-Coin High-Beta Basket (Batch Parallel)...');
+        
         const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const tickers = res.data.data || [];
         const tickerMap = {};
@@ -237,27 +244,52 @@ async function calculateBreadthBasket() {
         let validCoinsCount = 0;
         
         const btc24hChange = tickerMap['BTCUSDT'] || 0;
+        
+        const batchSize = 4;
+        const delayMs = 150;
 
-        for (const coin of BREADTH_COINS) {
-            const change24h = tickerMap[coin] || 0;
-            basketTotalChange += change24h;
-            if (change24h > 0) positive24hCount++;
-            
-            const klines = await fetchBybitKlinesGlobal(coin, '60');
-            if (klines && klines.length >= 20) {
-                const closes = klines.map(k => k.close);
-                const sma20 = SMA.calculate({period: 20, values: closes});
-                if (sma20.length > 0) {
-                    const lastClose = closes[closes.length - 1];
-                    const lastOpen = klines[klines.length - 1].open;
-                    const lastSMA = sma20[sma20.length - 1];
-                    
-                    if (lastClose > lastOpen && lastClose > lastSMA) {
-                        positive1hCount++;
+        for (let i = 0; i < BREADTH_COINS.length; i += batchSize) {
+            const batch = BREADTH_COINS.slice(i, i + batchSize);
+            const promises = batch.map(async (coin) => {
+                const change24h = tickerMap[coin] || 0;
+                let bTotal = change24h;
+                let p24 = (change24h > 0) ? 1 : 0;
+                let p1h = 0;
+                let valid = 0;
+                
+                try {
+                    const klines = await fetchBybitKlinesGlobal(coin, '60');
+                    if (klines && klines.length >= 20) {
+                        const closes = klines.map(k => k.close);
+                        const sma20 = SMA.calculate({period: 20, values: closes});
+                        if (sma20.length > 0) {
+                            const lastClose = closes[closes.length - 1];
+                            const lastOpen = klines[klines.length - 1].open;
+                            const lastSMA = sma20[sma20.length - 1];
+                            
+                            if (lastClose > lastOpen && lastClose > lastSMA) {
+                                p1h = 1;
+                            }
+                        }
                     }
+                    valid = 1;
+                } catch(err) {
+                    console.warn(`[BREADTH ENGINE] Klines fetch failed for ${coin}: ${err.message}`);
                 }
+                return { p24, p1h, bTotal, valid };
+            });
+
+            const results = await Promise.all(promises);
+            for (const r of results) {
+                positive24hCount += r.p24;
+                positive1hCount += r.p1h;
+                basketTotalChange += r.bTotal;
+                validCoinsCount += r.valid;
             }
-            validCoinsCount++;
+            
+            if (i + batchSize < BREADTH_COINS.length) {
+                await new Promise(res => setTimeout(res, delayMs));
+            }
         }
 
         const participation24hScore = validCoinsCount > 0 ? (positive24hCount / validCoinsCount) : 0;
@@ -265,20 +297,25 @@ async function calculateBreadthBasket() {
         const avgBasketChange = validCoinsCount > 0 ? (basketTotalChange / validCoinsCount) : 0;
         const relativeStrengthScore = (avgBasketChange > btc24hChange) ? 1.0 : (avgBasketChange > 0 ? 0.5 : 0.0);
 
-        // Ağırlıklar: 35 / 35 / 30
         const breadthScore = (participation24hScore * 0.35) + (momentum1hScore * 0.35) + (relativeStrengthScore * 0.30);
         let breadthState = 'NEUTRAL';
         if (breadthScore > 0.6) breadthState = 'STRONG';
         else if (breadthScore < 0.4) breadthState = 'WEAK';
 
-        return {
-            score: breadthScore,
+        BREADTH_CACHE = {
+            score: parseFloat(breadthScore.toFixed(4)),
             state: breadthState,
-            components: { s24h: participation24hScore, s1h: momentum1hScore, sRel: relativeStrengthScore }
+            components: { 
+                s24h: parseFloat(participation24hScore.toFixed(4)), 
+                s1h: parseFloat(momentum1hScore.toFixed(4)), 
+                sRel: parseFloat(relativeStrengthScore.toFixed(4)) 
+            }
         };
+        
+        return BREADTH_CACHE;
 
     } catch(e) {
-        console.error("[BREADTH ENGINE] Error:", e.message);
+        console.error("[BREADTH ENGINE] Fatal Error:", e.message);
         return { score: 0.5, state: 'NEUTRAL', components: {s24h: 0, s1h: 0, sRel: 0} };
     }
 }
