@@ -108,20 +108,20 @@ async function checkLiquidityAsync(symbol, direction, currentPrice, stopPrice, g
             let msg = '';
             
             if (tier === 1) {
-                if (spreadPct > 0.25) { scoreMod -= 15; msg = `Tier-1 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
-                else if (spreadPct > 0.15) { scoreMod -= 5; msg = `Tier-1 Orta Spread (%${spreadPct.toFixed(2)})`; }
+                if (spreadPct > 0.45) { scoreMod -= 15; msg = `Tier-1 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
+                else if (spreadPct > 0.25) { scoreMod -= 5; msg = `Tier-1 Orta Spread (%${spreadPct.toFixed(2)})`; }
                 
                 if (depthRatio < 5) { scoreMod -= 15; msg += ` | Sığ Tahta (${Math.round(depthRatio)}x Ratio)`; }
                 else if (depthRatio < 10) { scoreMod -= 5; msg += ` | Zayıf Tahta (${Math.round(depthRatio)}x Ratio)`; }
             } else if (tier === 2) {
-                if (spreadPct > 0.40) { scoreMod -= 15; msg = `Tier-2 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
-                else if (spreadPct > 0.25) { scoreMod -= 5; msg = `Tier-2 Orta Spread (%${spreadPct.toFixed(2)})`; }
+                if (spreadPct > 0.60) { scoreMod -= 15; msg = `Tier-2 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
+                else if (spreadPct > 0.35) { scoreMod -= 5; msg = `Tier-2 Orta Spread (%${spreadPct.toFixed(2)})`; }
                 
                 if (depthRatio < 8) { scoreMod -= 15; msg += ` | Sığ Tahta (${Math.round(depthRatio)}x Ratio)`; }
                 else if (depthRatio < 15) { scoreMod -= 5; msg += ` | Zayıf Tahta (${Math.round(depthRatio)}x Ratio)`; }
             } else {
-                if (spreadPct > 0.60) { scoreMod -= 15; msg = `Tier-3 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
-                else if (spreadPct > 0.40) { scoreMod -= 5; msg = `Tier-3 Orta Spread (%${spreadPct.toFixed(2)})`; }
+                if (spreadPct > 0.80) { scoreMod -= 15; msg = `Tier-3 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
+                else if (spreadPct > 0.50) { scoreMod -= 5; msg = `Tier-3 Orta Spread (%${spreadPct.toFixed(2)})`; }
                 
                 if (depthRatio < 8) { scoreMod -= 15; msg += ` | Sığ Tahta (${Math.round(depthRatio)}x Ratio)`; }
                 else if (depthRatio < 15) { scoreMod -= 5; msg += ` | Zayıf Tahta (${Math.round(depthRatio)}x Ratio)`; }
@@ -130,13 +130,18 @@ async function checkLiquidityAsync(symbol, direction, currentPrice, stopPrice, g
             // Sabit Maksimum penalty -15
             if (scoreMod < -15) scoreMod = -15;
 
+            let decision = 'PASS';
+            if (scoreMod === -15) decision = 'HARD_VETO';
+            else if (scoreMod < 0) decision = 'SOFT_PENALTY';
+
             const telemetry = {
                 tier: tier,
                 spreadPct: parseFloat(spreadPct.toFixed(3)),
                 bidsUsd: Math.round(bidsVolumeUsd),
                 asksUsd: Math.round(asksVolumeUsd),
                 estimatedNotional: Math.round(estimatedNotional),
-                depthRatio: parseFloat(depthRatio.toFixed(1))
+                depthRatio: parseFloat(depthRatio.toFixed(1)),
+                decision: decision
             };
 
             if (scoreMod === 0) {

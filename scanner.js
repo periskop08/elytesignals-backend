@@ -1801,6 +1801,7 @@ async function analyzeCoin(symbolInfo) {
                 breakdown.demir_ask_depth = demirRes.telemetry.asksUsd;
                 breakdown.demir_estimated_notional = demirRes.telemetry.estimatedNotional;
                 breakdown.demir_depth_ratio = demirRes.telemetry.depthRatio;
+                breakdown.demir_decision = demirRes.telemetry.decision;
                 breakdown.demir_scoreMod = demirRes.scoreMod;
                 breakdown.demir_msg = demirRes.msg;
             }
