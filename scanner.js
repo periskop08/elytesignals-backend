@@ -1105,7 +1105,7 @@ async function analyzeCoin(symbolInfo) {
             regime = 'TRENDING';
             s_trend += 5;
             warnings.push('Market Regime: Trending (+5)');
-        } else if (currentADX < 15) {
+        } else if (currentADX < 10) {
             regime = 'RANGING';
             qualityScore -= 2; // Eskiden -5'ti, Context Engine devreye girdiği için çifte ceza olmasın diye yumuşatıldı
             warnings.push('Market Regime: Ranging Limit (-2)');
@@ -1189,11 +1189,11 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
                     // ADX Koruması (Kripto için FOMO Filtresi)
-                    if (currentADX < 15) {
+                    if (currentADX < 10) {
                         console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
                         breakdown.adxVeto = true;
                         qualityScore -= 200; // Son aşamada kesin veto yemesi için
-                    } else if (currentADX >= 15 && currentADX < 30) {
+                    } else if (currentADX >= 10 && currentADX < 30) {
                         qualityScore -= 10;
                         warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
                     } else {
@@ -1206,11 +1206,11 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
                     // ADX Koruması (Kripto için)
-                    if (currentADX < 15) {
+                    if (currentADX < 10) {
                         console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
                         breakdown.adxVeto = true;
                         qualityScore -= 200; 
-                    } else if (currentADX >= 15 && currentADX < 30) {
+                    } else if (currentADX >= 10 && currentADX < 30) {
                         qualityScore -= 10;
                         warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
                     } else {
