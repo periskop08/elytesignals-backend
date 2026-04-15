@@ -2039,11 +2039,10 @@ async function runScan() {
                 let blockReason = "";
                 let blockLessonId = null;
                 let telegramLimitWarning = "";
+                let isTestRule = false;
 
                 try {
                     const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status IN ('ACTIVE', 'TEST') AND datetime(createdAt) >= datetime('now', '-30 days') ORDER BY id DESC LIMIT 15");
-                    
-                    let isTestRule = false;
 
                     if (activeLessons && activeLessons.length > 0) {
                         const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] (${l.status}) - ${l.lessonText}`).join('\n');
