@@ -1787,7 +1787,7 @@ async function analyzeCoin(symbolInfo) {
             const { checkLiquidityAsync } = require('./demir_bey');
             const demirRes = await Promise.race([
                 checkLiquidityAsync(sym, direction, currentPrice, dynamicStop, breakdown.globalVol),
-                new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Bypass)" }), 2000))
+                new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Otonom İzin)" }), 2000))
             ]);
             
             qualityScore += demirRes.scoreMod;
