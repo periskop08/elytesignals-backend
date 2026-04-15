@@ -106,16 +106,16 @@ async function setLeverage(symbol, positionSide, leverage) {
 }
 
 // 2. Place Order mapping
-async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPrice, riskMultiplier = 1.0) {
+async function placeOrder(rawSymbol, direction, entryPrice, targetPrice, stopPrice, finalUsdRisk) {
     // rawSymbol: 'BTCUSDT' -> Format to BingX 'BTC-USDT' or 'NCCOXAG2USD-USDT' for assets
     const symbol = resolveBingxSymbol(rawSymbol);
     
     const info = await getInstrumentInfo(symbol);
     if (!info) throw new Error("Instrument info not found for " + symbol);
 
-    // --- SABİT RİSK (R) HESAPLAMASI ---
+    // --- DİNAMİK RİSK BAZLI BOYUTLANDIRMA (RISK-BASED SIZING) ---
     // Formül: Miktar (Quantity) = Riske Edilen Para ($) / (Giriş Fiyatı - Stop Fiyatı)
-    const RISK_USD = parseFloat(process.env.BINGX_RISK_USD || 10) * riskMultiplier;
+    const RISK_USD = finalUsdRisk || parseFloat(process.env.BINGX_RISK_USD || 10);
     const coinBasinaZarar = Math.abs(entryPrice - stopPrice);
     
     // Risk başına alınması gereken coin miktarını direkt buluruz. 

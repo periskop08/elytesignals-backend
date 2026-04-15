@@ -67,6 +67,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
             closeReason TEXT, /* NATIVE_TP, NATIVE_SL, MANUAL_CLOSE */
             bybitOrderId TEXT,
             isBreakeven INTEGER DEFAULT 0,
+            riskedUsd REAL DEFAULT 0,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             closedAt DATETIME
         )`, (err) => {
@@ -74,6 +75,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 console.error("user_trades table error:", err);
             } else {
                 db.run("ALTER TABLE user_trades ADD COLUMN isBreakeven INTEGER DEFAULT 0", () => {});
+                db.run("ALTER TABLE user_trades ADD COLUMN riskedUsd REAL DEFAULT 0", () => {});
             }
         });
 
