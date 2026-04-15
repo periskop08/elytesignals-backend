@@ -1711,13 +1711,21 @@ async function analyzeCoin(symbolInfo) {
                  console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ALPHA (Hard Reject)`);
                  return null;
              }
-        } else if (adjustedRR >= 1.00 && adjustedRR < 1.10) {
+        } else if (adjustedRR >= 1.00 && adjustedRR < 1.05) {
              if (operationMode === 'VOLUME') {
                  effective_rr_band = 'SOFT_0.5';
                  rr_modifier = 0.5;
              } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.10 but Mode is ALPHA (Soft Reject)`);
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.05 but Mode is ALPHA (Hard Reject)`);
                  return null;
+             }
+        } else if (adjustedRR >= 1.05 && adjustedRR < 1.10) {
+             if (operationMode === 'VOLUME') {
+                 effective_rr_band = 'SOFT_0.5';
+                 rr_modifier = 0.5;
+             } else {
+                 effective_rr_band = 'ALPHA_MICRO_0.4';
+                 rr_modifier = 0.4;
              }
         } else if (adjustedRR >= 1.10 && adjustedRR < 1.15) {
              if (operationMode === 'VOLUME') {
@@ -1742,15 +1750,15 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
         // 1. Dinamik Kalite Barajı (Çift Motor / Dual Engine)
-        let dynamicThreshold = 60;
+        let dynamicThreshold = 55;
         if (operationMode === 'VOLUME') {
-            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 40;
-            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 44;
-            else dynamicThreshold = 55;
+            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 35;
+            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 40;
+            else dynamicThreshold = 50;
         } else {
-            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 50;
-            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 55;
-            else dynamicThreshold = 60;
+            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 45;
+            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 50;
+            else dynamicThreshold = 55;
         }
         
         if (qualityScore < dynamicThreshold) {
@@ -2107,24 +2115,25 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                             }
                         }
                         
+                        signal.breakdown.quality_score_before_llm = signal.qualityScore;
+                        
                         if (blockJson.risk_level === "HIGH") {
                             if (!isTestRule) {
                                 llmRiskPenalty = 0.70;
-                                signal.qualityScore -= 30;
+                                signal.qualityScore -= 15;
                             }
                             blockReason = `Yüksek Risk: ${blockJson.reason}`;
                             blockLessonId = blockJson.lesson_id;
                         } else if (blockJson.risk_level === "MEDIUM") {
                             if (!isTestRule) {
                                 llmRiskPenalty = 0.75;
-                                signal.qualityScore -= 20;
+                                signal.qualityScore -= 5;
                             }
                             blockReason = `Orta Risk: ${blockJson.reason}`;
                             blockLessonId = blockJson.lesson_id;
                         } else if (blockJson.risk_level === "LOW") {
                             if (!isTestRule) {
                                 llmRiskPenalty = 1.0;
-                                signal.qualityScore -= 10;
                             }
                             blockReason = `Düşük Risk (Küçük Pürüz): ${blockJson.reason}`;
                         }
@@ -2140,6 +2149,10 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                     if (!isTestRule) {
                         signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + `LLM RİSK İNDİRİMİ: ${blockReason}`;
                     }
+
+                    signal.breakdown.quality_score_after_llm = signal.qualityScore;
+                    signal.breakdown.llm_modifier = typeof llmRiskPenalty !== 'undefined' ? llmRiskPenalty : 1.0;
+                    signal.breakdown.final_block_reason_primary = 'LLM_RISK_PENALTY';
 
                     const breakdownJson = JSON.stringify(signal.breakdown || {});
                     const shadowStatus = isTestRule ? 'SHADOW_TEST_PENDING' : 'PENDING';
@@ -2432,6 +2445,11 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                     } catch(e) {}
 
                                     let finalRiskMultiplier = riskMultiplier * rrModifier;
+                                    if (signal.breakdown) {
+                                        signal.breakdown.base_risk_multiplier = baseRiskMultiplier;
+                                        signal.breakdown.llm_modifier = llmRiskModifier;
+                                        signal.breakdown.final_risk_multiplier = finalRiskMultiplier;
+                                    }
                                     console.log(`[TELEMETRY] Mode: ${opMode} | RR Band: ${rrBand} | Base: ${baseRiskMultiplier}x | LLM: ${llmRiskModifier}x | RR_Mod: ${rrModifier}x | Final Risk: ${finalRiskMultiplier.toFixed(2)}x`);
 
                                     if (finalRiskMultiplier < 0.30) {
