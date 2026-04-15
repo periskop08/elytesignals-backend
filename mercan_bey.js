@@ -2,6 +2,7 @@ require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const TelegramBot = require('node-telegram-bot-api');
 const { logTokenUsage } = require('./usage_tracker');
+const axios = require('axios');
 
 // Gemini 1.5 Pro Search Grounding yeteneği için tanımlama
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -35,7 +36,32 @@ async function fireMercanBey(symbol, type, diffPercentage) {
     const diffFmt = (diffPercentage * 100).toFixed(2);
     const moveDesc = type === 'PUMP' ? `Aşırı Alış (Pump) +%${diffFmt}` : `Aşırı Satış (Dump) -%${Math.abs(diffFmt)}`;
     
-    console.log(`[MERCAN_BEY] Anomali fırlatıldı! ${symbol} (${moveDesc}). Google taraması başlatılıyor...`);
+    console.log(`[MERCAN_BEY] Anomali fırlatıldı! ${symbol} (${moveDesc}). Hacim kontrol ediliyor...`);
+
+    let volumeUsd = 0;
+    try {
+        const bingxSymbol = symbol.endsWith('USDT') ? symbol.replace('USDT', '-USDT') : symbol;
+        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${bingxSymbol}`);
+        if (res.data && res.data.data && res.data.data.quoteVolume) {
+            volumeUsd = parseFloat(res.data.data.quoteVolume);
+        }
+    } catch (e) {
+        console.warn("[MERCAN_BEY] Hacim alınamadı:", e.message);
+    }
+
+    const requiresAI = Math.abs(diffPercentage) >= 0.30 || volumeUsd >= 100000000;
+
+    if (!requiresAI) {
+        let volText = volumeUsd > 0 ? `$${(volumeUsd/1000000).toFixed(1)}M` : 'Bilinmiyor';
+        const shortMsg = `🚨 *ANOMALİ TESPİT EDİLDİ:* #${symbol}\n📉 *Hareket:* ${moveDesc}\n💰 *Hacim:* ${volText}\n\n📌 _Hareket %30'u veya hacim 100M$'ı aşmadığı için yapay zeka araştırması devredışı bırakıldı._`;
+        if (bot && process.env.TELEGRAM_VIP_GROUP_ID) {
+            await bot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, shortMsg, { parse_mode: 'Markdown' });
+            console.log(`[MERCAN_BEY] Hızlı rapor başarıyla iletildi (${symbol}).`);
+        }
+        return;
+    }
+
+    console.log(`[MERCAN_BEY] Şartlar sağlandı (Hacim > 100M veya Fark > %30). Gemini uçuşa geçiyor...`);
 
     try {
         const prompt = `Şu anda kripto para piyasasında ${symbol} varlığında ani bir ${moveDesc} gerçekleşti.
