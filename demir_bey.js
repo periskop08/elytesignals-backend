@@ -66,7 +66,7 @@ async function checkLiquidityAsync(symbol, direction, currentPrice, stopPrice, g
             const data = response.data.data;
             if (!data.bids || !data.asks || data.bids.length === 0 || data.asks.length === 0) {
                 recordBypass();
-                return { scoreMod: 0, msg: "Likidite verisi eksik (Bypass)", telemetry: {tier} };
+                return { scoreMod: 0, msg: "Likidite verisi eksik (Otonom İzin)", telemetry: {tier} };
             }
 
             const bestBidPrice = parseFloat(data.bids[0][0]);
@@ -74,7 +74,7 @@ async function checkLiquidityAsync(symbol, direction, currentPrice, stopPrice, g
 
             if (bestAskPrice === 0) {
                 recordBypass();
-                return { scoreMod: 0, msg: "Ask Price = 0 (Bypass)", telemetry: {tier} };
+                return { scoreMod: 0, msg: "Ask Price = 0 (Otonom İzin)", telemetry: {tier} };
             }
 
             const spreadPct = ((bestAskPrice - bestBidPrice) / bestAskPrice) * 100;
@@ -154,10 +154,10 @@ async function checkLiquidityAsync(symbol, direction, currentPrice, stopPrice, g
         }
         
         recordBypass();
-        return { scoreMod: 0, msg: "Likidite API Hatası (Bypass)", telemetry: {tier: 3} };
+        return { scoreMod: 0, msg: "Likidite API Hatası (Otonom İzin)", telemetry: {tier: 3} };
     } catch (err) {
         recordBypass();
-        return { scoreMod: 0, msg: `Demir Bey Timeout/Hata (Bypass)`, telemetry: {tier: 3} };
+        return { scoreMod: 0, msg: `Demir Bey Timeout/Hata (Otonom İzin)`, telemetry: {tier: 3} };
     }
 }
 
