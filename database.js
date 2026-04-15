@@ -177,7 +177,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
             qualityScore INTEGER DEFAULT 0,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             closedAt DATETIME
-        )`);
+        )`, (err) => {
+            if (!err) {
+                db.run("ALTER TABLE shadow_trades ADD COLUMN breakdownData TEXT", () => {});
+            }
+        });
 
         // Create stock_news table for Kantan Reporter Agent
         db.run(`CREATE TABLE IF NOT EXISTS stock_news (
