@@ -1687,16 +1687,24 @@ async function analyzeCoin(symbolInfo) {
                  effective_rr_band = 'SOFT_0.4';
                  rr_modifier = 0.4;
              } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ${operationMode} (Soft Reject)`);
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ALPHA (Hard Reject)`);
                  return null;
              }
-        } else if (adjustedRR >= 1.00 && adjustedRR < 1.15) {
+        } else if (adjustedRR >= 1.00 && adjustedRR < 1.10) {
              if (operationMode === 'VOLUME') {
                  effective_rr_band = 'SOFT_0.5';
                  rr_modifier = 0.5;
              } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.15 but Mode is ${operationMode} (Soft Reject)`);
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.10 but Mode is ALPHA (Soft Reject)`);
                  return null;
+             }
+        } else if (adjustedRR >= 1.10 && adjustedRR < 1.15) {
+             if (operationMode === 'VOLUME') {
+                 effective_rr_band = 'SOFT_0.5';
+                 rr_modifier = 0.5;
+             } else {
+                 effective_rr_band = 'ALPHA_SOFT_0.6';
+                 rr_modifier = 0.6;
              }
         } else {
              effective_rr_band = 'NORMAL_ACCEPT';
