@@ -1700,7 +1700,7 @@ async function analyzeCoin(symbolInfo) {
                  console.log(`[BÖRÜ BEY] ${sym} R:R yetersiz olsa da ADX Veto kuralı için Gölge Test'e zorunlu sevk ediliyor...`);
                  effective_rr_band = 'HARD_REJECT_SAVED_BY_ADX';
              } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} (Adj: ${adjustedRR.toFixed(2)}) < 0.90 (Hard Reject)`);
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} (${direction}) | RR: ${effectiveRR.toFixed(2)} (Adj: ${adjustedRR.toFixed(2)}) < 0.90 (Hard Reject)`);
                  return null;
              }
         } else if (adjustedRR >= 0.90 && adjustedRR < 1.00) {
@@ -1708,7 +1708,7 @@ async function analyzeCoin(symbolInfo) {
                  effective_rr_band = 'SOFT_0.4';
                  rr_modifier = 0.4;
              } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ALPHA (Hard Reject)`);
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} (${direction}) | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ALPHA (Hard Reject)`);
                  return null;
              }
         } else if (adjustedRR >= 1.00 && adjustedRR < 1.05) {
@@ -1716,7 +1716,7 @@ async function analyzeCoin(symbolInfo) {
                  effective_rr_band = 'SOFT_0.5';
                  rr_modifier = 0.5;
              } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} | RR: ${effectiveRR.toFixed(2)} < 1.05 but Mode is ALPHA (Hard Reject)`);
+                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} (${direction}) | RR: ${effectiveRR.toFixed(2)} < 1.05 but Mode is ALPHA (Hard Reject)`);
                  return null;
              }
         } else if (adjustedRR >= 1.05 && adjustedRR < 1.10) {
