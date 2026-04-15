@@ -1195,7 +1195,7 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
                     // ADX Koruması & Birleşik Zayıflık Filtresi
-                    const isWeakCombo = (breakdown.rvol < 1.0) && (!breakdown.ob);
+                    const isWeakCombo = (breakdown.rvol < 1.0) && (sweepIdx === -1) && (!breakdown.ob);
 
                     if (currentADX < 15 && isWeakCombo) {
                         console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought + Düşük ADX + Zayıf Hacim/Yapı çakışmasıyla çöpe atıldı.`);
@@ -1219,7 +1219,7 @@ async function analyzeCoin(symbolInfo) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
                     // ADX Koruması & Birleşik Zayıflık Filtresi
-                    const isWeakCombo = (breakdown.rvol < 1.0) && (!breakdown.ob);
+                    const isWeakCombo = (breakdown.rvol < 1.0) && (sweepIdx === -1) && (!breakdown.ob);
 
                     if (currentADX < 15 && isWeakCombo) {
                         console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold + Düşük ADX + Zayıf Hacim/Yapı çakışmasıyla çöpe atıldı.`);
