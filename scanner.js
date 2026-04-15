@@ -5,7 +5,7 @@ const { ATR, SMA, ADX, EMA, IchimokuCloud, StochasticRSI } = require('technicali
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const { appendToSheet } = require('./google-api');
-const { placeOrder, getPosition, updateStopLoss } = require('./bingx-trade');
+const { placeOrder, getPosition, updateStopLoss, getAccountBalance } = require('./bingx-trade');
 const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
 require('dotenv').config();
@@ -2450,19 +2450,92 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                         signal.breakdown.llm_modifier = llmRiskModifier;
                                         signal.breakdown.final_risk_multiplier = finalRiskMultiplier;
                                     }
-                                    console.log(`[TELEMETRY] Mode: ${opMode} | RR Band: ${rrBand} | Base: ${baseRiskMultiplier}x | LLM: ${llmRiskModifier}x | RR_Mod: ${rrModifier}x | Final Risk: ${finalRiskMultiplier.toFixed(2)}x`);
 
-                                    if (finalRiskMultiplier < 0.30) {
-                                        console.log(`[MIN_RISK_FLOOR_REJECT] ${signal.symbol} Final risk size (${finalRiskMultiplier.toFixed(2)}x) is < 0.30. İşlem anlamsız fee makasına girmemek için iptal edildi.`);
-                                    } else {
-                                        console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${finalRiskMultiplier.toFixed(2)})`);
+                                    // --- RISK-BASED POSITION SIZING ---
+                                    let accountBalance = null;
+                                    let balanceFallbackUsed = false;
                                     try {
-                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, finalRiskMultiplier);
+                                        accountBalance = await getAccountBalance();
+                                    } catch(e) { }
+
+                                    if (!accountBalance || isNaN(accountBalance)) {
+                                        accountBalance = process.env.DEFAULT_BALANCE ? parseFloat(process.env.DEFAULT_BALANCE) : 500.0;
+                                        balanceFallbackUsed = true;
+                                        console.warn(`[RISK SIZING] BingX bakiye alınamadı (API Hatası). Fallback bakiye kullanılıyor: $${accountBalance}`);
+                                        if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
+                                            try { telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Warning:* getAccountBalance() failed! Fallback bakiye ($${accountBalance}) kullanılarak işleme giriliyor.`, {parse_mode: 'Markdown'}); } catch(e){}
+                                        }
+                                    }
+
+                                    let baseRiskPercent = 0;
+                                    if (rrBand === 'NORMAL_ACCEPT') baseRiskPercent = 0.01;
+                                    else if (rrBand.includes('0.6') || rrBand.includes('0.5')) baseRiskPercent = 0.007;
+                                    else if (rrBand.includes('0.4')) baseRiskPercent = 0.004;
+
+                                    const usdRiskBeforeModifiers = accountBalance * baseRiskPercent;
+                                    const finalUsdRisk = usdRiskBeforeModifiers * finalRiskMultiplier;
+
+                                    const stopDistance = Math.abs(signal.entryPrice - signal.stopPrice);
+                                    let stopPercent = 0;
+                                    if (signal.entryPrice > 0) {
+                                        stopPercent = stopDistance / signal.entryPrice;
+                                    }
+                                    const calculatedPositionSize = stopDistance > 0 ? (finalUsdRisk / stopDistance) : 0;
+                                    const calculatedNotional = calculatedPositionSize * signal.entryPrice;
+
+                                    if (signal.breakdown) {
+                                        signal.breakdown.balance_fallback_used = balanceFallbackUsed;
+                                        signal.breakdown.balance_source = balanceFallbackUsed ? 'FALLBACK_500' : 'BINGX_API';
+                                        signal.breakdown.account_balance = accountBalance;
+                                        signal.breakdown.base_risk_percent = baseRiskPercent;
+                                        signal.breakdown.usd_risk_before_modifiers = usdRiskBeforeModifiers;
+                                        signal.breakdown.final_usd_risk = finalUsdRisk;
+                                        signal.breakdown.stop_percent = stopPercent;
+                                        signal.breakdown.calculated_position_size = calculatedPositionSize;
+                                    }
+
+                                    console.log(`[TELEMETRY] Mode: ${opMode} | RR Band: ${rrBand} | Fallback: ${balanceFallbackUsed} | Balance: $${accountBalance.toFixed(2)} | Final Risk USD: $${finalUsdRisk.toFixed(2)}`);
+
+                                    // Toplam Risk Limiti (Ceiling) %3
+                                    let totalOpenRiskBefore = 0;
+                                    try {
+                                        const act = await db.all("SELECT riskedUsd FROM user_trades WHERE status = 'ACTIVE'");
+                                        totalOpenRiskBefore = act.reduce((sum, t) => sum + (t.riskedUsd || 0), 0);
+                                    } catch(e) {}
+                                    const maxAllowedRiskUsd = accountBalance * 0.03;
+
+                                    if (signal.breakdown) {
+                                        signal.breakdown.total_open_risk_before = totalOpenRiskBefore;
+                                    }
+
+                                    if (totalOpenRiskBefore + finalUsdRisk > maxAllowedRiskUsd) {
+                                        console.log(`[RISK CEILING REJECT] ${signal.symbol} | Açık risk ($${totalOpenRiskBefore.toFixed(2)}) + Yeni Risk ($${finalUsdRisk.toFixed(2)}) > Maksimum %3 ($${maxAllowedRiskUsd.toFixed(2)}) limitini aşıyor.`);
+                                        if (signal.breakdown) signal.breakdown.risk_ceiling_limit_hit = true;
+                                    } else if (finalUsdRisk < 1.0) {
+                                        console.log(`[MIN_RISK_FLOOR_REJECT] ${signal.symbol} | Nihai risk ($${finalUsdRisk.toFixed(2)}) çok düşük (<1.0$). Patlama riski nedeniyle iptal edildi.`);
+                                    } else if (calculatedNotional < 5) {
+                                        console.log(`[MIN_NOTIONAL_REJECT] ${signal.symbol} | Lot hacmi (Notional: $${calculatedNotional.toFixed(2)}) çok düşük (<5$). Borsa minimumunu karşılamıyor.`);
+                                        if (signal.breakdown) signal.breakdown.min_notional_reject = true;
+                                    } else if (finalRiskMultiplier < 0.30) {
+                                        console.log(`[MIN_RISK_FLOOR_REJECT] ${signal.symbol} Final risk multiplier (${finalRiskMultiplier.toFixed(2)}x) is < 0.30. İşlem anlamsız fee makasına girmemek için iptal edildi.`);
+                                    } else {
+                                        console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Nihai Risk: $${finalUsdRisk.toFixed(2)}, Notional: $${calculatedNotional.toFixed(2)})`);
+                                    try {
+                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, finalUsdRisk);
                                             if (orderId) {
                                                 await db.run(
-                                                    "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
-                                                    [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
+                                                    "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId, riskedUsd) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?)",
+                                                    [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId, finalUsdRisk]
                                                 );
+
+                                                if (signal.breakdown) {
+                                                    let totalOpenRiskAfter = 0;
+                                                    try {
+                                                        const act = await db.all("SELECT riskedUsd FROM user_trades WHERE status = 'ACTIVE'");
+                                                        totalOpenRiskAfter = act.reduce((sum, t) => sum + (t.riskedUsd || 0), 0);
+                                                    } catch(e) {}
+                                                    signal.breakdown.total_open_risk_after = totalOpenRiskAfter;
+                                                }
 
                                                 // Ekranda favori yıldızı yanması için standart tabloya da yaz
                                                 const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
