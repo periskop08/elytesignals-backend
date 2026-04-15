@@ -47,22 +47,26 @@ function recordBypass() {
  * gerektiğinde işleme ceza puanı (-15) kesmektir.
  */
 
-async function checkLiquidityAsync(symbol, direction) {
+async function checkLiquidityAsync(symbol, direction, currentPrice, stopPrice, globalVol) {
     try {
-        if (symbol === 'BTCUSDT' || symbol === 'ETHUSDT' || symbol === 'BTC-USDT' || symbol === 'ETH-USDT') {
-            recordBypass();
-            return { scoreMod: 0, msg: "Lider Muafiyeti (Bypass)" };
+        let fetchSymbol = symbol.includes('-') ? symbol : symbol.replace('USDT', '-USDT');
+
+        let tier = 3;
+        const tier1List = ['BTCUSDT','ETHUSDT','BTC-USDT','ETH-USDT','BNBUSDT','BNB-USDT','SOLUSDT','SOL-USDT'];
+        if (tier1List.includes(symbol)) {
+            tier = 1;
+        } else if (globalVol && parseFloat(globalVol) >= 150000000) {
+            tier = 2; // 150M+ hacim uzeri Tier-2
         }
 
-        let fetchSymbol = symbol.includes('-') ? symbol : symbol.replace('USDT', '-USDT');
         const url = `https://open-api.bingx.com/openApi/swap/v2/quote/depth?symbol=${fetchSymbol}&limit=30`;
-        const response = await axios.get(url, { timeout: 1500 }); // 1.5 Saniye hard-timeout
+        const response = await axios.get(url, { timeout: 1500 }); 
         
         if (response.data && response.data.code === 0 && response.data.data) {
             const data = response.data.data;
             if (!data.bids || !data.asks || data.bids.length === 0 || data.asks.length === 0) {
                 recordBypass();
-                return { scoreMod: 0, msg: "Likidite verisi eksik (Bypass)" };
+                return { scoreMod: 0, msg: "Likidite verisi eksik (Bypass)", telemetry: {tier} };
             }
 
             const bestBidPrice = parseFloat(data.bids[0][0]);
@@ -70,53 +74,85 @@ async function checkLiquidityAsync(symbol, direction) {
 
             if (bestAskPrice === 0) {
                 recordBypass();
-                return { scoreMod: 0, msg: "Ask Price = 0 (Bypass)" };
+                return { scoreMod: 0, msg: "Ask Price = 0 (Bypass)", telemetry: {tier} };
             }
 
-            // Makas (Spread) yüzdesini hesapla
             const spreadPct = ((bestAskPrice - bestBidPrice) / bestAskPrice) * 100;
             
-            // Eğer spread %0.4'ten büyükse bu ciddi bir slippage riski oluşturur (Altcoinlerde ani hacimsizlik)
-            if (spreadPct > 0.4) {
-                recordStat('penalty');
-                return { scoreMod: -15, msg: `Yüksek Spread Riski (%${spreadPct.toFixed(2)}) (-15)` };
-            }
-
-            // Toplam Hacimi (İlk 5 Kademe) Hesapla
             let bidsVolumeUsd = 0;
-            for (let b of data.bids) {
-                bidsVolumeUsd += parseFloat(b[0]) * parseFloat(b[1]);
+            // Sadece İlk 10 Kademe (Gerçekçi slippage alanı)
+            const bidsCount = Math.min(data.bids.length, 10);
+            for (let i = 0; i < bidsCount; i++) {
+                bidsVolumeUsd += parseFloat(data.bids[i][0]) * parseFloat(data.bids[i][1]);
             }
             
             let asksVolumeUsd = 0;
-            for (let a of data.asks) {
-                asksVolumeUsd += parseFloat(a[0]) * parseFloat(a[1]);
+            const asksCount = Math.min(data.asks.length, 10);
+            for (let i = 0; i < asksCount; i++) {
+                asksVolumeUsd += parseFloat(data.asks[i][0]) * parseFloat(data.asks[i][1]);
             }
 
-            // Eğer girmek istediğimiz tarafın karşısındaki hacim inanılmaz sığ ise (örn 10.000$'dan küçükse) kayma olacaktır
-            if (direction === 'LONG' && asksVolumeUsd < 15000) {
+            let estimatedRiskUsd = 500 * 0.01; // Varsayılan $5 risk (%1)
+            let stopDistanceRatio = 0.01;
+            if (currentPrice && stopPrice && currentPrice > 0) {
+                stopDistanceRatio = Math.abs(currentPrice - stopPrice) / currentPrice;
+            }
+            if (stopDistanceRatio <= 0.0001) stopDistanceRatio = 0.001; 
+            const estimatedNotional = estimatedRiskUsd / stopDistanceRatio;
+
+            // Terslik Derinliği: LONG giriyorsak Asks (Satış Emri arıyoruz), SHORT yapıyorsak Bids.
+            const opposingDepthUsd = direction === 'LONG' ? asksVolumeUsd : bidsVolumeUsd;
+            const depthRatio = estimatedNotional > 0 ? (opposingDepthUsd / estimatedNotional) : 999;
+
+            let scoreMod = 0;
+            let msg = '';
+            
+            if (tier === 1) {
+                if (spreadPct > 0.25) { scoreMod -= 15; msg = `Tier-1 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
+                else if (spreadPct > 0.15) { scoreMod -= 5; msg = `Tier-1 Orta Spread (%${spreadPct.toFixed(2)})`; }
+                
+                if (depthRatio < 5) { scoreMod -= 15; msg += ` | Sığ Tahta (${Math.round(depthRatio)}x Ratio)`; }
+                else if (depthRatio < 10) { scoreMod -= 5; msg += ` | Zayıf Tahta (${Math.round(depthRatio)}x Ratio)`; }
+            } else if (tier === 2) {
+                if (spreadPct > 0.40) { scoreMod -= 15; msg = `Tier-2 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
+                else if (spreadPct > 0.25) { scoreMod -= 5; msg = `Tier-2 Orta Spread (%${spreadPct.toFixed(2)})`; }
+                
+                if (depthRatio < 8) { scoreMod -= 15; msg += ` | Sığ Tahta (${Math.round(depthRatio)}x Ratio)`; }
+                else if (depthRatio < 15) { scoreMod -= 5; msg += ` | Zayıf Tahta (${Math.round(depthRatio)}x Ratio)`; }
+            } else {
+                if (spreadPct > 0.60) { scoreMod -= 15; msg = `Tier-3 Yüksek Spread (%${spreadPct.toFixed(2)})`; }
+                else if (spreadPct > 0.40) { scoreMod -= 5; msg = `Tier-3 Orta Spread (%${spreadPct.toFixed(2)})`; }
+                
+                if (depthRatio < 8) { scoreMod -= 15; msg += ` | Sığ Tahta (${Math.round(depthRatio)}x Ratio)`; }
+                else if (depthRatio < 15) { scoreMod -= 5; msg += ` | Zayıf Tahta (${Math.round(depthRatio)}x Ratio)`; }
+            }
+
+            // Sabit Maksimum penalty -15
+            if (scoreMod < -15) scoreMod = -15;
+
+            const telemetry = {
+                tier: tier,
+                spreadPct: parseFloat(spreadPct.toFixed(3)),
+                bidsUsd: Math.round(bidsVolumeUsd),
+                asksUsd: Math.round(asksVolumeUsd),
+                estimatedNotional: Math.round(estimatedNotional),
+                depthRatio: parseFloat(depthRatio.toFixed(1))
+            };
+
+            if (scoreMod === 0) {
+                recordStat('normal');
+                return { scoreMod: 0, msg: "", telemetry };
+            } else {
                 recordStat('penalty');
-                return { scoreMod: -15, msg: `Sığ Satış Tahtası ($${Math.round(asksVolumeUsd)}) (-15)` };
-            } else if (direction === 'SHORT' && bidsVolumeUsd < 15000) {
-                recordStat('penalty');
-                return { scoreMod: -15, msg: `Sığ Alış Tahtası ($${Math.round(bidsVolumeUsd)}) (-15)` };
+                return { scoreMod: scoreMod, msg: msg.replace(/^ \| /, ''), telemetry };
             }
-
-            // Eğer tahta çok derinse ve spread çok darsa (+5 Bonus)
-            if (spreadPct < 0.10 && asksVolumeUsd > 50000 && bidsVolumeUsd > 50000) {
-                recordStat('bonus');
-                return { scoreMod: 5, msg: `Sağlam Likidite Tahtası (+5)` };
-            }
-
-            recordStat('normal');
-            return { scoreMod: 0, msg: "Tahta Standart (Pas Geçildi)" };
         }
         
         recordBypass();
-        return { scoreMod: 0, msg: "Likidite API Hatası (Bypass)" };
+        return { scoreMod: 0, msg: "Likidite API Hatası (Bypass)", telemetry: {tier: 3} };
     } catch (err) {
         recordBypass();
-        return { scoreMod: 0, msg: `Demir Bey Timeout/Hata (Bypass)` };
+        return { scoreMod: 0, msg: `Demir Bey Timeout/Hata (Bypass)`, telemetry: {tier: 3} };
     }
 }
 
