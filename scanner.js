@@ -1097,18 +1097,24 @@ async function analyzeCoin(symbolInfo) {
         const isVolatileExpanding = currentATR > (avgATR * 1.1); // %10'dan fazla genişleme
         let regime = 'CHOPPY/NORMAL';
 
-        if (currentADX >= 25 && isVolatileExpanding) {
-            regime = 'TRENDING_VOLATILE';
-            qualityScore += 5; // Eskiden sadece 25 üste 10 veriyorduk, şimdi daha dengeli ama agresif bir bonus var (Trend kırılımı)
-            warnings.push('Market Regime: Trending & Volatile (+5)');
-        } else if (currentADX >= 25 && !isVolatileExpanding) {
-            regime = 'TRENDING';
-            s_trend += 5;
+        if (currentADX >= 30) {
+            regime = isVolatileExpanding ? 'TRENDING_VOLATILE' : 'TRENDING_STRONG';
+            qualityScore += 10;
+            warnings.push('Market Regime: Strong Trend (+10)');
+        } else if (currentADX >= 25 && currentADX < 30) {
+            regime = isVolatileExpanding ? 'TRENDING_VOLATILE' : 'TRENDING';
+            qualityScore += 5;
             warnings.push('Market Regime: Trending (+5)');
-        } else if (currentADX < 10) {
+        } else if (currentADX >= 20 && currentADX < 25) {
+            regime = 'NEUTRAL';
+        } else if (currentADX >= 15 && currentADX < 20) {
+            regime = 'WEAK_TREND';
+            qualityScore -= 3;
+            warnings.push('Market Regime: Weak Trend (-3)');
+        } else if (currentADX < 15) {
             regime = 'RANGING';
-            qualityScore -= 2; // Eskiden -5'ti, Context Engine devreye girdiği için çifte ceza olmasın diye yumuşatıldı
-            warnings.push('Market Regime: Ranging Limit (-2)');
+            qualityScore -= 5;
+            warnings.push('Market Regime: Ranging Limit (-5)');
         }
         breakdown.regime = regime;
 
@@ -1188,31 +1194,46 @@ async function analyzeCoin(symbolInfo) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
-                    // ADX Koruması (Kripto için FOMO Filtresi)
-                    if (currentADX < 10) {
-                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
+                    // ADX Koruması & Birleşik Zayıflık Filtresi
+                    const isWeakCombo = (breakdown.rvol < 1.0) && (!breakdown.ob);
+
+                    if (currentADX < 15 && isWeakCombo) {
+                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought + Düşük ADX + Zayıf Hacim/Yapı çakışmasıyla çöpe atıldı.`);
                         breakdown.adxVeto = true;
-                        qualityScore -= 200; // Son aşamada kesin veto yemesi için
-                    } else if (currentADX >= 10 && currentADX < 30) {
-                        qualityScore -= 10;
-                        warnings.push(`ADX Koruması: StochRSI Şişkin ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
+                        warnings.push('[adx_hard_veto]');
+                        qualityScore -= 200;
+                    } else if (currentADX < 15) {
+                        qualityScore -= 5;
+                        warnings.push(`[adx_soft_penalty] ADX Düşük, StochRSI Şişkin ama Yapı/Hacim Kurtarıyor (-5 Ceza)`);
+                    } else if (currentADX >= 15 && currentADX < 20) {
+                        qualityScore -= 3;
+                        warnings.push(`[adx_soft_penalty] StochRSI Şişkin ve Trend Zayıf (ADX: ${currentADX.toFixed(1)}) -> -3 Ceza`);
+                    } else if (currentADX >= 20 && currentADX < 25) {
+                        warnings.push(`ADX Koruması: StochRSI Şişkin ama Nötr Bölge (ADX: ${currentADX.toFixed(1)}) -> 0 Ceza`);
                     } else {
-                        warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Rüzgar Arkada (Veto İptal)');
-                        // Ceza (-15) uygulanmıyor çünkü Trend > 30 (Güçlü)
+                        warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Trend Güçlü (Veto İptal)');
                     }
                 }
             } else if (direction === 'SHORT' && lastStoch.k < 20) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
-                    // ADX Koruması (Kripto için)
-                    if (currentADX < 10) {
-                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${currentADX.toFixed(1)}) çakışmasıyla çöpe atıldı (Fakat Gölge Test'e Gönderiliyor).`);
+                    // ADX Koruması & Birleşik Zayıflık Filtresi
+                    const isWeakCombo = (breakdown.rvol < 1.0) && (!breakdown.ob);
+
+                    if (currentADX < 15 && isWeakCombo) {
+                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold + Düşük ADX + Zayıf Hacim/Yapı çakışmasıyla çöpe atıldı.`);
                         breakdown.adxVeto = true;
+                        warnings.push('[adx_hard_veto]');
                         qualityScore -= 200; 
-                    } else if (currentADX >= 10 && currentADX < 30) {
-                        qualityScore -= 10;
-                        warnings.push(`ADX Koruması: StochRSI Dipte ama Trend idare eder (ADX: ${currentADX.toFixed(1)}) -> -10 Ceza`);
+                    } else if (currentADX < 15) {
+                        qualityScore -= 5;
+                        warnings.push(`[adx_soft_penalty] ADX Düşük, StochRSI Dipte ama Yapı/Hacim Kurtarıyor (-5 Ceza)`);
+                    } else if (currentADX >= 15 && currentADX < 20) {
+                        qualityScore -= 3;
+                        warnings.push(`[adx_soft_penalty] StochRSI Dipte ve Trend Zayıf (ADX: ${currentADX.toFixed(1)}) -> -3 Ceza`);
+                    } else if (currentADX >= 20 && currentADX < 25) {
+                        warnings.push(`ADX Koruması: StochRSI Dipte ama Nötr Bölge (ADX: ${currentADX.toFixed(1)}) -> 0 Ceza`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Satım ama Düşüş Trendi Güçlü (Veto İptal)');
                     }
