@@ -1786,7 +1786,7 @@ async function analyzeCoin(symbolInfo) {
         if (qualityScore >= dynamicThreshold && (!symbolInfo || !symbolInfo.isAsset)) {
             const { checkLiquidityAsync } = require('./demir_bey');
             const demirRes = await Promise.race([
-                checkLiquidityAsync(sym, direction),
+                checkLiquidityAsync(sym, direction, currentPrice, dynamicStop, breakdown.globalVol),
                 new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Bypass)" }), 2000))
             ]);
             
@@ -1794,9 +1794,19 @@ async function analyzeCoin(symbolInfo) {
             if (demirRes.msg) {
                 warnings.push(`[Demir Bey: ${demirRes.msg}]`);
             }
+            if (breakdown && demirRes.telemetry) {
+                breakdown.demir_tier = demirRes.telemetry.tier;
+                breakdown.demir_spread_pct = demirRes.telemetry.spreadPct;
+                breakdown.demir_bid_depth = demirRes.telemetry.bidsUsd;
+                breakdown.demir_ask_depth = demirRes.telemetry.asksUsd;
+                breakdown.demir_estimated_notional = demirRes.telemetry.estimatedNotional;
+                breakdown.demir_depth_ratio = demirRes.telemetry.depthRatio;
+                breakdown.demir_scoreMod = demirRes.scoreMod;
+                breakdown.demir_msg = demirRes.msg;
+            }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 55) {
+            if (qualityScore < dynamicThreshold) {
                 console.log(`[VETO] ${sym} işlemi Demir Bey cezasıyla (${demirRes.msg}) sisteme sokulmadı.`);
                 return {
                     demirVetoOnly: true,
