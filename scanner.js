@@ -657,7 +657,13 @@ async function analyzeCoin(symbolInfo) {
         const trapCurrentHigh = highs[highs.length - 1];
         const trapCurrentOpen = opens[opens.length - 1];
 
-        if (recentMin <= rangeLow * 1.005 && currentPrice > rangeLow) {
+        // LOKAL TREND ANALİZİ (Boğa Rallisinde Dibi Bulabilmek için 24 Mumluk Lokal Pencere)
+        const localLows = lows.slice(-24);
+        const localHighs = highs.slice(-24);
+        const localRangeLow = Math.min(...localLows);
+        const localRangeHigh = Math.max(...localHighs);
+
+        if (recentMin <= localRangeLow * 1.005 && currentPrice > localRangeLow) {
             let sweepIdx = lows.lastIndexOf(recentMin);
             if (sweepIdx !== -1) {
                 if (currentPrice > highs[sweepIdx]) { // CHOCH
@@ -669,7 +675,7 @@ async function analyzeCoin(symbolInfo) {
         }
 
         let sweepIdxShort = -1;
-        if (recentMax >= rangeHigh * 0.995 && currentPrice < rangeHigh) {
+        if (recentMax >= localRangeHigh * 0.995 && currentPrice < localRangeHigh) {
             let sweepIdx = highs.lastIndexOf(recentMax);
             if (sweepIdx !== -1) {
                 if (currentPrice < lows[sweepIdx]) {
