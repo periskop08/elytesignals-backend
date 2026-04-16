@@ -1595,7 +1595,7 @@ async function runScan() {
         // 23:00 -> 23*60 = 1380
         const isInstitutionalHours = timeInMinutes >= 930 && timeInMinutes <= 1380;
         
-        const isActiveTradFiSession = !isWeekend && isInstitutionalHours;
+        const isActiveTradFiSession = false; // KULLANICI TALEBİYLE 3 GÜN UYUTULDU (!isWeekend && isInstitutionalHours)
         const assetsToScan = isActiveTradFiSession ? tradFiAssets : [];
 
         const allPairs = [...cryptoPairs, ...assetsToScan];
