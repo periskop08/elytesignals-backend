@@ -1623,7 +1623,7 @@ async function runScan() {
                 try {
                     const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 15");
                     
-                    if (activeLessons && activeLessons.length > 0) {
+                    if (false && activeLessons && activeLessons.length > 0) { // 3 GÜNLÜK UYKU MODU İÇİN FALSE YAPILDI
                         const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] - ${l.lessonText}`).join('\n');
                         const prompt = `Sen PeriskopAI Otonom Fon Yöneticisisin. Sana geçmişteki zararlarımızdan çıkardığımız "KARA LİSTE" dersleri ve şu an girmeyi planladığımız GÜNCEL BİR SİNYAL gönderiyorum.
                         
