@@ -695,7 +695,18 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        // SWEEP YOKSA IŞLEM YOK
+        // 🚀 RANGE BREAKOUT (Trend Kırılımı) KONTROLÜ (Özel İstek) 🚀
+        // Fiyat range tepesini kırıp devam ederse Sweep (Likidite Temizliği) aramadan trend yönünde işleme izin ver.
+        const prevRangeHigh = Math.max(...highs.slice(0, -1));
+        const prevRangeLow = Math.min(...lows.slice(0, -1));
+
+        if (currentPrice > prevRangeHigh) {
+            dipDeviation = true; // Sweep zorunluluğunu bypass et
+        } else if (currentPrice < prevRangeLow) {
+            tepeDeviation = true; // Sweep zorunluluğunu bypass et
+        }
+
+        // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK
         if (!dipDeviation && !tepeDeviation) return null;
 
         const direction = dipDeviation ? 'LONG' : 'SHORT';
