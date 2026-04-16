@@ -1838,9 +1838,11 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                     } catch(e) {}
 
                                     console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${riskMultiplier})`);
-                                    try {
-                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
-                                            if (orderId) {
+                                        // KULLANICI TALEBİ: Borsaya otopilot emir gönderimi geçici olarak durduruldu.
+                                        // Analiz motoru %55 WR seviyesine getirilene kadar sadece sinyal üretmeye devam edecek.
+                                        // const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
+                                        const orderId = null;
+                                        if (orderId) {
                                                 await db.run(
                                                     "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
                                                     [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
