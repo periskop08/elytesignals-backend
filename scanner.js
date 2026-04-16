@@ -708,7 +708,7 @@ async function analyzeCoin(symbolInfo) {
 
         // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK
         if (!dipDeviation && !tepeDeviation) {
-             console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
+             // console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
              return null;
         }
 
