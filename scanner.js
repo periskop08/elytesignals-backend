@@ -675,11 +675,10 @@ async function analyzeCoin(symbolInfo) {
         if (recentMin <= localRangeLow * 1.005 && currentPrice > localRangeLow) {
             let sweepIdx = lows.lastIndexOf(recentMin);
             if (sweepIdx !== -1) {
-                if (currentPrice > highs[sweepIdx]) { // CHOCH
-                    dipDeviation = true;
-                    sweepIdxLong = sweepIdx;
-                    trapWickSize = Math.min(trapCurrentOpen, currentPrice) - trapCurrentLow;
-                }
+                // CHOCH Onayı Kaldırıldı (Fon Büyütme Agresif Modu) - Sadece dönmesi yeterli
+                dipDeviation = true;
+                sweepIdxLong = sweepIdx;
+                trapWickSize = Math.min(trapCurrentOpen, currentPrice) - trapCurrentLow;
             }
         }
 
@@ -687,11 +686,10 @@ async function analyzeCoin(symbolInfo) {
         if (recentMax >= localRangeHigh * 0.995 && currentPrice < localRangeHigh) {
             let sweepIdx = highs.lastIndexOf(recentMax);
             if (sweepIdx !== -1) {
-                if (currentPrice < lows[sweepIdx]) {
-                    tepeDeviation = true;
-                    sweepIdxShort = sweepIdx;
-                    trapWickSize = trapCurrentHigh - Math.max(trapCurrentOpen, currentPrice);
-                }
+                // CHOCH Onayı Kaldırıldı (Fon Büyütme Agresif Modu) - Sadece dönmesi yeterli
+                tepeDeviation = true;
+                sweepIdxShort = sweepIdx;
+                trapWickSize = trapCurrentHigh - Math.max(trapCurrentOpen, currentPrice);
             }
         }
 
