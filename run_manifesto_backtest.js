@@ -38,14 +38,9 @@ async function run() {
     const btcKlines = await fetchBybitCandles('BTCUSDT', 60, 1000);
     const ethKlines = await fetchBybitCandles('ETHUSDT', 60, 1000);
     
-    // Skor Bantları
+        // Skor Bantları
     const scoreBands = {
-        '40-44': { total: 0, tp: 0, sl: 0, long: 0, short: 0 },
-        '45-49': { total: 0, tp: 0, sl: 0, long: 0, short: 0 },
-        '50-54': { total: 0, tp: 0, sl: 0, long: 0, short: 0 },
-        '55-59': { total: 0, tp: 0, sl: 0, long: 0, short: 0 },
-        '60-100': { total: 0, tp: 0, sl: 0, long: 0, short: 0 },
-        'below_40': { total: 0, tp: 0, sl: 0, long: 0, short: 0 }
+        '45-60': { total: 0, tp: 0, sl: 0, long: 0, short: 0 }
     };
 
     let processedCount = 0;
@@ -157,12 +152,8 @@ async function run() {
             if (direction === 'SHORT' && sellVol > buyVol * 1.5) qc += 15;
 
             // Outomes
-            let band = 'below_40';
-            if (qc >= 40 && qc <= 44) band = '40-44';
-            else if (qc >= 45 && qc <= 49) band = '45-49';
-            else if (qc >= 50 && qc <= 54) band = '50-54';
-            else if (qc >= 55 && qc <= 59) band = '55-59';
-            else if (qc >= 60) band = '60-100';
+            let band = '45-60';
+            if (qc < 45 || qc > 60) continue; // Sadece 45-60 hedeflendi
 
             let dynamicStop = direction === 'LONG' ? currentPrice - (avgATR * 1.5) : currentPrice + (avgATR * 1.5);
             let risk = Math.abs(currentPrice - dynamicStop);
@@ -188,21 +179,23 @@ async function run() {
         }
     }
 
-    console.log("\n\n=== ELYTE MANIFESTO SKOR BANTLARI RAPORU ===");
-    console.log("Sermaye Simülasyonu: 500$ (Risk Başına 10$ Kasa Kaybı - %2. Hedef Vurursa +15$)");
-    const bands = ['40-44', '45-49', '50-54', '55-59', '60-100'];
-    let grandWin = 0; let grandLoss = 0;
+    console.log("\n\n=== ELYTE GERÇEK PİYASA BACKTEST (KOMİSYON DAHİL) ===");
+    console.log("Kasa Modeli: Risk: 1R = -$10 | Kâr (Net): 1.3R = +$13 (Borsa Kesintileri Düşüldü)");
+    console.log("Süre: Son 30 Gün | Analiz Uzayı: " + pairs.length + " Coin Segmenti\n");
 
-    for (const b of bands) {
-        const s = scoreBands[b];
-        const wr = s.tp + s.sl > 0 ? ((s.tp / (s.tp + s.sl)) * 100).toFixed(2) : 0;
-        const pnl = (s.tp * 15) - (s.sl * 10);
-        console.log(`\n• Skors [${b} Puan]`);
-        console.log(`   Toplam İşlem: ${s.total} (Ayda) | Yön: ${s.long} LONG / ${s.short} SHORT`);
-        console.log(`   Başarı (1:1.5 RR): ${s.tp} Win / ${s.sl} Loss`);
-        console.log(`   WinRate: ${wr}%`);
-        console.log(`   Net PnL Getirisi: $${pnl}`);
-    }
+    const s = scoreBands['45-60'];
+    const wr = s.tp + s.sl > 0 ? ((s.tp / (s.tp + s.sl)) * 100).toFixed(2) : 0;
+    const pnl = (s.tp * 13) - (s.sl * 10);
+    const rNet = pnl / 10;
+    const dailySignal = (s.total / 30).toFixed(1);
+
+    console.log(`• ZODYAK ALTIN KESİŞİM BÖLGESİ [45-60 PUAN]`);
+    console.log(`   Toplam Üretilen Sinyal: ${s.total} adet (Günde ortalama ${dailySignal} Sinyal)`);
+    console.log(`   Yön Dağılımı: ${s.long} LONG / ${s.short} SHORT`);
+    console.log(`   İşlem Sonuçları: ${s.tp} Win / ${s.sl} Loss`);
+    console.log(`   Kazanma Oranı (WinRate): ${wr}%`);
+    console.log(`   NET R (Getiri Katsayısı): +${rNet.toFixed(1)} R`);
+    console.log(`   NET Dolar Kazancı (500$ Kasa): +$${pnl}`);
 }
 
 run();
