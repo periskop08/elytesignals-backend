@@ -239,9 +239,10 @@ app.get('/api/shadow-stats', async (req, res) => {
 app.get('/api/signals/stats', async (req, res) => {
   try {
     const days = req.query.days ? parseInt(req.query.days) : null;
-    let timeFilter = "";
+    const ZODYAK_MILESTONE = "'2026-04-16 20:50:00'"; // ZODYAK SIFIRLAMA NOKTASI
+    let timeFilter = ` AND createdAt >= ${ZODYAK_MILESTONE}`;
     if (days) {
-         timeFilter = ` AND createdAt >= datetime('now', '-${days} days')`;
+         timeFilter += ` AND createdAt >= datetime('now', '-${days} days')`;
     }
     const signals = await db.all(`SELECT * FROM signals WHERE status IN ('WIN', 'LOSS', 'BREAKEVEN')${timeFilter}`);
     const activeSignals = await db.all(`SELECT * FROM signals WHERE status = 'ACTIVE'`);
