@@ -696,14 +696,20 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 🚀 RANGE BREAKOUT (Trend Kırılımı) KONTROLÜ (Özel İstek) 🚀
-        // Fiyat range tepesini kırıp devam ederse Sweep (Likidite Temizliği) aramadan trend yönünde işleme izin ver.
+        // Sadece Makro Piyasa destekliyorsa kırılımlara bypass izni ver (Fakeout/Fake Kırılım Koruması)
         const prevRangeHigh = Math.max(...highs.slice(0, -1));
         const prevRangeLow = Math.min(...lows.slice(0, -1));
 
-        if (currentPrice > prevRangeHigh) {
-            dipDeviation = true; // Sweep zorunluluğunu bypass et
-        } else if (currentPrice < prevRangeLow) {
-            tepeDeviation = true; // Sweep zorunluluğunu bypass et
+        const isMacroBull = globalMarketState.btcTrend && globalMarketState.btcTrend.includes('BULL') && 
+                            globalMarketState.ethTrend && globalMarketState.ethTrend.includes('BULL');
+                            
+        const isMacroBear = globalMarketState.btcTrend && globalMarketState.btcTrend.includes('BEAR') && 
+                            globalMarketState.ethTrend && globalMarketState.ethTrend.includes('BEAR');
+
+        if (currentPrice > prevRangeHigh && isMacroBull) {
+            dipDeviation = true; // BTC ve ETH Boğa iken yukarı kırılıma (LONG) sonsuz güven!
+        } else if (currentPrice < prevRangeLow && isMacroBear) {
+            tepeDeviation = true; // BTC ve ETH Ayı iken aşağı çöküşe (SHORT) sonsuz güven!
         }
 
         // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK
