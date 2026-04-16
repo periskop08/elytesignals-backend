@@ -731,7 +731,6 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
-        const trapCurrentOpen = opens[opens.length - 1] || currentPrice;
         const diff = (currentPrice - trapCurrentOpen) / trapCurrentOpen;
         if (Math.abs(diff) >= 0.10 && globalVol >= 5000000) {
             try {
