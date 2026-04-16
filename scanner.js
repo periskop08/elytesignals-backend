@@ -932,10 +932,11 @@ async function analyzeCoin(symbolInfo) {
         } catch(e) {}
 
         // Daima logla ki neden takıldığını görelim
-        console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
+        // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
-        if (qualityScore < 55) {
-            return null; // ZODYAK BARAJI AŞILAMADI (Yeni Baraj: 55)
+        // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 45 - 60 Puan Arası)
+        if (qualityScore < 45 || qualityScore > 60) {
+            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<45) girme!
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
