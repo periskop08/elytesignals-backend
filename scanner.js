@@ -712,7 +712,7 @@ async function analyzeCoin(symbolInfo) {
 
         // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK
         if (!dipDeviation && !tepeDeviation) {
-             // console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
+              // console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
              return null;
         }
 
@@ -932,7 +932,7 @@ async function analyzeCoin(symbolInfo) {
         } catch(e) {}
 
         // Daima logla ki neden takıldığını görelim
-        // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
+        console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
         // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 45 - 60 Puan Arası)
         if (qualityScore < 45 || qualityScore > 60) {
