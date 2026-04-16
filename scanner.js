@@ -707,7 +707,10 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK
-        if (!dipDeviation && !tepeDeviation) return null;
+        if (!dipDeviation && !tepeDeviation) {
+             // console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
+             return null;
+        }
 
         const direction = dipDeviation ? 'LONG' : 'SHORT';
 
@@ -740,8 +743,14 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
-        if (direction === 'LONG' && globalVol < 4000000) return null;
-        if (direction === 'SHORT' && globalVol < 2000000) return null;
+        if (direction === 'LONG' && globalVol < 4000000) {
+            console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (LONG: ${globalVol})`);
+            return null;
+        }
+        if (direction === 'SHORT' && globalVol < 2000000) {
+            console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (SHORT: ${globalVol})`);
+            return null;
+        }
 
         // --- SKORLAMA (SCORING) ALTYAPISI (ZODYAK V2.9.0) ---
         let qualityScore = 0;
