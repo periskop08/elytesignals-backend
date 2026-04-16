@@ -21,8 +21,8 @@ async function closeActiveSignals() {
             console.log("Processing trades...");
 
             db.serialize(() => {
-                const stmt1 = db.prepare("UPDATE signals SET status = ?, updatedAt = datetime('now') WHERE id = ?");
-                const stmt2 = db.prepare("UPDATE user_trades SET status = 'CLOSED', updatedAt = datetime('now') WHERE signalId = ?");
+                const stmt1 = db.prepare("UPDATE signals SET status = ? WHERE id = ?");
+                const stmt2 = db.prepare("UPDATE user_trades SET status = 'CLOSED' WHERE signalId = ?");
 
                 for (let s of activeSignals) {
                     const currentPrice = priceMap[s.symbol];
@@ -44,7 +44,7 @@ async function closeActiveSignals() {
 
                 stmt1.finalize();
                 stmt2.finalize();
-                console.log(`\nSuccessfully closed ${processed} active signals and injected their stats to the Database.`);
+                console.log(`\nSuccessfully closed ${processed} active signals and injected their stats to the Database!`);
             });
 
         } catch(e) {
