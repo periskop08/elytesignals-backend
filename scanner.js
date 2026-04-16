@@ -1296,16 +1296,14 @@ async function analyzeCoin(symbolInfo) {
                     hasGap = true; gapTarget = closes[closes.length - g - 1]; break;
                 }
             }
-
-            // DXY Gap Confluence Bonus iptal edildi
         }
 
         if (direction === 'LONG') {
             dynamicStop = currentPrice - (currentATR * slMultiplier);
             risk = currentPrice - dynamicStop;
 
-            // Hedef: Bayrak varsa Kırılım + Direk Boyu, yoksa EQ Likidite Noktası
-            targetP = hasFlagPennant ? (currentPrice + poleSize) : eq;
+            // Varsayılan Hedef: 1:1.5 Risk Ödül Oranı
+            targetP = hasFlagPennant ? (currentPrice + poleSize) : (currentPrice + (risk * 1.5));
 
             // Hisselerde Gap Fill Hedefi
             if (hasGap && gapTarget > currentPrice) {
@@ -1331,7 +1329,8 @@ async function analyzeCoin(symbolInfo) {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
             risk = dynamicStop - currentPrice;
 
-            targetP = hasFlagPennant ? (currentPrice - poleSize) : eq;
+            // Varsayılan Hedef: 1:1.5 Risk Ödül Oranı
+            targetP = hasFlagPennant ? (currentPrice - poleSize) : (currentPrice - (risk * 1.5));
 
             if (hasGap && gapTarget < currentPrice) {
                 targetP = gapTarget;
