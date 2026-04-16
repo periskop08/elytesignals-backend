@@ -925,9 +925,8 @@ async function analyzeCoin(symbolInfo) {
             }
         } catch(e) {}
 
-        if (qualityScore > 0) {
-            console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
-        }
+        // Daima logla ki neden takıldığını görelim
+        console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
         if (qualityScore < 55) {
             return null; // ZODYAK BARAJI AŞILAMADI (Yeni Baraj: 55)
