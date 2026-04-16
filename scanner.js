@@ -703,12 +703,14 @@ async function analyzeCoin(symbolInfo) {
         if (trapIsRangingLimit) {
             const btc1d = globalMarketState.btc1dObj;
             if (btc1d && btc1d.trend === 'BEAR' && direction === 'LONG') {
-                console.log(`[CEZA] ${sym} LONG işlemi ADX Ranging + BTC Bear çakışması nedeniyle -15 ceza aldı.`);
-                qualityScore -= 15; warnings.push('ADX Ranging + BTC Bear Çakışması (-15)');
+                qualityScore -= 15;
+                warnings.push('ADX Ranging + BTC Bear Çakışması (-15)');
+                console.log(`[CEZA] ${sym} LONG işlemi ADX Ranging + BTC Bear çakışması nedeniyle -15 ceza aldı | Güncel Puanı: ${qualityScore}`);
             }
             if (btc1d && btc1d.trend === 'BULL' && direction === 'SHORT') {
-                console.log(`[CEZA] ${sym} SHORT işlemi ADX Ranging + BTC Bull çakışması nedeniyle -15 ceza aldı.`);
-                qualityScore -= 15; warnings.push('ADX Ranging + BTC Bull Çakışması (-15)');
+                qualityScore -= 15;
+                warnings.push('ADX Ranging + BTC Bull Çakışması (-15)');
+                console.log(`[CEZA] ${sym} SHORT işlemi ADX Ranging + BTC Bull çakışması nedeniyle -15 ceza aldı | Güncel Puanı: ${qualityScore}`);
             }
         }
 
@@ -1104,8 +1106,9 @@ async function analyzeCoin(symbolInfo) {
                 } else {
                     // ADX Koruması (Kripto için FOMO Filtresi)
                     if (currentADX < 30) {
-                        console.log(`[CEZA] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla -15 ceza aldı.`);
-                        qualityScore -= 15; warnings.push('Zayıf ADX + Şişkin StochRSI Uyuşmazlığı (-15)');
+                        qualityScore -= 15;
+                        warnings.push('Zayıf ADX + Şişkin StochRSI Uyuşmazlığı (-15)');
+                        console.log(`[CEZA] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla -15 ceza aldı | Güncel Puanı: ${qualityScore}`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Rüzgar Arkada (Veto İptal)');
                         // Ceza (-15) uygulanmıyor çünkü Trend > 30 (Güçlü)
@@ -1117,8 +1120,9 @@ async function analyzeCoin(symbolInfo) {
                 } else {
                     // ADX Koruması (Kripto için)
                     if (currentADX < 30) {
-                        console.log(`[CEZA] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla -15 ceza aldı.`);
-                        qualityScore -= 15; warnings.push('Zayıf ADX + Dip StochRSI Uyuşmazlığı (-15)'); 
+                        qualityScore -= 15;
+                        warnings.push('Zayıf ADX + Dip StochRSI Uyuşmazlığı (-15)'); 
+                        console.log(`[CEZA] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla -15 ceza aldı | Güncel Puanı: ${qualityScore}`);
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Satım ama Düşüş Trendi Güçlü (Veto İptal)');
                     }
