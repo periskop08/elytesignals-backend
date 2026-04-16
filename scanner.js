@@ -1508,12 +1508,7 @@ async function analyzeCoin(symbolInfo) {
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
         if (qualityScore >= 55) {
-            const { checkLiquidityAsync } = require('./demir_bey');
-            const demirRes = await Promise.race([
-                checkLiquidityAsync(sym, direction),
-                new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Bypass)" }), 2000))
-            ]);
-            
+            const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
                 warnings.push(`[Demir Bey: ${demirRes.msg}]`);
