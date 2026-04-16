@@ -385,27 +385,36 @@ async function checkActiveSignals() {
                         if (!position || parseFloat(position.size) === 0) {
                             // Pozisyon Borsada Kapanmış (TP/SL)
                             console.log(`[AUTO-TRADE-CHECK] Pozisyon Borsada Kapalı Tespit Edildi: ${trade.symbol}`);
-                            const currentP = priceMap[trade.symbol];
-                            if (currentP) {
-                                let pnl = 0;
-                                if (trade.type === 'LONG') pnl = ((currentP - trade.entryPrice) / trade.entryPrice) * 100 * 10;
-                                else pnl = ((trade.entryPrice - currentP) / trade.entryPrice) * 100 * 10;
+                            const currentP = priceMap[trade.symbol] || trade.entryPrice;
+                            
+                            // NATIVE TP/SL MESAFE TESPİTİ: Anlık fiyat (currentP) fitilden dönmüş bile olsa
+                            // fiyatın o an SL'ye mi yoksa TP'ye mi daha yakın olduğuna bakarak kesin durumu tayin et.
+                            const distToTP = Math.abs(currentP - trade.targetPrice);
+                            const distToSL = Math.abs(currentP - trade.stopPrice);
+                            let reason = distToTP < distToSL ? 'NATIVE_TP' : 'NATIVE_SL';
+                            let customFavStatus = distToTP < distToSL ? 'WIN' : 'LOSS';
+                            
+                            let pnl = 0;
+                            if (trade.type === 'LONG') pnl = ((currentP - trade.entryPrice) / trade.entryPrice) * 100 * 10;
+                            else pnl = ((trade.entryPrice - currentP) / trade.entryPrice) * 100 * 10;
 
-                                let reason = pnl > 0 ? 'NATIVE_TP' : 'NATIVE_SL';
-                                await db.run(
-                                    "UPDATE user_trades SET status = 'CLOSED', pnl = ?, closeReason = ?, closedAt = CURRENT_TIMESTAMP WHERE id = ?",
-                                    [pnl, reason, trade.id]
-                                );
+                            await db.run(
+                                "UPDATE user_trades SET status = 'CLOSED', pnl = ?, closeReason = ?, closedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                                [pnl, reason, trade.id]
+                            );
 
-                                // UI FAVORILER SENKRONIZASYONU (Borsada kapanan manuel islemlerin web arayuzunde asili kalmamasi icin)
-                                const customFavStatus = pnl >= 0 ? 'WIN' : 'LOSS';
-                                await db.run(
-                                    "UPDATE favorites SET customStatus = ?, customPnl = ?, closedAt = CURRENT_TIMESTAMP WHERE telegramId = ? AND signalId = ? AND customStatus IS NULL",
-                                    [customFavStatus, pnl, trade.telegramId, trade.signalId]
-                                );
+                            // UI FAVORILER SENKRONIZASYONU
+                            await db.run(
+                                "UPDATE favorites SET customStatus = ?, customPnl = ?, closedAt = CURRENT_TIMESTAMP WHERE telegramId = ? AND signalId = ? AND customStatus IS NULL",
+                                [customFavStatus, pnl, trade.telegramId, trade.signalId]
+                            );
 
-                                // Orijinal Global sinyal duruyor olabilir. Ancak Kullanıcı Şahsi Favorilerinde "Aktif" olanları göstermeyeceğimizden listeden düşecektir.
-                            }
+                            // GLOBAL SİNYALİ BORSADAN GELEN KESİN BİLGİYLE ZORLA KAPAT (RACE CONDITION FIX)
+                            // Borsada pozisyon SL olduysa ama global api anlık fitili kaçırdıysa, sinyal dashboard'da asılı kalır. Bunu engellemek için Global'i de eziyoruz.
+                            await db.run(
+                                "UPDATE signals SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND status = 'ACTIVE'",
+                                [customFavStatus, trade.signalId]
+                            );
                         } else {
                             // --- BREAKEVEN TRAILING STOP LOGIC ---
                             const isBreakeven = trade.isBreakeven || 0;
