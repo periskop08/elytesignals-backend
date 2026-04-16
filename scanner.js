@@ -722,16 +722,9 @@ async function analyzeCoin(symbolInfo) {
         const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
         const trapIsRangingLimit = trapCurrentADX < 20;
 
-        // HARD-BLOCK VETO KURALI: Ranging Piyasada Makro Trende Karşı İşlem AÇILAMAZ!
-        if (trapIsRangingLimit) {
-            const btc1d = globalMarketState.btc1dObj;
-            if (btc1d && btc1d.trend === 'BEAR' && direction === 'LONG') {
-                return null; // ADX Ranging + BTC Bear -> LONG Yasak
-            }
-            if (btc1d && btc1d.trend === 'BULL' && direction === 'SHORT') {
-                return null; // ADX Ranging + BTC Bull -> SHORT Yasak
-            }
-        }
+        // Ranging Makro Çatışması Hard-Block İptal Edildi (Kullanıcı İsteği: Skor Cezası Olarak Hesaplanacak)
+        // Eğer piyasa ADX<20 altında ve trende tersse, Zodyak Puanlamasında Toplam -25 Puan ceza yiyecek.
+        // Ama +25 (OB), +15 (FVG), +20 (Wick) gibi kusursuz kurallar bir araya gelip 55 barajını aşarsa işleme girebilecek.
 
         // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
         const diff = (currentPrice - trapCurrentOpen) / trapCurrentOpen;
