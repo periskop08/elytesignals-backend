@@ -708,6 +708,31 @@ async function analyzeCoin(symbolInfo) {
         const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
         const trapIsRangingLimit = trapCurrentADX < 20;
 
+        // HARD-BLOCK VETO KURALI: Ranging Piyasada Makro Trende Karşı İşlem AÇILAMAZ!
+        if (trapIsRangingLimit) {
+            const btc1d = globalMarketState.btc1dObj;
+            if (btc1d && btc1d.trend === 'BEAR' && direction === 'LONG') {
+                return null; // ADX Ranging + BTC Bear -> LONG Yasak
+            }
+            if (btc1d && btc1d.trend === 'BULL' && direction === 'SHORT') {
+                return null; // ADX Ranging + BTC Bull -> SHORT Yasak
+            }
+        }
+
+        // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
+        const trapCurrentOpen = opens[opens.length - 1] || currentPrice;
+        const diff = (currentPrice - trapCurrentOpen) / trapCurrentOpen;
+        if (Math.abs(diff) >= 0.10 && globalVol >= 5000000) {
+            try {
+                const { fireMercanBey } = require('./mercan_bey');
+                fireMercanBey(sym, diff > 0 ? 'PUMP' : 'DUMP', diff);
+            } catch(e) {}
+        }
+
+        // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
+        if (direction === 'LONG' && globalVol < 4000000) return null;
+        if (direction === 'SHORT' && globalVol < 2000000) return null;
+
         // --- SKORLAMA (SCORING) ALTYAPISI (ZODYAK V2.9.0) ---
         let qualityScore = 0;
         let warnings = [];
