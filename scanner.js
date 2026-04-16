@@ -5,7 +5,7 @@ const { ATR, SMA, ADX, EMA, IchimokuCloud, StochasticRSI } = require('technicali
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const { appendToSheet } = require('./google-api');
-const { placeOrder, getPosition, updateStopLoss, getAccountBalance } = require('./bingx-trade');
+const { placeOrder, getPosition, updateStopLoss } = require('./bingx-trade');
 const YahooFinanceClass = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinanceClass();
 require('dotenv').config();
@@ -84,12 +84,7 @@ async function analyzeOptionsFlow(fetchId, currentPrice) {
 
 async function fetchCandles(symbolInfo, intervalMinutes, limit) {
     try {
-        let interval = intervalMinutes + 'm';
-        if (intervalMinutes === 60) interval = '1h';
-        else if (intervalMinutes === 240) interval = '4h';
-        else if (intervalMinutes === 1440) interval = '1d';
-        else if (intervalMinutes === 10080) interval = '1w';
-
+        const interval = intervalMinutes === 60 ? '1h' : (intervalMinutes + 'm');
         let fetchSym = '';
 
         if (typeof symbolInfo === 'string') {
@@ -222,122 +217,17 @@ function calculateTrendFromKlines(klines) {
     return { trend, rsi: lastRsi, ema: lastEma, sma: lastSma, close: lastClose };
 }
 
-// --- BREADTH ENGINE START ---
-const BREADTH_COINS = ['SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LINKUSDT', 'SUIUSDT', 'DOTUSDT', 'BCHUSDT', 'PEPEUSDT', 'WIFUSDT', 'ONDOUSDT', 'FETUSDT', 'INJUSDT'];
-
-let BREADTH_CACHE = null;
-
-async function calculateBreadthBasket() {
-    if (BREADTH_CACHE) {
-        console.log('[BREADTH ENGINE] Using cached breadth data for this cycle.');
-        return BREADTH_CACHE;
-    }
-    
-    try {
-        console.log('[BREADTH ENGINE] Calculating Market Breadth over 13-Coin High-Beta Basket (Batch Parallel)...');
-        
-        const res = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
-        const tickers = res.data.data || [];
-        const tickerMap = {};
-        tickers.forEach(t => {
-            tickerMap[t.symbol.replace('-', '')] = parseFloat(t.priceChangePercent) || 0;
-        });
-
-        let positive24hCount = 0;
-        let positive1hCount = 0;
-        let basketTotalChange = 0;
-        let validCoinsCount = 0;
-        
-        const btc24hChange = tickerMap['BTCUSDT'] || 0;
-        
-        const batchSize = 4;
-        const delayMs = 150;
-
-        for (let i = 0; i < BREADTH_COINS.length; i += batchSize) {
-            const batch = BREADTH_COINS.slice(i, i + batchSize);
-            const promises = batch.map(async (coin) => {
-                const change24h = tickerMap[coin] || 0;
-                let bTotal = change24h;
-                let p24 = (change24h > 0) ? 1 : 0;
-                let p1h = 0;
-                let valid = 0;
-                
-                try {
-                    const klines = await fetchBybitKlinesGlobal(coin, '60');
-                    if (klines && klines.length >= 20) {
-                        const closes = klines.map(k => k.close);
-                        const sma20 = SMA.calculate({period: 20, values: closes});
-                        if (sma20.length > 0) {
-                            const lastClose = closes[closes.length - 1];
-                            const lastOpen = klines[klines.length - 1].open;
-                            const lastSMA = sma20[sma20.length - 1];
-                            
-                            if (lastClose > lastOpen && lastClose > lastSMA) {
-                                p1h = 1;
-                            }
-                        }
-                    }
-                    valid = 1;
-                } catch(err) {
-                    console.warn(`[BREADTH ENGINE] Klines fetch failed for ${coin}: ${err.message}`);
-                }
-                return { p24, p1h, bTotal, valid };
-            });
-
-            const results = await Promise.all(promises);
-            for (const r of results) {
-                positive24hCount += r.p24;
-                positive1hCount += r.p1h;
-                basketTotalChange += r.bTotal;
-                validCoinsCount += r.valid;
-            }
-            
-            if (i + batchSize < BREADTH_COINS.length) {
-                await new Promise(res => setTimeout(res, delayMs));
-            }
-        }
-
-        const participation24hScore = validCoinsCount > 0 ? (positive24hCount / validCoinsCount) : 0;
-        const momentum1hScore = validCoinsCount > 0 ? (positive1hCount / validCoinsCount) : 0;
-        const avgBasketChange = validCoinsCount > 0 ? (basketTotalChange / validCoinsCount) : 0;
-        const relativeStrengthScore = (avgBasketChange > btc24hChange) ? 1.0 : (avgBasketChange > 0 ? 0.5 : 0.0);
-
-        const breadthScore = (participation24hScore * 0.35) + (momentum1hScore * 0.35) + (relativeStrengthScore * 0.30);
-        let breadthState = 'NEUTRAL';
-        if (breadthScore > 0.6) breadthState = 'STRONG';
-        else if (breadthScore < 0.4) breadthState = 'WEAK';
-
-        BREADTH_CACHE = {
-            score: parseFloat(breadthScore.toFixed(4)),
-            state: breadthState,
-            components: { 
-                s24h: parseFloat(participation24hScore.toFixed(4)), 
-                s1h: parseFloat(momentum1hScore.toFixed(4)), 
-                sRel: parseFloat(relativeStrengthScore.toFixed(4)) 
-            }
-        };
-        
-        return BREADTH_CACHE;
-
-    } catch(e) {
-        console.error("[BREADTH ENGINE] Fatal Error:", e.message);
-        return { score: 0.5, state: 'NEUTRAL', components: {s24h: 0, s1h: 0, sRel: 0} };
-    }
-}
-// --- BREADTH ENGINE END ---
-
 async function analyzeGlobalMarket() {
     try {
         console.log('[GLOBAL SENSOR] Fetching macro market and dominance data...');
-        const [btc1h, btc4h, btc1d, eth4h, eth1d, dom4h, cgDom, breadthData] = await Promise.all([
+        const [btc1h, btc4h, btc1d, eth4h, eth1d, dom4h, cgDom] = await Promise.all([
             fetchBybitKlinesGlobal('BTCUSDT', '60'),
             fetchBybitKlinesGlobal('BTCUSDT', '240'),
             fetchBybitKlinesGlobal('BTCUSDT', 'D'),
             fetchBybitKlinesGlobal('ETHUSDT', '240'),
             fetchBybitKlinesGlobal('ETHUSDT', 'D'),
             fetchBinanceKlines('BTCDOMUSDT', '4h'),
-            fetchCoinGeckoDominance(),
-            calculateBreadthBasket()
+            fetchCoinGeckoDominance()
         ]);
 
         const btc1hObj = calculateTrendFromKlines(btc1h);
@@ -364,12 +254,9 @@ async function analyzeGlobalMarket() {
             eth1dObj: eth1dObj,
             btcDomTrend: dom4hObj.trend,
             cgDom: cgDom,
-            breadthScore: breadthData.score,
-            breadthState: breadthData.state,
-            breadthComponents: breadthData.components,
             timestamp: Date.now()
         };
-        console.log(`[GLOBAL SENSOR] BTC: ${globalMarketState.btcTrend} | USDT.D: %${globalMarketState.cgDom.usdt.toFixed(1)} | ETH: ${globalMarketState.ethTrend} | BREADTH: ${globalMarketState.breadthState}`);
+        console.log(`[GLOBAL SENSOR] BTC: ${globalMarketState.btcTrend} | USDT.D: %${globalMarketState.cgDom.usdt.toFixed(1)} | ETH: ${globalMarketState.ethTrend}`);
     } catch (e) {
         console.error('[GLOBAL SENSOR] Error:', e.message);
     }
@@ -380,9 +267,6 @@ async function getUsdtPairsAndAssets() {
     try {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
-        if (!symbols || !Array.isArray(symbols)) {
-            throw new Error(`BingX API Geçici Bekleme (Rate Limit/Bağlantı): ${JSON.stringify(response.data)}`);
-        }
         const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT', 'NXPC-USDT'];
         
         let cryptoPairs = [];
@@ -868,13 +752,6 @@ async function analyzeCoin(symbolInfo) {
 
         // --- SKORLAMA (SCORING) ALTYAPISI ---
         let qualityScore = 0, s_struct = 0, s_trig = 0, s_vol = 0, s_trend = 0, s_pat = 0;
-        let bonusCounter = 0;
-        
-        const applyBonus = (pts) => {
-            if (bonusCounter === 0) { bonusCounter++; return pts; } // 100%
-            if (bonusCounter === 1) { bonusCounter++; return pts * 0.5; } // 50%
-            return pts * 0.25; // 25% for subsequent
-        };
         let warnings = [];
         let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
         
@@ -1097,23 +974,17 @@ async function analyzeCoin(symbolInfo) {
         const isVolatileExpanding = currentATR > (avgATR * 1.1); // %10'dan fazla genişleme
         let regime = 'CHOPPY/NORMAL';
 
-        if (currentADX >= 30) {
-            regime = isVolatileExpanding ? 'TRENDING_VOLATILE' : 'TRENDING_STRONG';
-            qualityScore += 10;
-            warnings.push('Market Regime: Strong Trend (+10)');
-        } else if (currentADX >= 25 && currentADX < 30) {
-            regime = isVolatileExpanding ? 'TRENDING_VOLATILE' : 'TRENDING';
-            qualityScore += 5;
+        if (currentADX >= 25 && isVolatileExpanding) {
+            regime = 'TRENDING_VOLATILE';
+            qualityScore += 5; // Eskiden sadece 25 üste 10 veriyorduk, şimdi daha dengeli ama agresif bir bonus var (Trend kırılımı)
+            warnings.push('Market Regime: Trending & Volatile (+5)');
+        } else if (currentADX >= 25 && !isVolatileExpanding) {
+            regime = 'TRENDING';
+            s_trend += 5;
             warnings.push('Market Regime: Trending (+5)');
-        } else if (currentADX >= 20 && currentADX < 25) {
-            regime = 'NEUTRAL';
-        } else if (currentADX >= 15 && currentADX < 20) {
-            regime = 'WEAK_TREND';
-            qualityScore -= 3;
-            warnings.push('Market Regime: Weak Trend (-3)');
-        } else if (currentADX < 15) {
+        } else if (currentADX < 20) {
             regime = 'RANGING';
-            qualityScore -= 5;
+            qualityScore -= 5; // Yatay piyasalarda yanlış kırılım (fakeout) cezası
             warnings.push('Market Regime: Ranging Limit (-5)');
         }
         breakdown.regime = regime;
@@ -1135,7 +1006,38 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        // [LAZY_EVALUATION] 4H MTF TREND UYUMU sona taşındı (Ağ maliyeti optimizasyonu)
+        // 5. 4H MTF TREND UYUMU
+        let trend4h = "neutral";
+        try {
+            // Fetch 4H proxy or true 4H
+            const klines4h = await fetchCandles(symbolInfo, 240, 50);
+            const closes4h = klines4h.map(k => k.close);
+            const sma4h = SMA.calculate({ values: closes4h, period: 50 });
+            const currentPrice4H = closes4h[closes4h.length - 1];
+            const sma50_4H = sma4h[sma4h.length - 1];
+
+            if (currentPrice4H > sma50_4H) trend4h = "bullish";
+            else if (currentPrice4H < sma50_4H) trend4h = "bearish";
+            breakdown.trend4h = trend4h;
+
+            if (direction === 'LONG') {
+                if (trend4h === 'bullish') {
+                    qualityScore += 15;
+                } else {
+                    warnings.push('Counter-trend 4H');
+                    qualityScore -= 5;
+                    if (CONFIG.sma50Filter === 'hard') return null;
+                }
+            } else if (direction === 'SHORT') {
+                if (trend4h === 'bearish') {
+                    qualityScore += 15;
+                } else {
+                    warnings.push('Counter-trend 4H');
+                    qualityScore -= 5;
+                    if (CONFIG.sma50Filter === 'hard') return null;
+                }
+            }
+        } catch (e) { }
 
         // 5.5 BAYRAK/FLAMA (FLAG/PENNANT) FORMASYONU
         let poleSize = 0;
@@ -1194,46 +1096,23 @@ async function analyzeCoin(symbolInfo) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Momentum Kırılımı: StochRSI Aşırı Alım (+5)');
                 } else {
-                    // ADX Koruması & Birleşik Zayıflık Filtresi
-                    const isWeakCombo = (breakdown.rvol < 1.0) && (sweepIdx === -1) && (!breakdown.ob);
-
-                    if (currentADX < 15 && isWeakCombo) {
-                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought + Düşük ADX + Zayıf Hacim/Yapı çakışmasıyla çöpe atıldı.`);
-                        breakdown.adxVeto = true;
-                        warnings.push('[adx_hard_veto]');
-                        qualityScore -= 200;
-                    } else if (currentADX < 15) {
-                        qualityScore -= 5;
-                        warnings.push(`[adx_soft_penalty] ADX Düşük, StochRSI Şişkin ama Yapı/Hacim Kurtarıyor (-5 Ceza)`);
-                    } else if (currentADX >= 15 && currentADX < 20) {
-                        qualityScore -= 3;
-                        warnings.push(`[adx_soft_penalty] StochRSI Şişkin ve Trend Zayıf (ADX: ${currentADX.toFixed(1)}) -> -3 Ceza`);
-                    } else if (currentADX >= 20 && currentADX < 25) {
-                        warnings.push(`ADX Koruması: StochRSI Şişkin ama Nötr Bölge (ADX: ${currentADX.toFixed(1)}) -> 0 Ceza`);
+                    // ADX Koruması (Kripto için FOMO Filtresi)
+                    if (currentADX < 30) {
+                        console.log(`[VETO] ${sym} LONG işlemi StochRSI Overbought(Şişkin) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla çöpe atıldı.`);
+                        return null; // Zayıf trendde şişmiş piyasa, işlemi tamamen VETO et
                     } else {
-                        warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Trend Güçlü (Veto İptal)');
+                        warnings.push('ADX Koruması: StochRSI Aşırı Alım ama Rüzgar Arkada (Veto İptal)');
+                        // Ceza (-15) uygulanmıyor çünkü Trend > 30 (Güçlü)
                     }
                 }
             } else if (direction === 'SHORT' && lastStoch.k < 20) {
                 if (symbolInfo && symbolInfo.isAsset) {
                     qualityScore += 5; warnings.push('Ayı Momentum Direnci: StochRSI Aşırı Satım (+5)');
                 } else {
-                    // ADX Koruması & Birleşik Zayıflık Filtresi
-                    const isWeakCombo = (breakdown.rvol < 1.0) && (sweepIdx === -1) && (!breakdown.ob);
-
-                    if (currentADX < 15 && isWeakCombo) {
-                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold + Düşük ADX + Zayıf Hacim/Yapı çakışmasıyla çöpe atıldı.`);
-                        breakdown.adxVeto = true;
-                        warnings.push('[adx_hard_veto]');
-                        qualityScore -= 200; 
-                    } else if (currentADX < 15) {
-                        qualityScore -= 5;
-                        warnings.push(`[adx_soft_penalty] ADX Düşük, StochRSI Dipte ama Yapı/Hacim Kurtarıyor (-5 Ceza)`);
-                    } else if (currentADX >= 15 && currentADX < 20) {
-                        qualityScore -= 3;
-                        warnings.push(`[adx_soft_penalty] StochRSI Dipte ve Trend Zayıf (ADX: ${currentADX.toFixed(1)}) -> -3 Ceza`);
-                    } else if (currentADX >= 20 && currentADX < 25) {
-                        warnings.push(`ADX Koruması: StochRSI Dipte ama Nötr Bölge (ADX: ${currentADX.toFixed(1)}) -> 0 Ceza`);
+                    // ADX Koruması (Kripto için)
+                    if (currentADX < 30) {
+                        console.log(`[VETO] ${sym} SHORT işlemi StochRSI Oversold(Dip) + Düşük ADX(${Math.round(currentADX)}) çakışmasıyla çöpe atıldı.`);
+                        return null; 
                     } else {
                         warnings.push('ADX Koruması: StochRSI Aşırı Satım ama Düşüş Trendi Güçlü (Veto İptal)');
                     }
@@ -1283,48 +1162,10 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        let baseGroups = Math.min(s_struct, 25) + Math.min(s_trig, 15) + Math.min(s_vol, 15) + Math.min(s_trend, 20) + Math.min(s_pat, 15);
-        qualityScore += baseGroups;
+        qualityScore += Math.min(s_struct, 30) + Math.min(s_trig, 15) + Math.min(s_vol, 15) + Math.min(s_trend, 20) + Math.min(s_pat, 15);
 
-        // --- ERKEN ÇIKIŞ (LAZY EVALUATION) ---
-        // Eğer baz kalite 20 puanın altındaysa, bu adayın umudu yoktur; boşuna pahalı API'lere vurma.
-        if (qualityScore >= 20) {
-            
-            // 5. 4H MTF TREND UYUMU
-            let trend4h = "neutral";
-            try {
-                const klines4h = await fetchCandles(symbolInfo, 240, 50);
-                const closes4h = klines4h.map(k => k.close);
-                const sma4h = SMA.calculate({ values: closes4h, period: 50 });
-                const currentPrice4H = closes4h[closes4h.length - 1];
-                const sma50_4H = sma4h[sma4h.length - 1];
-
-                if (currentPrice4H > sma50_4H) trend4h = "bullish";
-                else if (currentPrice4H < sma50_4H) trend4h = "bearish";
-                breakdown.trend4h = trend4h;
-
-                if (direction === 'LONG') {
-                    if (trend4h === 'bullish') {
-                        qualityScore += 15;
-                    } else {
-                        warnings.push('Counter-trend 4H');
-                        qualityScore -= 5;
-                        if (CONFIG.sma50Filter === 'hard') return null; // Zaten puana bakılmaz return edilir
-                    }
-                } else if (direction === 'SHORT') {
-                    if (trend4h === 'bearish') {
-                        qualityScore += 15;
-                    } else {
-                        warnings.push('Counter-trend 4H');
-                        qualityScore -= 5;
-                        if (CONFIG.sma50Filter === 'hard') return null;
-                    }
-                }
-            } catch (e) {
-                console.warn(`[SCANNER] 4H fetch failed for ${sym}`);
-            }
-
-            // 6. Günlük MA Golden Cross (+10 Puan)
+        // 5. Günlük MA Golden Cross (+10 Puan) (Sadece kalite skoru yüksek olanlara API tasarrufu için sorulur)
+        if (qualityScore >= 25) {
             try {
                 const dailyKlines = await fetchCandles(symbolInfo, 1440, 200);
                 if (dailyKlines && dailyKlines.length >= 200) {
@@ -1352,89 +1193,83 @@ async function analyzeCoin(symbolInfo) {
                         }
                     }
                 }
-            } catch (e) {
-                console.warn(`[SCANNER] 1D fetch failed for ${sym}`);
-            }
+            } catch (e) { } // Hata olursa es geç
+        }
 
-            // --- YENİ V3.2: PORTFOLIO MOMENTUM & HEDGING FILTER ---
-            try {
-                // (ÖNEMLİ: cacheActiveTrades pre-loop cache'ta mevcut, local db.all yapma!)
-                let isBtcEthLongProfitable = false;
-                let isBtcEthShortProfitable = false;
+        // --- YENİ V3.2: PORTFOLIO MOMENTUM & HEDGING FILTER ---
+        try {
+            const activeCryptoTrades = await db.all("SELECT symbol, type, entryPrice FROM user_trades WHERE status = 'ACTIVE'");
+            let isBtcEthLongProfitable = false;
+            let isBtcEthShortProfitable = false;
 
-                // cacheActiveTrades was defined globally but we are in analyzeCoin.
-                // activeTradesGlobal does not exist. However, we can use cacheActiveTrades if we passed it or if it's available.
-                // Wait! cacheActiveTrades is inside runScan. We must query here or pass it.
-                // For safety and zero-drift, we'll leave the DB query for now, but we just wrapped it in lazy-eval!
-                const activeCryptoTrades = await db.all("SELECT symbol, type, entryPrice FROM user_trades WHERE status = 'ACTIVE'");
-                
-                for (const t of activeCryptoTrades) {
-                    if (t.symbol === 'BTCUSDT' || t.symbol === 'ETHUSDT') {
-                        try {
-                            let cp = null;
-                            if (t.symbol === 'BTCUSDT') cp = globalBtcPrice;
-                            if (t.symbol === 'ETHUSDT') cp = globalEthPrice;
-                            
-                            if (cp) {
-                                if (t.type === 'LONG' && cp > t.entryPrice) isBtcEthLongProfitable = true;
-                                if (t.type === 'SHORT' && cp < t.entryPrice) isBtcEthShortProfitable = true;
-                            }
-                        } catch(e) { }
+            for (const t of activeCryptoTrades) {
+                if (t.symbol === 'BTCUSDT' || t.symbol === 'ETHUSDT') {
+                    try {
+                        let cp = null;
+                        if (t.symbol === 'BTCUSDT') cp = globalBtcPrice;
+                        if (t.symbol === 'ETHUSDT') cp = globalEthPrice;
+                        
+                        if (cp) {
+                            if (t.type === 'LONG' && cp > t.entryPrice) isBtcEthLongProfitable = true;
+                            if (t.type === 'SHORT' && cp < t.entryPrice) isBtcEthShortProfitable = true;
+                        }
+                    } catch(e) {
+                        console.error(`[SCANNER] Sessiz Hata (CryptoFilter): ${e.message}`);
                     }
                 }
+            }
 
-                if (isBtcEthLongProfitable && direction === 'SHORT') {
-                    qualityScore -= 15;
-                    warnings.push('Macro Hedge Ceza (Liderler LONG iken SHORT açılıyor) (-15)');
-                } else if (isBtcEthShortProfitable && direction === 'LONG') {
-                    qualityScore -= 15;
-                    warnings.push('Macro Hedge Ceza (Liderler SHORT iken LONG açılıyor) (-15)');
-                }
-            } catch (e) { }
+            if (isBtcEthLongProfitable && direction === 'SHORT') {
+                qualityScore -= 15;
+                warnings.push('Macro Hedge Ceza (Liderler LONG iken SHORT açılıyor) (-15)');
+            } else if (isBtcEthShortProfitable && direction === 'LONG') {
+                qualityScore -= 15;
+                warnings.push('Macro Hedge Ceza (Liderler SHORT iken LONG açılıyor) (-15)');
+            }
+        } catch (e) { }
 
-            // --- OPTIONS GAMMA WALL & MAX PAIN (SADECE VARLIKLAR İÇİN) ---
-            if (symbolInfo && symbolInfo.isAsset) {
-                try {
-                    const allowedOptionsTests = ['AAPL', 'TSLA', 'NVDA', 'NQ=F', 'QQQ', 'SPY'];
-                    if (allowedOptionsTests.includes(sym)) {
-                        const optEdge = await analyzeOptionsFlow(sym, currentPrice);
-                        if (optEdge) {
-                            let optionsConfluence = 0;
 
-                            if (direction === 'LONG' && optEdge.pcr > 1.2) {
-                                qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Put Yazılmış (PCR ${optEdge.pcr}) -> LONG Squeeze (+10)`);
-                            } else if (direction === 'SHORT' && optEdge.pcr < 0.8) {
-                                qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Call Yazılmış (PCR ${optEdge.pcr}) -> SHORT Baskısı (+10)`);
-                            }
+        // --- OPTIONS GAMMA WALL & MAX PAIN (SADECE VARLIKLAR İÇİN) ---
+        if (symbolInfo && symbolInfo.isAsset) { // Kriptolarda çalışmaz
+            try {
+                // Şimdilik sadece AAPL, TSLA, NASDAQ testi yapıyoruz
+                const allowedOptionsTests = ['AAPL', 'TSLA', 'NVDA', 'NQ=F', 'QQQ', 'SPY'];
+                if (allowedOptionsTests.includes(sym)) {
+                    const optEdge = await analyzeOptionsFlow(sym, currentPrice);
+                    if (optEdge) {
+                        let optionsConfluence = 0;
 
-                            const distToMaxPain = Math.abs(currentPrice - optEdge.maxPain) / currentPrice;
-                            if (distToMaxPain > 0.01 && distToMaxPain < 0.08) {
-                                if (direction === 'LONG' && optEdge.maxPain > currentPrice) {
-                                    qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
-                                } else if (direction === 'SHORT' && optEdge.maxPain < currentPrice) {
-                                    qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
-                                }
-                            }
+                        // 1. Put/Call Ratio Yorumu
+                        if (direction === 'LONG' && optEdge.pcr > 1.2) {
+                            qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Put Yazılmış (PCR ${optEdge.pcr}) -> LONG Squeeze (+10)`);
+                        } else if (direction === 'SHORT' && optEdge.pcr < 0.8) {
+                            qualityScore += 10; optionsConfluence++; warnings.push(`Aşırı Call Yazılmış (PCR ${optEdge.pcr}) -> SHORT Baskısı (+10)`);
+                        }
 
-                            if (direction === 'LONG' && optEdge.putWall > 0 && currentPrice < optEdge.putWall * 1.05 && currentPrice > optEdge.putWall) {
-                                qualityScore += 7; optionsConfluence++; warnings.push(`Put Wall Desteği (${optEdge.putWall}) (+7)`);
-                            } else if (direction === 'SHORT' && optEdge.callWall > 0 && currentPrice > optEdge.callWall * 0.95 && currentPrice < optEdge.callWall) {
-                                qualityScore += 7; optionsConfluence++; warnings.push(`Call Wall Direnci (${optEdge.callWall}) (+7)`);
-                            }
-
-                            if (optionsConfluence >= 2) {
-                                qualityScore += 5; warnings.push(`💎 Kurumsal Opsiyon Confluence Bonusu (+5)`);
+                        // 2. Max Pain Çekimi (+8)
+                        const distToMaxPain = Math.abs(currentPrice - optEdge.maxPain) / currentPrice;
+                        if (distToMaxPain > 0.01 && distToMaxPain < 0.08) { // %1 ile %8 arası uzaktaysa mıknatıs çalışır
+                            if (direction === 'LONG' && optEdge.maxPain > currentPrice) {
+                                qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
+                            } else if (direction === 'SHORT' && optEdge.maxPain < currentPrice) {
+                                qualityScore += 8; optionsConfluence++; warnings.push(`Max Pain Çekimi (${optEdge.maxPain}) (+8)`);
                             }
                         }
+
+                        // 3. Gamma Wall Destek/Direnci (+7)
+                        if (direction === 'LONG' && optEdge.putWall > 0 && currentPrice < optEdge.putWall * 1.05 && currentPrice > optEdge.putWall) {
+                            qualityScore += 7; optionsConfluence++; warnings.push(`Put Wall Desteği (${optEdge.putWall}) (+7)`);
+                        } else if (direction === 'SHORT' && optEdge.callWall > 0 && currentPrice > optEdge.callWall * 0.95 && currentPrice < optEdge.callWall) {
+                            qualityScore += 7; optionsConfluence++; warnings.push(`Call Wall Direnci (${optEdge.callWall}) (+7)`);
+                        }
+
+                        // Confluence Bonusu (2 veya daha fazla options kuralı tutarsa +5 ekstra)
+                        if (optionsConfluence >= 2) {
+                            qualityScore += 5; warnings.push(`💎 Kurumsal Opsiyon Confluence Bonusu (+5)`);
+                        }
                     }
-                } catch (err) {
-                    console.warn(`[SCANNER] Options flow failed for ${sym}`);
                 }
-            }
-        } else {
-            // Lazy Evaluation Early Exit Triggered!
-            // Coin 20 puana bile ulaşamamış, vakit kaybetmeden bitir.
-            // Zaten dynamicThreshold genellikle 55/60. 20 bile ulaşamayan reddedilir.
+            } catch (err) { }
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
@@ -1479,12 +1314,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = targetP - currentPrice;
 
-            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.1R
-            let maxReward = trapIsRangingLimit ? (risk * 1.1) : (risk * 3.0);
+            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
+            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice + reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.1R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
             }
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
@@ -1503,12 +1338,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = currentPrice - targetP;
 
-            // 1:3 R:R Cap veya Ranging Limit 1.1R
-            let maxReward = trapIsRangingLimit ? (risk * 1.1) : (risk * 3.0);
+            // 1:3 R:R Cap veya Ranging Limit 1.0R
+            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice - reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.1R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
             }
         }
 
@@ -1532,20 +1367,7 @@ async function analyzeCoin(symbolInfo) {
         let organicRR = risk > 0 ? (reward / risk) : 0; // Doğal hedef R:R'si
         let finalRR = organicRR;
         
-        // DUAL ENGINE SEÇİMİ (ALPHA vs VOLUME)
-        let operationMode = 'ALPHA';
-        if (breakdown.regime === 'TRENDING_VOLATILE' && currentADX > 30) {
-            operationMode = 'VOLUME';
-        } else if (breakdown.regime === 'TRENDING' && breakdown.rvol > 1.2) {
-            operationMode = 'VOLUME';
-        }
-        breakdown.engineMode = operationMode;
-
-        // COST-ADJUSTED RR HESABI (Sadece gerçek işlem maliyetleri - Fee + Spread)
-        let cost = (currentPrice * 0.0005); // Taker Fee tahmini (Kayma payı execution'da kalacak)
-        let effectiveRR = risk > 0 ? ((reward) / (risk + cost)) : 0;
-        
-        // R:R Barajı değerlendirmesi Ekin Bey VIP İndirimi için aşağıya taşındı.
+        breakdown.rr = parseFloat(finalRR.toFixed(2));
 
         // --- PERPLEXITY ELITE FILTER (v2.0) + CHATGPT SWEEP/ENGULFING ---
         let currentJ = closes.length - 1;
@@ -1665,161 +1487,42 @@ async function analyzeCoin(symbolInfo) {
             warnings.push('Sinerji: Keskin Nişancı Bonusu (+10)');
         }
 
-        // 3. SCORE NORMALIZATION & TRADFI DIVERGENCE (v5.4)
-        if (symbolInfo && symbolInfo.isAsset) {
-            qualityScore = Math.floor(qualityScore * 0.85); // TradFi assets receive 15% penalty to normalize against crypto-native volatility spikes
-        }
-        
-        if (qualityScore > 85) {
-            qualityScore = 85;
-            warnings.push('Norm: Puan Normalize Edildi (Max 85)');
-        }
+        // 3. Çatışma Cezası (İptal Edildi - VETO Kuralları Yeterli)
+        // V3.3: ADX < 20 veya StochRSI extreme durumları üst satırlarda doğrudan reddedildiği için redundant ceza kaldırıldı.
         
         // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
         // --- END PERPLEXITY & CHATGPT FILTER ---
-
-        // --- VIP EKIN BEY R:R DISCOUNT HESAPLAMASI ---
-        let vipDiscount = 0;
-        let isCounterTrendVIP = isCounterTrend && hasOrderBlock && hasVolSpike;
-        let isVolatileSynergy = breakdown.regime === 'TRENDING_VOLATILE' && checkFVG;
-        
-        if (isCounterTrendVIP || checkKillerWick || isVolatileSynergy) {
-            vipDiscount = 0.15;
-            warnings.push('VIP Ekin Bey İndirimi (+0.15 RR Toleransı)');
-        }
-
-        // --- YENİ 4 KADEMELİ RR BANT KONTROLÜ ---
-        let rr_modifier = 1.0;
-        let effective_rr_band = 'NORMAL_ACCEPT';
-
-        // İşlem özel indirim sayesinde (ör. vipDiscount 0.15) suni olarak RR'i yüksek gibi muamele görecek
-        let adjustedRR = effectiveRR + vipDiscount;
-
-        if (adjustedRR < 0.90) {
-             if (breakdown.adxVeto) {
-                 console.log(`[BÖRÜ BEY] ${sym} R:R yetersiz olsa da ADX Veto kuralı için Gölge Test'e zorunlu sevk ediliyor...`);
-                 effective_rr_band = 'HARD_REJECT_SAVED_BY_ADX';
-             } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} (${direction}) | RR: ${effectiveRR.toFixed(2)} (Adj: ${adjustedRR.toFixed(2)}) < 0.90 (Hard Reject)`);
-                 return null;
-             }
-        } else if (adjustedRR >= 0.90 && adjustedRR < 1.00) {
-             if (operationMode === 'VOLUME') {
-                 effective_rr_band = 'SOFT_0.4';
-                 rr_modifier = 0.4;
-             } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} (${direction}) | RR: ${effectiveRR.toFixed(2)} < 1.00 but Mode is ALPHA (Hard Reject)`);
-                 return null;
-             }
-        } else if (adjustedRR >= 1.00 && adjustedRR < 1.05) {
-             if (operationMode === 'VOLUME') {
-                 effective_rr_band = 'SOFT_0.5';
-                 rr_modifier = 0.5;
-             } else {
-                 console.log(`[TELEMETRY] blocked_by_rr +1 | Symbol: ${sym} (${direction}) | RR: ${effectiveRR.toFixed(2)} < 1.05 but Mode is ALPHA (Hard Reject)`);
-                 return null;
-             }
-        } else if (adjustedRR >= 1.05 && adjustedRR < 1.10) {
-             if (operationMode === 'VOLUME') {
-                 effective_rr_band = 'SOFT_0.5';
-                 rr_modifier = 0.5;
-             } else {
-                 effective_rr_band = 'ALPHA_MICRO_0.4';
-                 rr_modifier = 0.4;
-             }
-        } else if (adjustedRR >= 1.10 && adjustedRR < 1.15) {
-             if (operationMode === 'VOLUME') {
-                 effective_rr_band = 'SOFT_0.5';
-                 rr_modifier = 0.5;
-             } else {
-                 effective_rr_band = 'ALPHA_SOFT_0.6';
-                 rr_modifier = 0.6;
-             }
-        } else {
-             effective_rr_band = 'NORMAL_ACCEPT';
-             rr_modifier = 1.0;
-        }
-
-        breakdown.rr = parseFloat(effectiveRR.toFixed(2));
-        breakdown.effective_rr_band = effective_rr_band;
-        breakdown.rr_modifier = rr_modifier;
 
         // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
         // Eski Sınırlar: LONG 55 | SHORT CONFIG.minScore (55)
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // 1. Dinamik Kalite Barajı (Çift Motor / Dual Engine)
-        let dynamicThreshold = 55;
-        if (operationMode === 'VOLUME') {
-            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 35;
-            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 40;
-            else dynamicThreshold = 50;
-        } else {
-            if (breakdown.regime === 'TRENDING_VOLATILE') dynamicThreshold = 45;
-            else if (breakdown.regime === 'TRENDING') dynamicThreshold = 50;
-            else dynamicThreshold = 55;
+        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 55 (Ticari Hacmi Koruma Refleksi)
+        if (direction === 'LONG' && qualityScore < 55) {
+            return null;
         }
-        
-        if (qualityScore < dynamicThreshold) {
-            if (breakdown.adxVeto) {
-                return {
-                    adxVetoOnly: true,
-                    symbol: sym,
-                    type: direction,
-                    entryPrice: currentPrice,
-                    targetPrice: targetP,
-                    stopPrice: dynamicStop,
-                    qualityScore: qualityScore + 200, // Eksi puanı geri verdik göstermelik
-                    dynamicThreshold: dynamicThreshold,
-                    warnings: JSON.stringify(warnings),
-                    macroState: globalMarketState,
-                    breakdown: breakdown,
-                    atr: currentATR,
-                    isAsset: symbolInfo.isAsset || false
-                };
-            }
+        if (direction === 'SHORT' && qualityScore < 55) {
             return null;
         }
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= dynamicThreshold && (!symbolInfo || !symbolInfo.isAsset)) {
+        if (qualityScore >= 55) {
             const { checkLiquidityAsync } = require('./demir_bey');
             const demirRes = await Promise.race([
-                checkLiquidityAsync(sym, direction, currentPrice, dynamicStop, breakdown.globalVol),
-                new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Otonom İzin)" }), 2000))
+                checkLiquidityAsync(sym, direction),
+                new Promise(resolve => setTimeout(() => resolve({ scoreMod: 0, msg: "Demir Bey Timeout (Bypass)" }), 2000))
             ]);
             
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
                 warnings.push(`[Demir Bey: ${demirRes.msg}]`);
             }
-            if (breakdown && demirRes.telemetry) {
-                breakdown.demir_tier = demirRes.telemetry.tier;
-                breakdown.demir_spread_pct = demirRes.telemetry.spreadPct;
-                breakdown.demir_bid_depth = demirRes.telemetry.bidsUsd;
-                breakdown.demir_ask_depth = demirRes.telemetry.asksUsd;
-                breakdown.demir_estimated_notional = demirRes.telemetry.estimatedNotional;
-                breakdown.demir_depth_ratio = demirRes.telemetry.depthRatio;
-                breakdown.demir_decision = demirRes.telemetry.decision;
-                breakdown.demir_scoreMod = demirRes.scoreMod;
-                breakdown.demir_msg = demirRes.msg;
-            }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < dynamicThreshold) {
-                console.log(`[VETO] ${sym} işlemi Demir Bey cezasıyla (${demirRes.msg}) sisteme sokulmadı.`);
-                return {
-                    demirVetoOnly: true,
-                    symbol: sym,
-                    type: direction,
-                    entryPrice: currentPrice,
-                    targetPrice: targetP,
-                    stopPrice: dynamicStop,
-                    qualityScore: qualityScore + 15,
-                    demirMsg: demirRes.msg,
-                    breakdown: breakdown
-                };
+            if (qualityScore < 55) {
+                console.log(`[VETO] ${sym} işlemi Demir Bey'in (Sığ Tahta / Yüksek Spread) cezasıyla sisteme sokulmadı.`);
+                return null;
             }
         }
 
@@ -1839,11 +1542,9 @@ async function analyzeCoin(symbolInfo) {
             targetPrice: targetP,
             stopPrice: dynamicStop,
             qualityScore: qualityScore,
-            dynamicThreshold: dynamicThreshold,
             warnings: JSON.stringify(warnings),
             macroState: globalMarketState,
             breakdown: breakdown,
-            atr: currentATR,
             isAsset: symbolInfo.isAsset || false
         };
     } catch (e) {
@@ -1855,112 +1556,6 @@ async function analyzeCoin(symbolInfo) {
 let globalBtcPrice = null;
 let globalEthPrice = null;
 let isScanning = false;
-
-// --- AUTO-TRADE HELPER FUNCTIONS ---
-function selectLeaderState(btcTrade, ethTrade, globalBtcPrice, globalEthPrice) {
-    let dominantTrade = null;
-    let dominantLeaderSymbol = 'NONE';
-    let leaderState = 'PROBING';
-    let leaderRMultiple = 0;
-    let leaderDirection = null;
-
-    let btcR = null;
-    if (btcTrade && globalBtcPrice) {
-        const risk = Math.abs(btcTrade.entryPrice - btcTrade.stopPrice) || 1;
-        btcR = btcTrade.type === 'LONG' ? (globalBtcPrice - btcTrade.entryPrice)/risk : (btcTrade.entryPrice - globalBtcPrice)/risk;
-    }
-    
-    let ethR = null;
-    if (ethTrade && globalEthPrice) {
-        const risk = Math.abs(ethTrade.entryPrice - ethTrade.stopPrice) || 1;
-        ethR = ethTrade.type === 'LONG' ? (globalEthPrice - ethTrade.entryPrice)/risk : (ethTrade.entryPrice - globalEthPrice)/risk;
-    }
-
-    if (ethTrade) { // ETH her zaman BTC'den öncelikli
-        dominantTrade = ethTrade; leaderRMultiple = ethR; dominantLeaderSymbol = 'ETHUSDT';
-    } else if (btcTrade) {
-        dominantTrade = btcTrade; leaderRMultiple = btcR; dominantLeaderSymbol = 'BTCUSDT';
-    }
-
-    if (dominantTrade) {
-        leaderDirection = dominantTrade.type;
-        if (leaderRMultiple >= 0.4) leaderState = 'CONFIRMED';
-        else if (leaderRMultiple <= -0.4) leaderState = 'STRESSED';
-        else leaderState = 'PROBING';
-    }
-
-    return { leaderState, leaderRMultiple, leaderDirection, dominantLeaderSymbol };
-}
-
-function resolveMatrixLimits(leaderState, breadthState) {
-    let maxSame = 2;
-    let maxOpposite = 2;
-    let matrixScenarioApplied = 'DEFAULT';
-
-    if (leaderState === 'CONFIRMED') {
-         if (breadthState === 'STRONG') { maxSame = 5; maxOpposite = 1; matrixScenarioApplied = 'CONFIRMED_STRONG'; }
-         else if (breadthState === 'NEUTRAL') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_NEUTRAL'; }
-         else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 2; matrixScenarioApplied = 'CONFIRMED_WEAK'; }
-    } else if (leaderState === 'PROBING') {
-         if (breadthState === 'STRONG') { maxSame = 4; maxOpposite = 2; matrixScenarioApplied = 'PROBING_STRONG'; }
-         else if (breadthState === 'NEUTRAL') { maxSame = 3; maxOpposite = 2; matrixScenarioApplied = 'PROBING_NEUTRAL'; }
-         else if (breadthState === 'WEAK') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'PROBING_WEAK'; }
-    } else if (leaderState === 'STRESSED') {
-         if (breadthState === 'STRONG') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_STRONG'; }
-         else if (breadthState === 'NEUTRAL') { maxSame = 2; maxOpposite = 2; matrixScenarioApplied = 'STRESSED_NEUTRAL'; }
-         else if (breadthState === 'WEAK') { maxSame = 1; maxOpposite = 3; matrixScenarioApplied = 'STRESSED_WEAK'; }
-    }
-
-    return { maxSame, maxOpposite, matrixScenarioApplied };
-}
-
-function evaluateContextCompression(leaderState, breadthState, adxMetric, mtfBias, signalType, baseMaxSame, baseMaxOpposite) {
-    let contextScore = 0;
-    let contextComps = { breadth: 0, leader: 0, adx: 0, mtf: 0 };
-    
-    if (breadthState === 'WEAK') { contextScore -= 1; contextComps.breadth = -1; }
-    else if (breadthState === 'STRONG') { contextScore += 1; contextComps.breadth = 1; }
-
-    if (leaderState === 'STRESSED') { contextScore -= 1; contextComps.leader = -1; }
-    else if (leaderState === 'CONFIRMED') { contextScore += 1; contextComps.leader = 1; }
-
-    if (adxMetric < 15) { contextScore -= 1; contextComps.adx = -1; }
-    else if (adxMetric >= 25) { contextScore += 1; contextComps.adx = 1; }
-
-    if (mtfBias !== 'neutral') {
-        if ((signalType === 'LONG' && mtfBias === 'bearish') || (signalType === 'SHORT' && mtfBias === 'bullish')) {
-            contextScore -= 1; contextComps.mtf = -1;
-        } else if ((signalType === 'LONG' && mtfBias === 'bullish') || (signalType === 'SHORT' && mtfBias === 'bearish')) {
-            contextScore += 1; contextComps.mtf = 1;
-        }
-    }
-
-    let finalMaxSame = baseMaxSame;
-    let finalMaxOpposite = baseMaxOpposite;
-    let contextVeto = false;
-    let penaltyApplied = 0;
-
-    if (contextScore <= -3) {
-        contextVeto = true;
-    } else if (contextScore === -2) {
-        penaltyApplied = -10;
-        finalMaxSame = Math.min(finalMaxSame, 2);
-        finalMaxOpposite = Math.min(finalMaxOpposite, 2);
-    } else if (contextScore >= 2) {
-        finalMaxSame = Math.max(finalMaxSame, 4);
-        if (leaderState === 'CONFIRMED' && breadthState === 'STRONG') {
-            finalMaxSame = 5;
-        }
-    }
-
-    return { contextScore, contextComps, contextVeto, penaltyApplied, finalMaxSame, finalMaxOpposite };
-}
-
-function getDirectionalBucket(leaderDir, candidateDir) {
-    if (!leaderDir) return 'SAME';
-    return leaderDir === candidateDir ? 'SAME' : 'OPPOSITE';
-}
-// --- END AUTO-TRADE HELPERS ---
 
 async function runScan() {
     if (isScanning) {
@@ -2006,76 +1601,18 @@ async function runScan() {
         const allPairs = [...cryptoPairs, ...assetsToScan];
         console.log(`[SCANNER] Found ${cryptoPairs.length} USDT pairs and ${assetsToScan.length} assets to scan${!isActiveTradFiSession ? ' (TradFi Sleep Mode)' : ''}.`);
 
-        BREADTH_CACHE = null;
-
-        // PRE-LOOP BATCH CACHING
-        const activeSignalsRows = await db.all("SELECT symbol FROM signals WHERE status = 'ACTIVE'");
-        const cacheActiveSignals = new Set(activeSignalsRows.map(r => r.symbol));
-
-        const activeShadowsRows = await db.all("SELECT symbol FROM shadow_trades WHERE status IN ('PENDING', 'SHADOW_TEST_PENDING')");
-        const cacheActiveShadows = new Set(activeShadowsRows.map(r => r.symbol));
-
-        const cacheActiveTrades = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
-
         let signalCount = 0;
 
         for (let i = 0; i < allPairs.length; i++) {
             const symbolInfo = allPairs[i];
             const symbol = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
 
-            if (cacheActiveSignals.has(symbol)) continue;
-            if (cacheActiveShadows.has(symbol)) continue;
+            // Aktif sinyali olan coini tekrar tarayıp yeni sinyal üretmeye gerek yok (Spam önleme)
+            const existingActive = await db.get("SELECT id FROM signals WHERE symbol = ? AND status = 'ACTIVE'", [symbol]);
+            if (existingActive) continue;
 
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
-                if (signal.adxVetoOnly || signal.demirVetoOnly) {
-                    const breakdownStr = JSON.stringify(signal.breakdown || {});
-                    let lId = -999;
-                    if (signal.demirVetoOnly) {
-                        if (signal.demirMsg && signal.demirMsg.includes("Sığ")) {
-                            lId = -997; // Sığ Tahta
-                        } else {
-                            lId = -998; // Yüksek Makas veya diğer
-                        }
-                    }
-                    await db.run(
-                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, lId, signal.qualityScore, breakdownStr, 'PENDING']
-                    );
-
-                    try {
-                        const pendingShadows = await db.all(`
-                            SELECT s.symbol, s.type, s.lessonId, a.lessonText 
-                            FROM shadow_trades s 
-                            LEFT JOIN ai_lessons a ON s.lessonId = a.id 
-                            WHERE s.status IN ('PENDING', 'SHADOW_TEST_PENDING')
-                        `);
-                        let reasonAdded = lId === -999 ? 'ADX/Kalite' : 'Demir Bey (Sığ Tahta)';
-                        let msg = `🐺 *Börü Bey: Yeni Sanal İşlem Yakaladım!* 🐺\n\n📌 *Takibe Alınan:* #${signal.symbol} (${signal.type})\n🚫 *Veto Sebebi:* ${reasonAdded}\n\n📋 *Şu Anki Karanlık Oda Takip Listesi (${pendingShadows.length} işlem):*\n\n`;
-                        for (let s of pendingShadows) {
-                            let currReason = "";
-                            if (s.lessonId === -999) currReason = "Yetersiz ADX / Düşük Kalite Skoru (Sabit Motor Kuralı)";
-                            else if (s.lessonId === -998) currReason = "Demir Bey Tahta Koruması (Sığ Tahta / Yüksek Makas)";
-                            else if (s.lessonText) currReason = `Ders ID: ${s.lessonId} - "${s.lessonText}"`;
-                            else currReason = `Ders ID: ${s.lessonId}`;
-                            
-                            msg += `🔹 *${s.symbol}* (${s.type})\n_Sebep:_ ${currReason}\n\n`;
-                        }
-                        const axios = require('axios');
-                        if (process.env.ADMIN_TELEGRAM_ID && process.env.TELEGRAM_BOT_TOKEN) {
-                           await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                               chat_id: process.env.ADMIN_TELEGRAM_ID,
-                               text: msg,
-                               parse_mode: 'Markdown'
-                           });
-                        }
-                    } catch(tgEr) {
-                         console.error("Shadow notification error:", tgEr.message);
-                    }
-
-                    continue;
-                }
-                
                 let formattedVol = '-';
                 if (signal.breakdown && signal.breakdown.globalVol) {
                     formattedVol = (signal.breakdown.globalVol / 1000000).toFixed(1) + 'M';
@@ -2083,17 +1620,16 @@ async function runScan() {
                 const volumeTextForDb = signal.breakdown && signal.breakdown.rvol ? `${formattedVol} (${signal.breakdown.rvol}x)` : formattedVol;
                 
                 // +--- SHADOW BLOCK CHECK (AI MEMORY) ---+
-                let llmRiskPenalty = 1.0;
+                let isBlocked = false;
                 let blockReason = "";
                 let blockLessonId = null;
                 let telegramLimitWarning = "";
-                let isTestRule = false;
 
                 try {
-                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status IN ('ACTIVE', 'TEST') AND datetime(createdAt) >= datetime('now', '-30 days') ORDER BY id DESC LIMIT 15");
-
+                    const activeLessons = await db.all("SELECT * FROM ai_lessons WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 15");
+                    
                     if (activeLessons && activeLessons.length > 0) {
-                        const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] (${l.status}) - ${l.lessonText}`).join('\n');
+                        const lessonsText = activeLessons.map(l => `[Ders ID: ${l.id}] - ${l.lessonText}`).join('\n');
                         const prompt = `Sen PeriskopAI Otonom Fon Yöneticisisin. Sana geçmişteki zararlarımızdan çıkardığımız "KARA LİSTE" dersleri ve şu an girmeyi planladığımız GÜNCEL BİR SİNYAL gönderiyorum.
                         
 AKTİF DERSLER (Hafıza):
@@ -2102,88 +1638,47 @@ ${lessonsText}
 GÜNCEL SİNYAL GİRİŞ HARİTASI:
 Varlık: ${signal.symbol}
 Yön: ${signal.type}
-Toplam Kalite Skoru: ${signal.qualityScore} (Maksimum Sınır: 85 üzerinden)
+Toplam Kalite Skoru: ${signal.qualityScore}
 Grafik Bileşenleri (Uyarılar): ${signal.warnings}
 
-Soru: Yeni oluşan bu sinyal, Aktif Derslerdeki bir hataya/tuzağa ne kadar benziyor? Ne kadar riskli?
-Cevabını SADECE aşağıdaki JSON formatında ver:
-{
-  "risk_level": "LOW" | "MEDIUM" | "HIGH",
-  "reason": "1 kısa Cümle Sebebini Yaz",
-  "lesson_id": "İlgili ders ID (yoksa null)"
-}`;
+Soru: Yeni oluşan bu sinyal, Aktif Derslerdeki bir hataya/tuzağa çok benziyor mu?
+Eğer bu işlemi RİSKLİ/HATALI buluyorsan ve engellemek istiyorsan sadece "ENGEL: [Hangi Ders ID'si nedeniyle engellediğini ve 1 kısa Cümle Sebebini Yaz]" formatında cevap ver.
+Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
 
-                        const blockRes = await aiModel.generateContent({
-                            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                            generationConfig: { responseMimeType: "application/json" }
-                        });
-                        const blockJson = JSON.parse(blockRes.response.text());
+                        const blockRes = await aiModel.generateContent(prompt);
+                        const blockText = blockRes.response.text();
                         
-                        if (blockJson.lesson_id) {
-                            const matchedLesson = activeLessons.find(l => l.id == blockJson.lesson_id);
-                            if (matchedLesson && matchedLesson.status === 'TEST') {
-                                isTestRule = true;
-                            }
-                        }
-                        
-                        signal.breakdown.quality_score_before_llm = signal.qualityScore;
-                        
-                        if (blockJson.risk_level === "HIGH") {
-                            if (!isTestRule) {
-                                llmRiskPenalty = 0.70;
-                                signal.qualityScore -= 15;
-                            }
-                            blockReason = `Yüksek Risk: ${blockJson.reason}`;
-                            blockLessonId = blockJson.lesson_id;
-                        } else if (blockJson.risk_level === "MEDIUM") {
-                            if (!isTestRule) {
-                                llmRiskPenalty = 0.75;
-                                signal.qualityScore -= 5;
-                            }
-                            blockReason = `Orta Risk: ${blockJson.reason}`;
-                            blockLessonId = blockJson.lesson_id;
-                        } else if (blockJson.risk_level === "LOW") {
-                            if (!isTestRule) {
-                                llmRiskPenalty = 1.0;
-                            }
-                            blockReason = `Düşük Risk (Küçük Pürüz): ${blockJson.reason}`;
+                        if (blockText.includes("ENGEL:")) {
+                            isBlocked = true;
+                            blockReason = blockText.split("ENGEL:")[1].trim();
+                            const match = blockText.match(/Ders ID:?\s*(\d+)/i) || blockText.match(/Ders.(\d+)/i);
+                            if (match) blockLessonId = parseInt(match[1]);
                         }
                     }
                 } catch (err) {
                     console.error("[SHADOW] Error checking AI memory:", err.message);
                 }
 
-                if (llmRiskPenalty < 1.0 || (blockLessonId && signal.qualityScore)) { 
-                    // Only trigger if real penalty applied OR if a lesson matched (even if test)
-                    console.log(`[SHADOW BLOCK] Danışman LLM Yakaladı: ${signal.symbol} -> ${blockReason} (Test Modu: ${isTestRule})`);
-                    
-                    if (!isTestRule) {
-                        signal.warnings = (signal.warnings ? signal.warnings + ', ' : '') + `LLM RİSK İNDİRİMİ: ${blockReason}`;
-                    }
-
-                    signal.breakdown.quality_score_after_llm = signal.qualityScore;
-                    signal.breakdown.llm_modifier = typeof llmRiskPenalty !== 'undefined' ? llmRiskPenalty : 1.0;
-                    signal.breakdown.final_block_reason_primary = 'LLM_RISK_PENALTY';
-
-                    const breakdownJson = JSON.stringify(signal.breakdown || {});
-                    const shadowStatus = isTestRule ? 'SHADOW_TEST_PENDING' : 'PENDING';
-
+                if (isBlocked) {
+                    console.log(`[SHADOW BLOCK] Sinyal Engellendi: ${signal.symbol} -> ${blockReason}`);
                     await db.run(
-                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore, breakdownData, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore, breakdownJson, shadowStatus]
+                        "INSERT INTO shadow_trades (symbol, type, entryPrice, targetPrice, stopPrice, lessonId, qualityScore) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, blockLessonId, signal.qualityScore]
                     );
 
-                    if (telegramBot && process.env.ADMIN_TELEGRAM_ID && !isTestRule) {
+                    // Telegram Admin'e Uyarı Gönder
+                    if (telegramBot && CONFIG.telegramAdminId) {
                         try {
-                            telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `👨‍🏫 *Danışman Ajan Sinyali Notladı (Soft Veto)* 👨‍🏫\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Uyarı:* ${blockReason}\n\nBu sinyal veritabanına kaydedildi ancak Kalite Puanı düşürüldü. Gölge PnL takibine de alındı.`, { parse_mode: 'Markdown' });
+                            telegramBot.sendMessage(CONFIG.telegramAdminId, `🤖 *Otonom Ajan Sinyali Reddetti (Shadow Mode)* 🤖\n\n🎯 *Parite:* #${signal.symbol} (${signal.type})\n⛔ *Sebep:* ${blockReason}\n\nBu sinyal veritabanına ve gruba düşmedi. Sadece gölge modunda arka planda PnL takibine alındı.`, { parse_mode: 'Markdown' });
                         } catch(e) {}
                     }
+                    continue; // Skip DB insertion and everything else
                 }
                 // +--- END SHADOW BLOCK ---+
 
                 const insertResult = await db.run(
-                    "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol, engineMode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb, signal.breakdown?.engineMode || 'ALPHA']
+                    "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    [signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, signal.qualityScore, signal.warnings, volumeTextForDb]
                 );
                 const signalId = insertResult.id;
                 console.log(`[SCANNER] New ${signal.type} signal for ${signal.symbol}! ID: ${signalId}`);
@@ -2223,109 +1718,57 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                 }
 
                 // --- AUTO TRADING BLOCK START ---
-                let autoTradeBlocked = false;
-                if (signal.qualityScore < signal.dynamicThreshold) {
-                    console.log(`[AUTO-TRADE] Atlandı: Soft Veto Sonrası Puanı ${signal.qualityScore} (Gerekli: ${signal.dynamicThreshold})`);
-                    autoTradeBlocked = true;
-                } else if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
+                if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
-                        // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS (v5.5) ---+
-                        let activeTradesList = cacheActiveTrades;
+                        // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS ---+
+                        let activeTradesList = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
                         let activeCount = activeTradesList.length;
-                        let btcTrade = null;
-                        let ethTrade = null;
+                        
+                        let dominantDirection = null; // 'LONG' or 'SHORT'
+                        let maxAllowedInThisDirection = 2; // Default if choppy/no leaders
+
+                        let btcEthProfitableLong = false;
+                        let btcEthProfitableShort = false;
+
                         for (const trade of activeTradesList) {
-                            if (trade.symbol === 'BTCUSDT') btcTrade = trade;
-                            if (trade.symbol === 'ETHUSDT') ethTrade = trade;
-                        }
-
-                        const { leaderState, leaderRMultiple, leaderDirection, dominantLeaderSymbol } = selectLeaderState(btcTrade, ethTrade, globalBtcPrice, globalEthPrice);
-                        const breadthState = globalMarketState && globalMarketState.breadthState ? globalMarketState.breadthState : 'NEUTRAL';
-                        const { maxSame: baseMaxSame, maxOpposite: baseMaxOpposite, matrixScenarioApplied } = resolveMatrixLimits(leaderState, breadthState);
-                        
-                        const adxMetric = signal.breakdown && typeof signal.breakdown.adx !== 'undefined' ? signal.breakdown.adx : 25;
-                        const mtfBias = signal.breakdown && typeof signal.breakdown.trend4h !== 'undefined' ? signal.breakdown.trend4h : 'neutral';
-                        
-                        const contextRes = evaluateContextCompression(leaderState, breadthState, adxMetric, mtfBias, signal.type, baseMaxSame, baseMaxOpposite);
-
-                        const maxSame = contextRes.finalMaxSame;
-                        const maxOpposite = contextRes.finalMaxOpposite;
-
-                        if (contextRes.penaltyApplied < 0) {
-                            signal.qualityScore += contextRes.penaltyApplied;
-                        }
-
-                        const candidateBucket = getDirectionalBucket(leaderDirection, signal.type);
-                        
-                        let currentOpenSame = 0;
-                        let currentOpenOpposite = 0;
-
-                        if (!leaderDirection) {
-                            currentOpenSame = activeTradesList.filter(t => t.type === signal.type).length;
-                            currentOpenOpposite = activeTradesList.filter(t => t.type !== signal.type).length;
-                        } else {
-                            currentOpenSame = activeTradesList.filter(t => t.type === leaderDirection).length;
-                            currentOpenOpposite = activeTradesList.filter(t => t.type !== leaderDirection).length;
-                        }
-
-                        let blockReasonsAll = [];
-                        let finalBlockReasonPrimary = 'NONE';
-                        let autoTradeBlockedByLimit = false;
-
-                        if (contextRes.contextVeto) {
-                            autoTradeBlockedByLimit = true;
-                            blockReasonsAll.push('CONTEXT_COMPRESSION_VETO');
-                            finalBlockReasonPrimary = 'CONTEXT_BLOCK';
-                        } else {
-                            if (candidateBucket === 'SAME' && currentOpenSame >= maxSame) { 
-                                autoTradeBlockedByLimit = true;
-                                blockReasonsAll.push('LIMIT_SAME_CAP_REACHED');
-                                finalBlockReasonPrimary = 'LIMIT_BLOCK';
-                            }
-                            if (candidateBucket === 'OPPOSITE' && currentOpenOpposite >= maxOpposite) { 
-                                autoTradeBlockedByLimit = true; 
-                                blockReasonsAll.push('LIMIT_OPPOSITE_CAP_REACHED');
-                                finalBlockReasonPrimary = 'LIMIT_BLOCK';
+                            if (trade.symbol === 'BTCUSDT' || trade.symbol === 'ETHUSDT') {
+                                try {
+                                    let cp = null;
+                                    if (trade.symbol === 'BTCUSDT') cp = globalBtcPrice;
+                                    if (trade.symbol === 'ETHUSDT') cp = globalEthPrice;
+                                    
+                                    if (cp) {
+                                        if (trade.type === 'LONG' && cp > trade.entryPrice) btcEthProfitableLong = true;
+                                        if (trade.type === 'SHORT' && cp < trade.entryPrice) btcEthProfitableShort = true;
+                                    }
+                                } catch(e) {
+                                    console.error("[SCANNER] Sessiz Hata (Portfolio):", e.message);
+                                }
                             }
                         }
 
-                        let finalAutoTradeBlocked = autoTradeBlockedByLimit;
-                        let eliteExceptionTriggered = false;
+                        if (btcEthProfitableLong) dominantDirection = 'LONG';
+                        else if (btcEthProfitableShort) dominantDirection = 'SHORT';
 
-                        if (autoTradeBlockedByLimit && signal.qualityScore >= 75 && finalBlockReasonPrimary !== 'CONTEXT_BLOCK') {
-                             finalAutoTradeBlocked = false;
-                             eliteExceptionTriggered = true;
-                        }
-
-                        // --- TELEMETRY LOGGING ---
-                        console.log(`[TELEMETRY] ${signal.symbol} | Matrix: ${matrixScenarioApplied} | Leader: ${dominantLeaderSymbol}(${leaderState}, R:${leaderRMultiple.toFixed(2)}) | Breadth: ${breadthState}`);
-                        console.log(`[TELEMETRY] Context Score: ${contextRes.contextScore} | Comps: ${JSON.stringify(contextRes.contextComps)}`);
-                        console.log(`[TELEMETRY] Base Limits: ${baseMaxSame}/${baseMaxOpposite} | Final Limits: ${maxSame}/${maxOpposite}`);
-                        if (globalMarketState && globalMarketState.breadthComponents) {
-                            console.log(`[TELEMETRY] Breadth Comps -> 24h: ${globalMarketState.breadthComponents.s24h.toFixed(2)}, 1h: ${globalMarketState.breadthComponents.s1h.toFixed(2)}, Rel: ${globalMarketState.breadthComponents.sRel.toFixed(2)}`);
-                        }
-                        console.log(`[TELEMETRY] Bucket: ${candidateBucket} | Same Limit: ${currentOpenSame}/${maxSame} | Opp Limit: ${currentOpenOpposite}/${maxOpposite}`);
-                        if (eliteExceptionTriggered) {
-                            console.log(`[TELEMETRY] elite_exception_triggered! Reason: Score ${signal.qualityScore} >= 75 | Dir: ${signal.type}`);
-                        }
-                        if (matrixScenarioApplied === 'PROBING_STRONG') {
-                            console.log(`[TELEMETRY] scenario_tag = PROBING_STRONG (Özel İzleme - Erken Agresyon Testi)`);
+                        let currentDirectionCount = activeTradesList.filter(t => t.type === signal.type).length;
+                        
+                        if (dominantDirection) {
+                            if (signal.type === dominantDirection) {
+                                maxAllowedInThisDirection = 5; // Trend Riding
+                            } else {
+                                maxAllowedInThisDirection = 3; // Hedging (Sigorta)
+                            }
                         }
 
-                        if (finalAutoTradeBlocked) {
-                            console.log(`[AUTO-TRADE] Limit Dolu. Matrix: ${matrixScenarioApplied} | Bucket: ${candidateBucket}. Auto-Trade KAPATILDI!`);
-                            console.log(`[TELEMETRY] blocked_by_limit_count +1`);
-                            console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
-                            console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
-                            if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
-                                telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda limit (${candidateBucket === 'SAME'? maxSame:maxOpposite}) dolduğu için #${signal.symbol} borsa emri AÇILMADI.\nMatris: ${matrixScenarioApplied}`);
+                        if (currentDirectionCount >= maxAllowedInThisDirection) {
+                            telegramLimitWarning = `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda maksimum limite ulaştığımız için (${currentDirectionCount} adet aktif ${signal.type} işlem), bu elit sinyal borsa hesabınızda otomatik olarak AÇILMADI. Riski yönetmek kaydıyla isterseniz işlemi kendiniz manuel olarak açabilirsiniz.`;
+                            console.log(`[AUTO-TRADE] Limit (${currentDirectionCount}/${maxAllowedInThisDirection}) dolu! Sinyal Yönü: ${signal.type}. Sinyal havuza eklendi (Macro limit kısıtlaması).`);
+                            if (bot && CONFIG.telegramAdminId) {
+                                bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
                             }
                         } else if (activeCount >= CONFIG.maxActiveTrades) {
-                            blockReasonsAll.push('GLOBAL_LIMIT_REACHED');
-                            finalBlockReasonPrimary = 'GLOBAL_LIMIT';
-                            console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu!`);
-                            console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
-                            console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
+                            // Genel borsa API patlaması olmasın diye global üst limit de 15 vs olarak korunabilir, ama şimdilik limitleri biz ayarladık.
+                            console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal havuza eklendi.`);
                         } else {
                             // Aynı gün içinde aynı coine girildi mi? (Sinyal 2. veya 3. kez mi düşüyor?)
                             const todayStr = new Date().toISOString().split('T')[0];
@@ -2340,103 +1783,29 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                 let currentLivePrice = signal.entryPrice;
                                 let slippageExceeded = false;
                                 try {
-                                    let fetchSymbol = signal.symbol.includes('-') ? signal.symbol : signal.symbol.replace('USDT', '-USDT');
-                                    const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${fetchSymbol}`);
+                                    const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v2/quote/ticker?symbol=${signal.symbol}`);
                                     if (res.data && res.data.data && res.data.data.lastPrice) {
                                         currentLivePrice = parseFloat(res.data.data.lastPrice);
                                         const slippage = Math.abs(currentLivePrice - signal.entryPrice) / signal.entryPrice;
-                                        const riskWidth = Math.abs(signal.entryPrice - signal.stopPrice) / signal.entryPrice;
-                                        let atrPercent = (signal.atr && signal.entryPrice) ? (signal.atr / signal.entryPrice) : 0.02;
-                                        
-                                        let tierMaxSlippage = 0.003; // Tier 1 (Majörler - ATR <%1.5) -> Max %0.3 kayma
-                                        if (atrPercent >= 0.03) {
-                                            tierMaxSlippage = 0.0075; // Tier 3 (Meme/Sığ Tahtalar - ATR >= %3) -> Max %0.75 kayma
-                                        } else if (atrPercent >= 0.015) {
-                                            tierMaxSlippage = 0.005; // Tier 2 (Altcoinler - ATR %1.5 - %3) -> Max %0.5 kayma
-                                        }
-
-                                        // Edge (Matematiksel Üstünlük) Koruması: Kayma, asla Stop mesafesinin (Risk) %25'ini geçemez.
-                                        const edgeProtectionMax = riskWidth * 0.25; 
-                                        const maxSlippage = Math.min(tierMaxSlippage, edgeProtectionMax);
-                                        if (slippage > maxSlippage) {
+                                        if (slippage > 0.003) {
                                             slippageExceeded = true;
                                         }
                                     }
                                 } catch (err) {}
 
                                 if (slippageExceeded) {
-                                    blockReasonsAll.push('SLIPPAGE_EXCEEDED');
-                                    finalBlockReasonPrimary = 'SLIPPAGE_BLOCK';
-                                    console.log(`[TELEMETRY] blocked_by_slippage +1 | Symbol: ${signal.symbol} | Slippage Exceeded`);
-                                    console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
-                                    console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                     console.log(`[AUTO-TRADE] İPTAL! Fiyat Kayması (Slippage) Tespit Edildi: Hedef=${signal.entryPrice}, Güncel=${currentLivePrice}`);
-                                    if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
-                                        telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa güvenli makas aralığından (Dinamik Slippage Toleransı) daha fazla saptığı için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
+                                    if (bot && CONFIG.telegramAdminId) {
+                                        bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
-                                    // +--- SEPET KORELASYON MOTORU ---+
-                                    let skipAutoTrade = false;
+                                    // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
+                                    let riskMultiplier = 1.0;
                                     try {
-                                        const sectorMap = {
-                                            "BTC": "L1", "ETH": "L1", "SOL": "L1", "AVAX": "L1", "BNB": "L1",
-                                            "FET": "AI", "AGIX": "AI", "WLD": "AI", "RENDER": "AI", "NEAR": "AI", "TAO": "AI",
-                                            "DOGE": "MEME", "SHIB": "MEME", "PEPE": "MEME", "BOME": "MEME", "FLOKI": "MEME", "WIF":"MEME"
-                                        };
-                                        const baseSymbol = signal.symbol.replace('-USDT', '').replace('USDT', '');
-                                        const clusterName = sectorMap[baseSymbol] || 'OTHER';
-                                        
-                                        if (clusterName !== 'OTHER') {
-                                            const activeTrades = await db.all("SELECT symbol FROM user_trades WHERE status = 'ACTIVE'");
-                                            let clusterCount = 0;
-                                            activeTrades.forEach(t => {
-                                                const tBase = t.symbol.replace('-USDT', '').replace('USDT', '');
-                                                if (sectorMap[tBase] === clusterName) clusterCount++;
-                                            });
-                                            let isVolMode = signal.breakdown && signal.breakdown.engineMode === 'VOLUME';
-                                            let clusterLimit = isVolMode ? 3 : 2;
-                                            
-                                            if (clusterCount >= clusterLimit) {
-                                                if (isVolMode && clusterCount === 3) {
-                                                    skipAutoTrade = false;
-                                                    signal.qualityScore -= 10;
-                                                    llmRiskPenalty = (typeof llmRiskPenalty !== 'undefined') ? llmRiskPenalty * 0.5 : 0.5;
-                                                } else {
-                                                    skipAutoTrade = true;
-                                                    blockReasonsAll.push('SECTOR_LIMIT_REACHED');
-                                                    finalBlockReasonPrimary = 'SECTOR_CORRELATION_BLOCK';
-                                                    console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
-                                                    console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
-                                                    console.log(`[CORRELATION REJECT] ${clusterName} sektöründe aktif işlem limiti (${clusterCount}/${clusterLimit}).`);
-                                                }
-                                            }
-                                        }
-                                    } catch(e) {}
-
-                                    if (!skipAutoTrade) {
-                                        // +--- DYNAMIC POSITION SIZING (V5.2 DUAL ENGINE & R:R MULTI-BAND) ---+
-                                        let baseRiskMultiplier = 1.0;
-                                        let riskMultiplier = 1.0;
-                                        let llmRiskModifier = typeof llmRiskPenalty !== 'undefined' ? llmRiskPenalty : 1.0;
-                                        let historyModifier = 1.0;
-                                        let rrModifier = signal.breakdown && signal.breakdown.rr_modifier ? signal.breakdown.rr_modifier : 1.0;
-                                        let opMode = signal.breakdown && signal.breakdown.engineMode === 'VOLUME' ? 'VOLUME' : 'ALPHA';
-                                        let rrBand = signal.breakdown && signal.breakdown.effective_rr_band ? signal.breakdown.effective_rr_band : 'NORMAL_ACCEPT';
-
-                                    try {
-                                        if (opMode === 'VOLUME') {
-                                            if (signal.qualityScore >= 80) baseRiskMultiplier = 1.15;
-                                            else if (signal.qualityScore >= 65) baseRiskMultiplier = 1.0;
-                                            else if (signal.qualityScore >= 50) baseRiskMultiplier = 0.75;
-                                            else baseRiskMultiplier = 0.5;
-                                        } else {
-                                            if (signal.qualityScore >= 80) baseRiskMultiplier = 1.1;
-                                            else if (signal.qualityScore >= 70) baseRiskMultiplier = 1.0;
-                                            else if (signal.qualityScore >= 60) baseRiskMultiplier = 0.75;
-                                            else baseRiskMultiplier = 0.5;
-                                        }
-                                        
-                                        riskMultiplier = baseRiskMultiplier * llmRiskModifier;
+                                        if (signal.qualityScore >= 85) riskMultiplier = 1.3;
+                                        else if (signal.qualityScore >= 75) riskMultiplier = 1.0;
+                                        else if (signal.qualityScore >= 65) riskMultiplier = 0.75;
+                                        else riskMultiplier = 0.5;
 
                                         const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 20");
                                         if (history && history.length >= 10) {
@@ -2444,109 +1813,23 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                             const winRate = wins / history.length;
                                             
                                             if (winRate < 0.35) {
-                                                historyModifier = 0.5;
-                                                riskMultiplier *= historyModifier;
+                                                riskMultiplier *= 0.5;
                                                 console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Portföy Defansa Çekildi.`);
                                             } else if (winRate > 0.60) {
-                                                historyModifier = 1.5;
-                                                riskMultiplier *= historyModifier;
+                                                riskMultiplier *= 1.5;
                                                 console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Momentum Sürülüyor.`);
                                             }
                                         }
                                     } catch(e) {}
 
-                                    let finalRiskMultiplier = riskMultiplier * rrModifier;
-                                    if (signal.breakdown) {
-                                        signal.breakdown.base_risk_multiplier = baseRiskMultiplier;
-                                        signal.breakdown.llm_modifier = llmRiskModifier;
-                                        signal.breakdown.final_risk_multiplier = finalRiskMultiplier;
-                                    }
-
-                                    // --- RISK-BASED POSITION SIZING ---
-                                    let accountBalance = null;
-                                    let balanceFallbackUsed = false;
+                                    console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${riskMultiplier})`);
                                     try {
-                                        accountBalance = await getAccountBalance();
-                                    } catch(e) { }
-
-                                    if (!accountBalance || isNaN(accountBalance)) {
-                                        accountBalance = process.env.DEFAULT_BALANCE ? parseFloat(process.env.DEFAULT_BALANCE) : 500.0;
-                                        balanceFallbackUsed = true;
-                                        console.warn(`[RISK SIZING] BingX bakiye alınamadı (API Hatası). Fallback bakiye kullanılıyor: $${accountBalance}`);
-                                        if (telegramBot && process.env.ADMIN_TELEGRAM_ID) {
-                                            try { telegramBot.sendMessage(process.env.ADMIN_TELEGRAM_ID, `⚠️ *Warning:* getAccountBalance() failed! Fallback bakiye ($${accountBalance}) kullanılarak işleme giriliyor.`, {parse_mode: 'Markdown'}); } catch(e){}
-                                        }
-                                    }
-
-                                    let baseRiskPercent = 0;
-                                    if (rrBand === 'NORMAL_ACCEPT') baseRiskPercent = 0.01;
-                                    else if (rrBand.includes('0.6') || rrBand.includes('0.5')) baseRiskPercent = 0.007;
-                                    else if (rrBand.includes('0.4')) baseRiskPercent = 0.004;
-
-                                    const usdRiskBeforeModifiers = accountBalance * baseRiskPercent;
-                                    const finalUsdRisk = usdRiskBeforeModifiers * finalRiskMultiplier;
-
-                                    const stopDistance = Math.abs(signal.entryPrice - signal.stopPrice);
-                                    let stopPercent = 0;
-                                    if (signal.entryPrice > 0) {
-                                        stopPercent = stopDistance / signal.entryPrice;
-                                    }
-                                    const calculatedPositionSize = stopDistance > 0 ? (finalUsdRisk / stopDistance) : 0;
-                                    const calculatedNotional = calculatedPositionSize * signal.entryPrice;
-
-                                    if (signal.breakdown) {
-                                        signal.breakdown.balance_fallback_used = balanceFallbackUsed;
-                                        signal.breakdown.balance_source = balanceFallbackUsed ? 'FALLBACK_500' : 'BINGX_API';
-                                        signal.breakdown.account_balance = accountBalance;
-                                        signal.breakdown.base_risk_percent = baseRiskPercent;
-                                        signal.breakdown.usd_risk_before_modifiers = usdRiskBeforeModifiers;
-                                        signal.breakdown.final_usd_risk = finalUsdRisk;
-                                        signal.breakdown.stop_percent = stopPercent;
-                                        signal.breakdown.calculated_position_size = calculatedPositionSize;
-                                    }
-
-                                    console.log(`[TELEMETRY] Mode: ${opMode} | RR Band: ${rrBand} | Fallback: ${balanceFallbackUsed} | Balance: $${accountBalance.toFixed(2)} | Final Risk USD: $${finalUsdRisk.toFixed(2)}`);
-
-                                    // Toplam Risk Limiti (Ceiling) %3
-                                    let totalOpenRiskBefore = 0;
-                                    try {
-                                        const act = await db.all("SELECT riskedUsd FROM user_trades WHERE status = 'ACTIVE'");
-                                        totalOpenRiskBefore = act.reduce((sum, t) => sum + (t.riskedUsd || 0), 0);
-                                    } catch(e) {}
-                                    const maxAllowedRiskUsd = accountBalance * 0.03;
-
-                                    if (signal.breakdown) {
-                                        signal.breakdown.total_open_risk_before = totalOpenRiskBefore;
-                                    }
-
-                                    if (totalOpenRiskBefore + finalUsdRisk > maxAllowedRiskUsd) {
-                                        console.log(`[RISK CEILING REJECT] ${signal.symbol} | Açık risk ($${totalOpenRiskBefore.toFixed(2)}) + Yeni Risk ($${finalUsdRisk.toFixed(2)}) > Maksimum %3 ($${maxAllowedRiskUsd.toFixed(2)}) limitini aşıyor.`);
-                                        if (signal.breakdown) signal.breakdown.risk_ceiling_limit_hit = true;
-                                    } else if (finalUsdRisk < 1.0) {
-                                        console.log(`[MIN_RISK_FLOOR_REJECT] ${signal.symbol} | Nihai risk ($${finalUsdRisk.toFixed(2)}) çok düşük (<1.0$). Patlama riski nedeniyle iptal edildi.`);
-                                    } else if (calculatedNotional < 5) {
-                                        console.log(`[MIN_NOTIONAL_REJECT] ${signal.symbol} | Lot hacmi (Notional: $${calculatedNotional.toFixed(2)}) çok düşük (<5$). Borsa minimumunu karşılamıyor.`);
-                                        if (signal.breakdown) signal.breakdown.min_notional_reject = true;
-                                    } else if (finalRiskMultiplier < 0.30) {
-                                        console.log(`[MIN_RISK_FLOOR_REJECT] ${signal.symbol} Final risk multiplier (${finalRiskMultiplier.toFixed(2)}x) is < 0.30. İşlem anlamsız fee makasına girmemek için iptal edildi.`);
-                                    } else {
-                                        console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Nihai Risk: $${finalUsdRisk.toFixed(2)}, Notional: $${calculatedNotional.toFixed(2)})`);
-                                    try {
-                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, finalUsdRisk);
+                                        const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
                                             if (orderId) {
                                                 await db.run(
-                                                    "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId, riskedUsd) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?)",
-                                                    [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId, finalUsdRisk]
+                                                    "INSERT INTO user_trades (telegramId, signalId, symbol, type, entryPrice, targetPrice, stopPrice, status, bybitOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?)",
+                                                    [process.env.PERISKOP_TELEGRAM_ID, signalId, signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, orderId]
                                                 );
-
-                                                if (signal.breakdown) {
-                                                    let totalOpenRiskAfter = 0;
-                                                    try {
-                                                        const act = await db.all("SELECT riskedUsd FROM user_trades WHERE status = 'ACTIVE'");
-                                                        totalOpenRiskAfter = act.reduce((sum, t) => sum + (t.riskedUsd || 0), 0);
-                                                    } catch(e) {}
-                                                    signal.breakdown.total_open_risk_after = totalOpenRiskAfter;
-                                                }
 
                                                 // Ekranda favori yıldızı yanması için standart tabloya da yaz
                                                 const checkFav = await db.get("SELECT id FROM favorites WHERE telegramId = ? AND signalId = ?", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
@@ -2554,29 +1837,13 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                                                     await db.run("INSERT INTO favorites (telegramId, signalId) VALUES (?, ?)", [process.env.PERISKOP_TELEGRAM_ID, signalId]);
                                                 }
                                                 console.log(`[AUTO-TRADE] Başarılı! Favorilere kayıt edildi.`);
-                                                
-                                                console.log(`[TELEMETRY] TELEMETRY GÖNDERİLİYOR: SUCCESS - ${signal.symbol}`);
-                                                console.log(`[TELEMETRY] final_block_reason_primary: NONE`);
-                                                console.log(`[TELEMETRY] block_reasons_all: NONE`);
-                                            } else {
-                                                console.error("[AUTO-TRADE] Emir gerçekleştirilemedi (bybit/bingx yanıt vermedi).");
-                                                blockReasonsAll.push('API_ORDER_FAILED');
-                                                finalBlockReasonPrimary = 'EXCHANGE_ERROR';
-                                                console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
-                                                console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                             }
                                         } catch (e) {
                                             console.error(`[AUTO-TRADE] Borsa Emir İletim Hatası:`, e.message);
                                         }
-                                    } // End finalRiskMultiplier else
-                                    } // End !skipAutoTrade
-                                } // End slippageExceeded else
+                                    }
                                 } else {
-                                    blockReasonsAll.push('SAME_DAY_DUPLICATE');
-                                    finalBlockReasonPrimary = 'SPAM_PROTECTION';
                                     console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
-                                    console.log(`[TELEMETRY] final_block_reason_primary: ${finalBlockReasonPrimary}`);
-                                    console.log(`[TELEMETRY] block_reasons_all: ${blockReasonsAll.join(',')}`);
                                 }
                         }
                     } catch (e) {
@@ -2593,15 +1860,10 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                         
                         let tierTag = signal.qualityScore >= 65 ? '💎 Elit Kurumsal Sinyal' : '⚠️ Standart PA Sinyali';
                         
-                        let extraNote = "";
-                        if (autoTradeBlocked) {
-                            extraNote = `⚠️ *Uyarı:* Bu işlem borsa hesabında AÇILMADI!\nSebep: Arif Bey'in geçmiş öğrenim defteri (Dersler) kontrolü sonucu ${blockReason ? '_' + blockReason + '_' : 'Riskli'} olarak etiketlendi.\n\n`;
-                        }
-
                         const msg = `🚨 *Elyte Sinyal Uygulaması Üzerinde '${categoryTag}' Kategorisinde Yeni Bir Sinyal Düştü!*\n\n` +
                             `⭐ Kalite Derecesi: *${tierTag}* (Skor: ${signal.qualityScore})\n` +
                             `🎯 Yön: *${signal.type}*\n\n` + flagPart +
-                            (telegramLimitWarning ? telegramLimitWarning + `\n\n` : ``) + extraNote +
+                            (telegramLimitWarning ? telegramLimitWarning + `\n\n` : ``) +
                             `_Detaylar ve seviyeler için Elyte aplikasyonuna girebilirsiniz..._ 🔭\n\n` +
                             `🔗 Web Platformu:\nhttps://www.elytesignals.com/dashboard`;
                         telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
@@ -2613,8 +1875,8 @@ Cevabını SADECE aşağıdaki JSON formatında ver:
                 signalCount++;
             }
 
-            // Rate limit'i aşmamak için her istek arası 400ms bekle (BingX limiti yoğunluğu)
-            await delay(400);
+            // Rate limit'i aşmamak için her istek arası 100ms bekle (1 saniyede 10 istek, limite çok uzak)
+            await delay(100);
         }
 
         console.log(`[SCANNER] Scan complete. Found ${signalCount} new signals.`);
