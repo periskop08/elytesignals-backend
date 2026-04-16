@@ -925,8 +925,8 @@ async function analyzeCoin(symbolInfo) {
             }
         } catch(e) {}
 
-        if (qualityScore < 70) {
-            return null; // ZODYAK BARAJI AŞILAMADI
+        if (qualityScore < 55) {
+            return null; // ZODYAK BARAJI AŞILAMADI (Yeni Baraj: 55)
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
