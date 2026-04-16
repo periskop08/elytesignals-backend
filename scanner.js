@@ -699,6 +699,12 @@ async function analyzeCoin(symbolInfo) {
         const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
         const trapIsRangingLimit = trapCurrentADX < 20;
 
+        // --- SKORLAMA (SCORING) ALTYAPISI ---
+        let qualityScore = 0, s_struct = 0, s_trig = 0, s_vol = 0, s_trend = 0, s_pat = 0;
+        let warnings = [];
+        let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
+
+
         // HARD-BLOCK VETO KURALI: Ranging Piyasada Makro Trende Karşı İşlem AÇILAMAZ!
         if (trapIsRangingLimit) {
             const btc1d = globalMarketState.btc1dObj;
@@ -758,10 +764,6 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        // --- SKORLAMA (SCORING) ALTYAPISI ---
-        let qualityScore = 0, s_struct = 0, s_trig = 0, s_vol = 0, s_trend = 0, s_pat = 0;
-        let warnings = [];
-        let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
         
         // 1. ORDER BLOCK (OB) YARDIMCI KONTROLÜ
         const trapObZone = direction === 'LONG' ? [rangeLow - (currentATR * 1.5), rangeLow + (currentATR * 1.5)] : [rangeHigh - (currentATR * 1.5), rangeHigh + (currentATR * 1.5)];
