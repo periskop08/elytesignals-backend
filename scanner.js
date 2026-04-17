@@ -736,7 +736,7 @@ async function analyzeCoin(symbolInfo) {
         if (trapCurrentADX < 25) { // eqDistance kısıtlaması kaldırıldı, sadece Ranging Limit (ADX<25) yeterli
             // SHORT OTE (Range'in üst %61.8 bölgesi)
             const oteShort = subRangeLow + (subRangeHigh - subRangeLow) * 0.618;
-            if (highs[highs.length - 1] >= oteShort && currentPrice < subRangeHigh && rvol > 1.2) {
+            if (highs[highs.length - 1] >= oteShort && currentPrice < subRangeHigh) {
                 const wickSize = highs[highs.length - 1] - Math.max(opens[opens.length - 1], currentPrice);
                 const bodySize = Math.abs(currentPrice - opens[opens.length - 1]) || 0.0001;
                 if (wickSize > bodySize * 1.5) {
@@ -749,7 +749,7 @@ async function analyzeCoin(symbolInfo) {
             
             // LONG OTE (Range'in alt %38.2 bölgesi)
             const oteLong = subRangeLow + (subRangeHigh - subRangeLow) * 0.382;
-            if (lows[lows.length - 1] <= oteLong && currentPrice > subRangeLow && rvol > 1.2) {
+            if (lows[lows.length - 1] <= oteLong && currentPrice > subRangeLow) {
                 const wickSize = Math.min(opens[opens.length - 1], currentPrice) - lows[lows.length - 1];
                 const bodySize = Math.abs(currentPrice - opens[opens.length - 1]) || 0.0001;
                 if (wickSize > bodySize * 1.5) {
