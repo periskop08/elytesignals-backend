@@ -97,7 +97,7 @@ async function fetchCandles(symbolInfo, intervalMinutes, limit) {
             fetchSym = symbolInfo.symbol.replace('USDT', '-USDT');
         }
 
-        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${fetchSym}&interval=${interval}&limit=${limit}`);
+        const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${fetchSym}&interval=${interval}&limit=${limit}`, { timeout: 3500 });
         let list = res.data.data || [];
 
         // BingX returns array of objects {open, high, low, close, volume, time}
