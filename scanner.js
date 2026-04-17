@@ -113,6 +113,7 @@ async function fetchCandles(symbolInfo, intervalMinutes, limit) {
             closeTime: parseInt(k.time)
         }));
     } catch (e) {
+        console.log(`[API HATASI] ${symbolInfo} çekilemedi: ${e.response ? e.response.status : e.message}`);
         return null;
     }
 }
@@ -1335,6 +1336,9 @@ async function runScan() {
         for (let i = 0; i < allPairs.length; i++) {
             const symbolInfo = allPairs[i];
             const symbol = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
+
+            // BingX API (Rate Limit 429) Tuzağına Düşmemek İçin Gecikme Zırhı
+            await new Promise(resolve => setTimeout(resolve, 45));
 
             // Aktif sinyali olan coini tekrar tarayıp yeni sinyal üretmeye gerek yok (Spam önleme)
             const existingActive = await db.get("SELECT id FROM signals WHERE symbol = ? AND status = 'ACTIVE'", [symbol]);
