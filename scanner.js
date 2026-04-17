@@ -790,7 +790,7 @@ async function analyzeCoin(symbolInfo) {
             try {
                 const { fireMercanBey } = require('./mercan_bey');
                 fireMercanBey(sym, diff > 0 ? 'PUMP' : 'DUMP', diff);
-            } catch(e) {}
+            } catch(e) { console.error(`[ERROR] Mercan Bey: ${e.message}`); }
         }
 
         // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
@@ -921,7 +921,7 @@ async function analyzeCoin(symbolInfo) {
                 else if (direction === 'SHORT' && trend4h === 'bearish') { qualityScore += 15; warnings.push("Makro: 4H Zaman Dilimi Uyumu (+15)"); }
                 else if (direction === 'SHORT' && trend4h === 'bullish') { qualityScore -= 5; warnings.push("Makro: 4H Zaman Dilimi Çatışması (-5)"); }
             }
-        } catch(e) {}
+        } catch(e) { console.error(`[ERROR] 4H Trend Klines (${sym}): ${e.message}`); }
 
         const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
@@ -964,7 +964,7 @@ async function analyzeCoin(symbolInfo) {
                     else if (direction === 'SHORT' && sma50_1d < sma200_1d && currentPrice < sma200_1d) { qualityScore += 10; warnings.push("İndikatör: 1D Bear Cross (+10)"); }
                 }
             }
-        } catch(e) {}
+        } catch(e) { console.error(`[ERROR] 1D Klines (${sym}): ${e.message}`); }
 
         // 7. ORDER FLOW BÖLÜMÜ (MİKRO-ANATOMİ)
         if (currentHigh > currentLow && currentVol > 0) {
@@ -993,7 +993,7 @@ async function analyzeCoin(symbolInfo) {
                 qualityScore -= 12;
                 warnings.push(`Portföy: Aynı Yönde ${sameDirCount} İşlem Yığılma Cezası (-12)`);
             }
-        } catch(e) {}
+        } catch(e) { console.error(`[ERROR] Active Trades Portföy Check (${sym}): ${e.message}`); }
 
         // Daima logla ki neden takıldığını görelim
         // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
@@ -1035,7 +1035,7 @@ async function analyzeCoin(symbolInfo) {
             risk = currentPrice - dynamicStop;
 
             // Varsayılan Hedef: 1:1.5 Risk Ödül Oranı
-            targetP = hasFlagPennant ? (currentPrice + poleSize) : (currentPrice + (risk * 1.5));
+            targetP = currentPrice + (risk * 1.5);
 
             // Hisselerde Gap Fill Hedefi
             if (hasGap && gapTarget > currentPrice) {
@@ -1062,7 +1062,7 @@ async function analyzeCoin(symbolInfo) {
             risk = dynamicStop - currentPrice;
 
             // Varsayılan Hedef: 1:1.5 Risk Ödül Oranı
-            targetP = hasFlagPennant ? (currentPrice - poleSize) : (currentPrice - (risk * 1.5));
+            targetP = currentPrice - (risk * 1.5);
 
             if (hasGap && gapTarget < currentPrice) {
                 targetP = gapTarget;
@@ -1275,7 +1275,7 @@ async function analyzeCoin(symbolInfo) {
             isAsset: symbolInfo.isAsset || false
         };
     } catch (e) {
-        // console.error(e);
+        console.error(`[FATAL ERROR] analyzeCoin (${typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol}):`, e.message);
     }
     return null;
 }
