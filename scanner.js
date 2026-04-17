@@ -100,6 +100,8 @@ async function fetchCandles(symbolInfo, intervalMinutes, limit) {
         const res = await axios.get(`https://open-api.bingx.com/openApi/swap/v3/quote/klines?symbol=${fetchSym}&interval=${interval}&limit=${limit}`, { timeout: 3500 });
         let list = res.data.data || [];
 
+        if (!Array.isArray(list)) list = [];
+
         // BingX returns array of objects {open, high, low, close, volume, time}
         // We sort oldest to newest to match technical indicators logic
         list.sort((a, b) => a.time - b.time);
@@ -113,7 +115,7 @@ async function fetchCandles(symbolInfo, intervalMinutes, limit) {
             closeTime: parseInt(k.time)
         }));
     } catch (e) {
-        console.log(`[API HATASI] ${symbolInfo} çekilemedi: ${e.response ? e.response.status : e.message}`);
+        console.log(`[API HATASI] ${typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol} çekilemedi: ${e.response ? e.response.status : e.message}`);
         return null;
     }
 }
