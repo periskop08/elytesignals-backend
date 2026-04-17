@@ -622,8 +622,13 @@ async function backfillTrades() {
 async function analyzeCoin(symbolInfo) {
     try {
         const sym = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
+        if (sym === 'BTCUSDT' || sym === 'BTC-USDT') console.log(`[TRACE] 1. analyzeCoin başladı: ${sym}`);
         const klinesFull = await fetchCandles(symbolInfo, 60, 250);
-        if (!klinesFull || klinesFull.length < 200) return null;
+        if (!klinesFull || klinesFull.length < 200) {
+            if (sym === 'BTCUSDT' || sym === 'BTC-USDT') console.log(`[TRACE] 2. Klines yetersiz! (Length: ${klinesFull ? klinesFull.length : 'null'})`);
+            return null;
+        }
+        if (sym === 'BTCUSDT' || sym === 'BTC-USDT') console.log(`[TRACE] 3. Klines 200'ü geçti (Length: ${klinesFull.length})`);
 
         const closesFull = klinesFull.map(k => k.close);
         const sma200Values = SMA.calculate({ period: 200, values: closesFull });
@@ -792,6 +797,7 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
+        if (sym === 'BTCUSDT' || sym === 'BTC-USDT') console.log(`[TRACE] 4. Hacim eşiğine gelindi. GlobalVol: ${globalVol}, Yön: ${direction}`);
         if (direction === 'LONG' && globalVol < 1000000) {
             console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (LONG: ${globalVol})`);
             return null;
@@ -992,6 +998,7 @@ async function analyzeCoin(symbolInfo) {
             }
         } catch(e) {}
 
+        if (sym === 'BTCUSDT' || sym === 'BTC-USDT') console.log(`[TRACE] 5. Puanlama Bitti! Score: ${qualityScore}`);
         // Daima logla ki neden takıldığını görelim
         console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
