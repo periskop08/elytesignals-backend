@@ -319,8 +319,8 @@ async function getUsdtPairsAndAssets() {
                     });
                 }
             } else {
-                // Kripto Pariteler (3 Milyon USD Barajı)
-                if (vol > 3000000) {
+                // Kripto Pariteler (1 Milyon USD Barajı)
+                if (vol > 1000000) {
                    const cleanCrypto = s.symbol.replace('-', '');
                    freshMap[cleanCrypto] = s.symbol; // BTCUSDT -> BTC-USDT
                    cryptoPairs.push({
@@ -761,13 +761,17 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK (Ne makro, ne mikro menzil varsa yoksay)
-        if (!dipDeviation && !tepeDeviation && !internalDeviation) {
-             console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
-             return null;
-        }
+        // KULLANICI EMRİ: Sweep Veto (İptal Edildi)
+        // if (!dipDeviation && !tepeDeviation && !internalDeviation) {
+        //      console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
+        //      return null;
+        // }
 
-        const direction = dipDeviation ? 'LONG' : (tepeDeviation ? 'SHORT' : internalDirection);
+        let direction = dipDeviation ? 'LONG' : (tepeDeviation ? 'SHORT' : internalDirection);
+        // Sweep olmadığı için yön boş kalmasın diye ana trend bazlı zorunlu yön tayini:
+        if (!direction) {
+            direction = currentPrice > curSma200 ? 'LONG' : 'SHORT';
+        }
 
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
@@ -806,6 +810,10 @@ async function analyzeCoin(symbolInfo) {
             qualityScore += 22;
             warnings.push("Sub-Range OTE Bouncing (+22)");
         }
+
+        // MAHKUMLAR AFFEDİLDİ: Sırf radara girebildiği için Şartsız Joker (+15)
+        qualityScore += 15;
+        warnings.push("Şartsız Analiz Jokeri (+15)");
 
         // 1. ZEMIN / BÖLGE SLOTU (Max +40)
         const trapObZone = direction === 'LONG' ? [rangeLow - (avgATR * 1.5), rangeLow + (avgATR * 1.5)] : [rangeHigh - (avgATR * 1.5), rangeHigh + (avgATR * 1.5)];
