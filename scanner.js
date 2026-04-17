@@ -710,21 +710,68 @@ async function analyzeCoin(symbolInfo) {
             tepeDeviation = true; // BTC ve ETH Ayı iken aşağı çöküşe (SHORT) sonsuz güven!
         }
 
-        // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK
-        if (!dipDeviation && !tepeDeviation) {
+        // --- ADX ve RVOL (Hacim) Çekimi ---
+        const trapAdxRes = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
+        const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
+        const trapIsRangingLimit = trapCurrentADX < 20;
+
+        const currentVol = volumes[volumes.length - 1] || 0;
+        const avgVol = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
+        const rvol = currentVol / (avgVol || 1);
+
+        // 🚀 RANGE ORTASI (Sub-Range OTE Bouncing) v6.1 KONTROLÜ 🚀
+        // Gemini & Perplexity Modeli: Sıkışan piyasada %61.8 Fib seviyesinden sekip, hacimli reddedilme yakalaması.
+        let internalDeviation = false;
+        let internalDirection = '';
+        let internalTarget = 0;
+        let internalStop = 0;
+
+        const subLows = lows.slice(-20);
+        const subHighs = highs.slice(-20);
+        const subRangeLow = Math.min(...subLows);
+        const subRangeHigh = Math.max(...subHighs);
+        const subRangeMiddle = (subRangeHigh + subRangeLow) / 2;
+        const eqDistance = Math.abs(currentPrice - subRangeMiddle) / currentPrice;
+
+        if (eqDistance < 0.015 && trapCurrentADX < 25) {
+            // SHORT OTE (Range'in üst %61.8 bölgesi)
+            const oteShort = subRangeLow + (subRangeHigh - subRangeLow) * 0.618;
+            if (currentPrice >= oteShort && currentPrice < subRangeHigh && rvol > 1.2) {
+                const wickSize = highs[highs.length - 1] - Math.max(opens[opens.length - 1], currentPrice);
+                const bodySize = Math.abs(currentPrice - opens[opens.length - 1]) || 0.0001;
+                if (wickSize > bodySize * 1.5) {
+                    internalDeviation = true;
+                    internalDirection = 'SHORT';
+                    internalTarget = subRangeLow; // Karşı uca vur kaç
+                    internalStop = subRangeHigh * 1.005; // Zirveyi kırarsa kaç (Max 8h time limit simulation)
+                }
+            }
+            
+            // LONG OTE (Range'in alt %38.2 bölgesi)
+            const oteLong = subRangeLow + (subRangeHigh - subRangeLow) * 0.382;
+            if (currentPrice <= oteLong && currentPrice > subRangeLow && rvol > 1.2) {
+                const wickSize = Math.min(opens[opens.length - 1], currentPrice) - lows[lows.length - 1];
+                const bodySize = Math.abs(currentPrice - opens[opens.length - 1]) || 0.0001;
+                if (wickSize > bodySize * 1.5) {
+                    internalDeviation = true;
+                    internalDirection = 'LONG';
+                    internalTarget = subRangeHigh; // Karşı uca vur kaç
+                    internalStop = subRangeLow * 0.995; // Dibi kırarsa kaç (Max 8h time limit simulation)
+                }
+            }
+        }
+
+        // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK (Ne makro, ne mikro menzil varsa yoksay)
+        if (!dipDeviation && !tepeDeviation && !internalDeviation) {
              console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
              return null;
         }
 
-        const direction = dipDeviation ? 'LONG' : 'SHORT';
+        const direction = dipDeviation ? 'LONG' : (tepeDeviation ? 'SHORT' : internalDirection);
 
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
-        
-        // ADX Hesaplama (Ranging Limit tespiti)
-        const trapAdxRes = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
-        const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
-        const trapIsRangingLimit = trapCurrentADX < 20;
+
 
         // Ranging Makro Çatışması Hard-Block İptal Edildi (Kullanıcı İsteği: Skor Cezası Olarak Hesaplanacak)
         // Eğer piyasa ADX<20 altında ve trende tersse, Zodyak Puanlamasında Toplam -25 Puan ceza yiyecek.
@@ -752,7 +799,13 @@ async function analyzeCoin(symbolInfo) {
         // --- SKORLAMA (SCORING) ALTYAPISI (ZODYAK V2.9.0) ---
         let qualityScore = 0;
         let warnings = [];
-        let breakdown = { ob: false, fvg: false, rvol: 0, adx: 0, rr: 0, trend4h: "neutral", globalVol: globalVol };
+        let breakdown = { ob: false, fvg: false, rvol: rvol, adx: trapCurrentADX, rr: 0, trend4h: "neutral", globalVol: globalVol };
+
+        // Sub-Range OTE Bouncing Puan Ödülü Tarafından
+        if (internalDeviation) {
+            qualityScore += 22;
+            warnings.push("Sub-Range OTE Bouncing (+22)");
+        }
 
         // 1. ZEMIN / BÖLGE SLOTU (Max +40)
         const trapObZone = direction === 'LONG' ? [rangeLow - (avgATR * 1.5), rangeLow + (avgATR * 1.5)] : [rangeHigh - (avgATR * 1.5), rangeHigh + (avgATR * 1.5)];
