@@ -1001,9 +1001,9 @@ async function analyzeCoin(symbolInfo) {
         // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
         // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 45 - 60 Puan Arası)
-        if (qualityScore < 45 || qualityScore > 75) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 45) | Neden: Skor Yetersiz Veya FOMO`);
-            return null; // FOMO tuzağına (>75) veya kalitesiz formasyona (<45) girme!
+        if (qualityScore < 45 || qualityScore > 60) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 45-60) | Neden: Skor Yetersiz Veya FOMO`);
+            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<45) girme!
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
