@@ -1232,9 +1232,11 @@ async function analyzeCoin(symbolInfo) {
 
         // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 45 (Ticari Hacmi Koruma Refleksi)
         if (direction === 'LONG' && qualityScore < 45) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: LONG | Puan: ${qualityScore} (Baraj: 45)`);
             return null;
         }
         if (direction === 'SHORT' && qualityScore < 45) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: SHORT | Puan: ${qualityScore} (Baraj: 45)`);
             return null;
         }
 
