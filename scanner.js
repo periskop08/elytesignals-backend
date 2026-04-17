@@ -858,7 +858,7 @@ async function analyzeCoin(symbolInfo) {
         let isEngulfing = false;
 
         if (direction === 'LONG' && dipDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
-        if (direction === 'SHORT' && peakDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
+        if (direction === 'SHORT' && tepeDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
         if (isKillerWick) { triggerScore = Math.max(triggerScore, 20); warnings.push("Tetik: Katil Fitil (+20)"); }
 
         const currentOpen = opens[opens.length - 1];
