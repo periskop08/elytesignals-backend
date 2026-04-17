@@ -1220,16 +1220,16 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 55 (Ticari Hacmi Koruma Refleksi)
-        if (direction === 'LONG' && qualityScore < 55) {
+        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 45 (Ticari Hacmi Koruma Refleksi)
+        if (direction === 'LONG' && qualityScore < 45) {
             return null;
         }
-        if (direction === 'SHORT' && qualityScore < 55) {
+        if (direction === 'SHORT' && qualityScore < 45) {
             return null;
         }
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 55) {
+        if (qualityScore >= 45) {
             const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
@@ -1237,7 +1237,7 @@ async function analyzeCoin(symbolInfo) {
             }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 55) {
+            if (qualityScore < 45) {
                 console.log(`[VETO] ${sym} işlemi Demir Bey'in (Sığ Tahta / Yüksek Spread) cezasıyla sisteme sokulmadı.`);
                 return null;
             }
