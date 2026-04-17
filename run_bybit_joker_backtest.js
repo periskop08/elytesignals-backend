@@ -13,7 +13,7 @@ async function getTopPairsByBit(limit) {
 
 async function fetchBybitCandles(symbol, limit) {
     try {
-        const res = await axios.get(\`https://api.bybit.com/v5/market/kline?category=linear&symbol=\${symbol}&interval=60&limit=\${limit}\`);
+        const res = await axios.get(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=60&limit=${limit}`);
         if (!res.data || !res.data.result || !res.data.result.list) return null;
         let list = res.data.result.list.map(k => ({
             time: parseInt(k[0]), open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]), volume: parseFloat(k[5])
@@ -206,7 +206,7 @@ async function run() {
                 else if (t.outcome === 'LOSS') { stats.buckets[b].loss++; stats.buckets[b].count++; }
             });
         });
-        process.stdout.write(\`Processed \${Math.min(i + batchSize, pairs.length)}/\${pairs.length} coins...\\n\`);
+        process.stdout.write(`Processed ${Math.min(i + batchSize, pairs.length)}/${pairs.length} coins...\n`);
     }
     
     let baseCapital = 500;
@@ -215,7 +215,7 @@ async function run() {
     let totalWins = 0; let totalLosses = 0;
 
     let outputStr = "=== ELYTE MATRIS (JOKER BATCH) BYBIT BACKTEST RAPORU ===\n";
-    outputStr += \`Total Signals Detected: \${stats.total}\n\n\`;
+    outputStr += `Total Signals Detected: ${stats.total}\n\n`;
 
     for (const [bracket, data] of Object.entries(stats.buckets)) {
         if (data.count === 0) continue;
@@ -227,17 +227,17 @@ async function run() {
         const profit = (data.win * 37.5) - (data.loss * 25);
         expectedPnL += profit;
         
-        outputStr += \`[Puan Aralığı: \${bracket}]\n\`;
-        outputStr += \`- Sinyal Sayısı: \${data.count} | Win: \${data.win} | Loss: \${data.loss}\n\`;
-        outputStr += \`- Win Rate: %\${winRate} | Projected PnL: $\${profit.toFixed(2)}\n\n\`;
+        outputStr += `[Puan Aralığı: ${bracket}]\n`;
+        outputStr += `- Sinyal Sayısı: ${data.count} | Win: ${data.win} | Loss: ${data.loss}\n`;
+        outputStr += `- Win Rate: %${winRate} | Projected PnL: $${profit.toFixed(2)}\n\n`;
     }
     
     const overallWinRate = totalWins+totalLosses > 0 ? ((totalWins / (totalWins+totalLosses))*100).toFixed(2) : 0;
-    outputStr += \`───────────────────────────────────────\n\`;
-    outputStr += \`FINAL NET KAR/ZARAR: $\${expectedPnL.toFixed(2)}\n\`;
-    outputStr += \`FON KASASI DEĞİŞİMİ: 500$ -> $\${(initialCapital + expectedPnL).toFixed(2)}\n\`;
-    outputStr += \`GENEL WIN RATE: %\${overallWinRate}\n\`;
-    outputStr += \`───────────────────────────────────────\n\`;
+    outputStr += `───────────────────────────────────────\n`;
+    outputStr += `FINAL NET KAR/ZARAR: $${expectedPnL.toFixed(2)}\n`;
+    outputStr += `FON KASASI DEĞİŞİMİ: 500$ -> $${(initialCapital + expectedPnL).toFixed(2)}\n`;
+    outputStr += `GENEL WIN RATE: %${overallWinRate}\n`;
+    outputStr += `───────────────────────────────────────\n`;
     console.log(outputStr);
 
 }
