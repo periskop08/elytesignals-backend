@@ -763,8 +763,8 @@ async function analyzeCoin(symbolInfo) {
 
         // SWEEP VEYA BREAKOUT YOKSA IŞLEM YOK (Ne makro, ne mikro menzil varsa yoksay)
         if (!dipDeviation && !tepeDeviation && !internalDeviation) {
-            qualityScore -= 10;
-            warnings.push("No Sweep - Ranging Caution (-10)");
+             console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
+             return null;
         }
 
         const direction = dipDeviation ? 'LONG' : (tepeDeviation ? 'SHORT' : internalDirection);
@@ -984,9 +984,9 @@ async function analyzeCoin(symbolInfo) {
         // Daima logla ki neden takıldığını görelim
         console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
-        // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 42 - 60 Puan Arası)
-        if (qualityScore < 42 || qualityScore > 60) {
-            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<42) girme!
+        // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 45 - 60 Puan Arası)
+        if (qualityScore < 45 || qualityScore > 60) {
+            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<45) girme!
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
@@ -1220,16 +1220,16 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'LONG' && qualityScore < 55) return null;
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
-        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 42 (Ticari Hacmi Koruma Refleksi)
-        if (direction === 'LONG' && qualityScore < 42) {
+        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 45 (Ticari Hacmi Koruma Refleksi)
+        if (direction === 'LONG' && qualityScore < 45) {
             return null;
         }
-        if (direction === 'SHORT' && qualityScore < 42) {
+        if (direction === 'SHORT' && qualityScore < 45) {
             return null;
         }
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 42) {
+        if (qualityScore >= 45) {
             const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
@@ -1237,7 +1237,7 @@ async function analyzeCoin(symbolInfo) {
             }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 42) {
+            if (qualityScore < 45) {
                 console.log(`[VETO] ${sym} işlemi Demir Bey'in (Sığ Tahta / Yüksek Spread) cezasıyla sisteme sokulmadı.`);
                 return null;
             }
