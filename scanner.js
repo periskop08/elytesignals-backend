@@ -909,8 +909,8 @@ async function analyzeCoin(symbolInfo) {
 
         const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
-        if (currentADX >= 25) { qualityScore += 10; warnings.push("Makro: Sağlıklı ADX İvmesi (+10)"); }
-        else if (currentADX < 20) { qualityScore -= 10; warnings.push("Makro: ADX Testere (Ranging) Ceza (-10)"); }
+        if (currentADX >= 15) { qualityScore += 10; warnings.push("Makro: Sağlıklı ADX İvmesi (+10)"); }
+        else if (currentADX < 15) { qualityScore -= 10; warnings.push("Makro: ADX Testere (Ranging) Ceza (-10)"); }
 
         // 5. İNDİKATÖR MANTIĞI & CEZA HUKUKU
         const ichiRes = IchimokuCloud.calculate({ high: highs, low: lows, conversionPeriod: 9, basePeriod: 26, spanPeriod: 52, displacement: 26 });
@@ -1197,7 +1197,7 @@ async function analyzeCoin(symbolInfo) {
 
         // 2. Altın Üçgen Bonusu (Sinerji)
         let hasOrderBlock = warnings.some(w => w.includes('Order Block'));
-        let isStrongTrend = currentADX >= 25;
+        let isStrongTrend = currentADX >= 15;
         if (hasOrderBlock && checkFVG && isStrongTrend) {
             qualityScore += 10;
             warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
