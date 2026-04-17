@@ -870,9 +870,6 @@ async function analyzeCoin(symbolInfo) {
         }
         if (isSweep) { qualityScore += 15; warnings.push("Tuzak: Likidite Süpürmesi (Sweep) (+15)"); }
 
-        const currentVol = volumes[volumes.length - 1];
-        const vol20 = volumes.slice(-21, -1);
-        const avgVol = vol20.reduce((a, b) => a + b, 0) / 20;
         if ((direction === 'LONG' && currentClose < currentOpen && currentVol < avgVol * 0.5) || 
             (direction === 'SHORT' && currentClose > currentOpen && currentVol < avgVol * 0.5)) {
             qualityScore += 12; warnings.push("Tuzak: Volume Shelter (Hacim Kuruması) (+12)");
