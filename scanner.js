@@ -996,8 +996,9 @@ async function analyzeCoin(symbolInfo) {
         console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
         // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 45 - 60 Puan Arası)
-        if (qualityScore < 45 || qualityScore > 60) {
-            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<45) girme!
+        if (qualityScore < 45 || qualityScore > 75) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 45) | Neden: Skor Yetersiz Veya FOMO`);
+            return null; // FOMO tuzağına (>75) veya kalitesiz formasyona (<45) girme!
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
@@ -1232,14 +1233,7 @@ async function analyzeCoin(symbolInfo) {
         // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
 
         // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 45 (Ticari Hacmi Koruma Refleksi)
-        if (direction === 'LONG' && qualityScore < 45) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: LONG | Puan: ${qualityScore} (Baraj: 45)`);
-            return null;
-        }
-        if (direction === 'SHORT' && qualityScore < 45) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: SHORT | Puan: ${qualityScore} (Baraj: 45)`);
-            return null;
-        }
+        // (Bu kontrol kodun üst kısmına [SKOR-ELENDI] logu ile birleştirilerek taşındı)
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
         if (qualityScore >= 45) {
