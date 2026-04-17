@@ -733,7 +733,7 @@ async function analyzeCoin(symbolInfo) {
         const subRangeMiddle = (subRangeHigh + subRangeLow) / 2;
         const eqDistance = Math.abs(currentPrice - subRangeMiddle) / currentPrice;
 
-        if (eqDistance < 0.015 && trapCurrentADX < 25) {
+        if (trapCurrentADX < 25) { // eqDistance kısıtlaması kaldırıldı, sadece Ranging Limit (ADX<25) yeterli
             // SHORT OTE (Range'in üst %61.8 bölgesi)
             const oteShort = subRangeLow + (subRangeHigh - subRangeLow) * 0.618;
             if (highs[highs.length - 1] >= oteShort && currentPrice < subRangeHigh && rvol > 1.2) {
