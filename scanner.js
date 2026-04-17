@@ -807,6 +807,12 @@ async function analyzeCoin(symbolInfo) {
             warnings.push("Sub-Range OTE Bouncing (+22)");
         }
 
+        // KULLANICI JOKERİ: Sweep/Deviation Yakalayana Şartsız +15 Puan
+        if (dipDeviation || tepeDeviation || internalDeviation) {
+            qualityScore += 15;
+            warnings.push("Tetik: Kusursuz Sweep Jokeri (+15)");
+        }
+
         // 1. ZEMIN / BÖLGE SLOTU (Max +40)
         const trapObZone = direction === 'LONG' ? [rangeLow - (avgATR * 1.5), rangeLow + (avgATR * 1.5)] : [rangeHigh - (avgATR * 1.5), rangeHigh + (avgATR * 1.5)];
         const trapObCandlesStart = closes.length - CONFIG.obLookback - 6;
