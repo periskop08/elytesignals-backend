@@ -921,9 +921,9 @@ async function analyzeCoin(symbolInfo) {
             }
         }
         
-        // 200 SMA ANA TREND ÇATIŞMASI CEZASI (Kullanıcı İsteği: -25 Puan)
-        if (direction === 'LONG' && currentPrice < curSma200) { qualityScore -= 25; warnings.push("Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-25)"); }
-        else if (direction === 'SHORT' && currentPrice > curSma200) { qualityScore -= 25; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-25)"); }
+        // 200 SMA ANA TREND ÇATIŞMASI CEZASI (Optimize: -15 Puan)
+        if (direction === 'LONG' && currentPrice < curSma200) { qualityScore -= 15; warnings.push("Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-15)"); }
+        else if (direction === 'SHORT' && currentPrice > curSma200) { qualityScore -= 15; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-15)"); }
 
         let trend4h = "neutral";
         try {
@@ -945,8 +945,8 @@ async function analyzeCoin(symbolInfo) {
 
         const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
-        if (currentADX >= 15) { qualityScore += 10; warnings.push("Makro: Sağlıklı ADX İvmesi (+10)"); }
-        else if (currentADX < 15) { qualityScore -= 10; warnings.push("Makro: ADX Testere (Ranging) Ceza (-10)"); }
+        if (currentADX >= 20) { qualityScore += 10; warnings.push("Makro: Sağlıklı ADX İvmesi (+10)"); }
+        else if (currentADX < 20) { qualityScore += 12; warnings.push("🟢 Range Mean Reversion (+12)"); }
 
         // 5. İNDİKATÖR MANTIĞI & CEZA HUKUKU
         const ichiRes = IchimokuCloud.calculate({ high: highs, low: lows, conversionPeriod: 9, basePeriod: 26, spanPeriod: 52, displacement: 26 });
@@ -1022,9 +1022,9 @@ async function analyzeCoin(symbolInfo) {
             return null;
         }
         
-        // Zodyak Altın Kesişim Limiti (Baraj: Sadece 60 ve Üzeri Elite Kurulumlar)
-        if (qualityScore < 60) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 60+) | Neden: Skor Yetersiz`);
+        // Zodyak Altın Kesişim Limiti (Baraj: Sadece 48 ve Üzeri Elite Kurulumlar)
+        if (qualityScore < 48) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 48+) | Neden: Skor Yetersiz`);
             return null; // Elit puan limitinin altında kalanları reddet
         }
 
@@ -1285,7 +1285,7 @@ async function analyzeCoin(symbolInfo) {
         // (Bu kontrol kodun üst kısmına [SKOR-ELENDI] logu ile birleştirilerek taşındı)
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 60) {
+        if (qualityScore >= 48) {
             const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
@@ -1293,8 +1293,8 @@ async function analyzeCoin(symbolInfo) {
             }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 60) {
-                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (60+) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
+            if (qualityScore < 48) {
+                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (48+) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
                 return null;
             }
         }
