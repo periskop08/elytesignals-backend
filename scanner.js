@@ -270,7 +270,7 @@ async function getUsdtPairsAndAssets() {
     try {
         const response = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
         const symbols = response.data.data;
-        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT', 'NXPC-USDT'];
+        const ignoredStables = ['USDC-USDT', 'USD1-USDT', 'USDE-USDT', 'BUSD-USDT', 'TUSD-USDT', 'FDUSD-USDT', 'EUR-USDT', 'DAI-USDT', 'USTC-USDT', 'PYUSD-USDT', 'CRCLX-USDT', 'NXPC-USDT', 'PAXG-USDT', 'XAUT-USDT'];
         
         let cryptoPairs = [];
         let tradFiAssets = [];
