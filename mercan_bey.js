@@ -48,7 +48,7 @@ async function fireMercanBey(symbol, type, diffPercentage) {
         return; 
     }
     
-    // Eski deklarasyonlar silindi (yukarı taşındığı için)
+    console.log(`[MERCAN_BEY] Anomali fırlatıldı! ${symbol} (${moveDesc}). Hacim kontrol ediliyor...`);
 
     let volumeUsd = 0;
     try {
