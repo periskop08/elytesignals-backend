@@ -239,7 +239,7 @@ app.get('/api/shadow-stats', async (req, res) => {
 app.get('/api/signals/stats', async (req, res) => {
   try {
     const days = req.query.days ? parseInt(req.query.days) : null;
-    const ZODYAK_MILESTONE = "'2026-04-16 20:50:00'"; // ZODYAK SIFIRLAMA NOKTASI
+    const ZODYAK_MILESTONE = "'2026-04-18 16:00:00'"; // YENİ ZODYAK 1:2 R:R (NİSAN GÜNCELLEMESİ) SIFIRLAMA NOKTASI
     let timeFilter = ` AND createdAt >= ${ZODYAK_MILESTONE}`;
     if (days) {
          timeFilter += ` AND createdAt >= datetime('now', '-${days} days')`;
