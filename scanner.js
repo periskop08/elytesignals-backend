@@ -906,6 +906,10 @@ async function analyzeCoin(symbolInfo) {
                 }
             }
         }
+        
+        // 200 SMA ANA TREND ÇATIŞMASI CEZASI (Kullanıcı İsteği: -25 Puan)
+        if (direction === 'LONG' && currentPrice < curSma200) { qualityScore -= 25; warnings.push("Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-25)"); }
+        else if (direction === 'SHORT' && currentPrice > curSma200) { qualityScore -= 25; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-25)"); }
 
         let trend4h = "neutral";
         try {
