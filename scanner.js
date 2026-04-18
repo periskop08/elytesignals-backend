@@ -898,11 +898,11 @@ async function analyzeCoin(symbolInfo) {
             const btc1d = globalMarketState.btc1dObj;
             if (btc1d) {
                 if (direction === 'LONG') {
-                    if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore += 15; warnings.push("Makro: BTC Uyumlu Trend (+15)"); }
-                    else if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore -= 15; warnings.push("Makro: BTC Zıt Yön Ceza (-15)"); }
+                    if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
+                    else if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 } else {
-                    if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore += 15; warnings.push("Makro: BTC Uyumlu Trend (+15)"); }
-                    else if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore -= 15; warnings.push("Makro: BTC Zıt Yön Ceza (-15)"); }
+                    if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
+                    else if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 }
             }
         }
@@ -946,10 +946,8 @@ async function analyzeCoin(symbolInfo) {
             const lastStoch = stochRSIRes[stochRSIRes.length - 1];
             if (direction === 'LONG') {
                 if (lastStoch.k > 80) { qualityScore -= 10; warnings.push("İndikatör: StochRSI Aşırı Alım FOMO Cezası (-10)"); }
-                else if (lastStoch.k < 20) { qualityScore += 5; warnings.push("İndikatör: StochRSI Dip Kalkışı Teşvik (+5)"); }
             } else if (direction === 'SHORT') {
                 if (lastStoch.k < 20) { qualityScore -= 10; warnings.push("İndikatör: StochRSI Aşırı Satım FOMO Cezası (-10)"); }
-                else if (lastStoch.k > 80) { qualityScore += 5; warnings.push("İndikatör: StochRSI Zirve Dönüşü Teşvik (+5)"); }
             }
         }
 
