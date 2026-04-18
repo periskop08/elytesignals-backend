@@ -1000,10 +1000,10 @@ async function analyzeCoin(symbolInfo) {
         // Daima logla ki neden takıldığını görelim
         // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
         
-        // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 45 - 60 Puan Arası)
-        if (qualityScore < 45 || qualityScore > 60) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 45-60) | Neden: Skor Yetersiz Veya FOMO`);
-            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<45) girme!
+        // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 50 - 60 Puan Arası)
+        if (qualityScore < 50 || qualityScore > 60) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 50-60) | Neden: Skor Yetersiz Veya FOMO`);
+            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<50) girme!
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
@@ -1241,7 +1241,7 @@ async function analyzeCoin(symbolInfo) {
         // (Bu kontrol kodun üst kısmına [SKOR-ELENDI] logu ile birleştirilerek taşındı)
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 45) {
+        if (qualityScore >= 50) {
             const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
@@ -1249,8 +1249,8 @@ async function analyzeCoin(symbolInfo) {
             }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 45 || qualityScore > 60) {
-                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (45-60) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
+            if (qualityScore < 50 || qualityScore > 60) {
+                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (50-60) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
                 return null;
             }
         }
