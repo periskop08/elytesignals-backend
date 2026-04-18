@@ -1040,8 +1040,8 @@ async function analyzeCoin(symbolInfo) {
             dynamicStop = currentPrice - (currentATR * slMultiplier);
             risk = currentPrice - dynamicStop;
 
-            // Varsayılan Hedef: 1:1.5 Risk Ödül Oranı
-            targetP = currentPrice + (risk * 1.5);
+            // Varsayılan Hedef: 1:2 Risk Ödül Oranı (10$ Risk = 20$ Kazanç)
+            targetP = currentPrice + (risk * 2.0);
 
             // Hisselerde Gap Fill Hedefi
             if (hasGap && gapTarget > currentPrice) {
@@ -1056,19 +1056,19 @@ async function analyzeCoin(symbolInfo) {
 
             reward = targetP - currentPrice;
 
-            // 1:3 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
-            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
+            // 1:2 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
+            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 2.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice + reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:2 Max)');
             }
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
             risk = dynamicStop - currentPrice;
 
-            // Varsayılan Hedef: 1:1.5 Risk Ödül Oranı
-            targetP = currentPrice - (risk * 1.5);
+            // Varsayılan Hedef: 1:2 Risk Ödül Oranı (10$ Risk = 20$ Kazanç)
+            targetP = currentPrice - (risk * 2.0);
 
             if (hasGap && gapTarget < currentPrice) {
                 targetP = gapTarget;
@@ -1081,12 +1081,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = currentPrice - targetP;
 
-            // 1:3 R:R Cap veya Ranging Limit 1.0R
-            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 3.0);
+            // 1:2 R:R Cap veya Ranging Limit 1.0R
+            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 2.0);
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice - reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:3 Max)');
+                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:2 Max)');
             }
         }
 
