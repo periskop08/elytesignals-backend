@@ -1018,7 +1018,7 @@ async function analyzeCoin(symbolInfo) {
 
         // +--- ANA STRATEJİ KİLİDİ (SADECE KUSURSUZ SWEEP ONAYI ŞART) ---+
         if (!isSweep) {
-            console.log(`[STRA-VETO] ${sym} | Yön: ${direction} | Neden: Kusursuz Likidite Süpürmesi (Sweep) onayı yok. Range ortası ve Salt Momentum sinyalleri reddedildi.`);
+            // console.log(`[STRA-VETO] ${sym} | Yön: ${direction} | Neden: Kusursuz Likidite Süpürmesi (Sweep) onayı yok. Range ortası ve Salt Momentum sinyalleri reddedildi.`);
             return null;
         }
         
