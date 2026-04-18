@@ -999,6 +999,12 @@ async function analyzeCoin(symbolInfo) {
 
         // Daima logla ki neden takıldığını görelim
         // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
+
+        // +--- ANA STRATEJİ KİLİDİ (SWEEP VEYA RANGE EQ ONAYI ŞART) ---+
+        if (!isSweep && !internalDeviation) {
+            console.log(`[STRA-VETO] ${sym} | Yön: ${direction} | Neden: Likidite Süpürmesi (Sweep) veya Range Ortası (EQ/OTE) onayı yok. Salt momentum/golden cross sinyalleri reddedildi.`);
+            return null;
+        }
         
         // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 50 - 60 Puan Arası)
         if (qualityScore < 50 || qualityScore > 60) {
