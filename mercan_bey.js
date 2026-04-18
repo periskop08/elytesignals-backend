@@ -20,23 +20,35 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 }
 
-// Global hafıza: Aynı coini tekrar tekrar araştırmayı engeller (12 saat cache)
+// Global hafıza: Aynı coini tekrar tekrar araştırmayı engeller (12 saat cache), eski raporu verir
 const memoryCache = {};
 
 async function fireMercanBey(symbol, type, diffPercentage) {
     const cacheKey = `${symbol}_${type}`;
-    // Eğer bu coin son 12 saat içerisinde araştırılmışsa pas geç
-    if (memoryCache[cacheKey] && (Date.now() - memoryCache[cacheKey] < 12 * 60 * 60 * 1000)) {
-        return; 
-    }
-    
-    // Hafızaya yaz
-    memoryCache[cacheKey] = Date.now();
     
     const diffFmt = (diffPercentage * 100).toFixed(2);
     const moveDesc = type === 'PUMP' ? `Aşırı Alış (Pump) +%${diffFmt}` : `Aşırı Satış (Dump) -%${Math.abs(diffFmt)}`;
+
+    // Eğer bu coin son 12 saat içerisinde araştırılmışsa yapay zekaya sormadan ARŞİV'den ver
+    if (memoryCache[cacheKey] && (Date.now() - memoryCache[cacheKey].time < 12 * 60 * 60 * 1000)) {
+        console.log(`[MERCAN_BEY] Hafıza devreye girdi. ${symbol} için önbellekten rapor gönderiliyor...`);
+        const cachedData = memoryCache[cacheKey];
+        
+        if (cachedData.isShort) {
+            const shortMsg = `🚨 *ANOMALİ TESPİT EDİLDİ:* #${symbol}\n📉 *Hareket:* ${moveDesc}\n\n📌 _[Arşiv Hafızası]: Hareket %30'u veya hacim 100M$'ı aşmadığı için yapay zeka araştırması devredışı bırakıldı._`;
+            if (bot && process.env.TELEGRAM_VIP_GROUP_ID) {
+                await bot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, shortMsg, { parse_mode: 'Markdown' });
+            }
+        } else {
+            const msg = `🕵️‍♂️ *Mercan Bey (ARŞİV RAPORU)*\n\n🚨 *TEKRARLAYAN ANOMALİ:* #${symbol}\n📉 *Hareket:* ${moveDesc}\n\n📝 *Önceki Araştırma Raporu:*\n${cachedData.aiReport}`;
+            if (bot && process.env.TELEGRAM_VIP_GROUP_ID) {
+                await bot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, msg, { parse_mode: 'Markdown' });
+            }
+        }
+        return; 
+    }
     
-    console.log(`[MERCAN_BEY] Anomali fırlatıldı! ${symbol} (${moveDesc}). Hacim kontrol ediliyor...`);
+    // Eski deklarasyonlar silindi (yukarı taşındığı için)
 
     let volumeUsd = 0;
     try {
@@ -54,6 +66,10 @@ async function fireMercanBey(symbol, type, diffPercentage) {
     if (!requiresAI) {
         let volText = volumeUsd > 0 ? `$${(volumeUsd/1000000).toFixed(1)}M` : 'Bilinmiyor';
         const shortMsg = `🚨 *ANOMALİ TESPİT EDİLDİ:* #${symbol}\n📉 *Hareket:* ${moveDesc}\n💰 *Hacim:* ${volText}\n\n📌 _Hareket %30'u veya hacim 100M$'ı aşmadığı için yapay zeka araştırması devredışı bırakıldı._`;
+        
+        // Kısa durumu hafızaya al
+        memoryCache[cacheKey] = { time: Date.now(), isShort: true };
+
         if (bot && process.env.TELEGRAM_VIP_GROUP_ID) {
             await bot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, shortMsg, { parse_mode: 'Markdown' });
             console.log(`[MERCAN_BEY] Hızlı rapor başarıyla iletildi (${symbol}).`);
@@ -76,7 +92,9 @@ KURAL 2: Eğer somut bir veri veya haber bulursan, 3 veya 4 cümlelik çok net, 
         let responseText = result.response.text().trim();
 
         // Fazladan referans/dipnot linkleri eklenmişse temizleyebiliriz ama genelde faydalıdır.
-        
+        // Uzun raporu hafızaya al
+        memoryCache[cacheKey] = { time: Date.now(), isShort: false, aiReport: responseText };
+
         const msg = `🕵️‍♂️ *Mercan Bey (İstihbarat Hafiyesi)*\n\n🚨 *ANOMALİ TESPİT EDİLDİ:* #${symbol}\n📉 *Hareket:* ${moveDesc}\n\n📝 *Araştırma Raporu:*\n${responseText}`;
         
         if (bot && process.env.TELEGRAM_VIP_GROUP_ID) {
