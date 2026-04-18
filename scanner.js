@@ -796,11 +796,11 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
-        if (direction === 'LONG' && globalVol < 5000000) {
+        if (direction === 'LONG' && globalVol < 4000000) {
             console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (LONG: ${globalVol})`);
             return null;
         }
-        if (direction === 'SHORT' && globalVol < 3000000) {
+        if (direction === 'SHORT' && globalVol < 2000000) {
             console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (SHORT: ${globalVol})`);
             return null;
         }
@@ -1004,10 +1004,10 @@ async function analyzeCoin(symbolInfo) {
             return null;
         }
         
-        // Zodyak Altın Kesişim Limiti (Kullanıcı & Backtest Onaylı: 50 - 60 Puan Arası)
-        if (qualityScore < 50 || qualityScore > 60) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 50-60) | Neden: Skor Yetersiz Veya FOMO`);
-            return null; // FOMO tuzağına (>60) veya kalitesiz formasyona (<50) girme!
+        // Zodyak Altın Kesişim Limiti (Baraj: Sadece 60 ve Üzeri Elite Kurulumlar)
+        if (qualityScore < 60) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 60+) | Neden: Skor Yetersiz`);
+            return null; // Elit puan limitinin altında kalanları reddet
         }
 
         // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
@@ -1245,7 +1245,7 @@ async function analyzeCoin(symbolInfo) {
         // (Bu kontrol kodun üst kısmına [SKOR-ELENDI] logu ile birleştirilerek taşındı)
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 50) {
+        if (qualityScore >= 60) {
             const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
@@ -1253,8 +1253,8 @@ async function analyzeCoin(symbolInfo) {
             }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 50 || qualityScore > 60) {
-                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (50-60) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
+            if (qualityScore < 60) {
+                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (60+) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
                 return null;
             }
         }
