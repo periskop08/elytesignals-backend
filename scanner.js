@@ -1349,12 +1349,12 @@ async function runScan() {
 
             const signal = await analyzeCoin(symbolInfo);
             if (signal) {
-                // +--- 24H COOLDOWN CHECK (AYNI YÖN SPAM KORUMASI) ---+
-                const recentSameDirection = await db.get("SELECT id FROM signals WHERE symbol = ? AND type = ? AND createdAt >= datetime('now', '-24 hours')", [symbol, signal.type]);
+                // +--- 24H COOLDOWN CHECK (AYNI YÖN SPAM KORUMASI) [GEÇİCİ OLARAK İPTAL] ---+
+                /* const recentSameDirection = await db.get("SELECT id FROM signals WHERE symbol = ? AND type = ? AND createdAt >= datetime('now', '-24 hours')", [symbol, signal.type]);
                 if (recentSameDirection) {
                     console.log(`[COOLDOWN VETO] ${symbol} coininden son 24 saat içinde zaten bir ${signal.type} sinyali verildi. Aşırı işlem yığılması engellendi.`);
                     continue;
-                }
+                } */
                 let formattedVol = '-';
                 if (signal.breakdown && signal.breakdown.globalVol) {
                     formattedVol = (signal.breakdown.globalVol / 1000000).toFixed(1) + 'M';
