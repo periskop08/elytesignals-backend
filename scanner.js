@@ -998,9 +998,9 @@ async function analyzeCoin(symbolInfo) {
         // Daima logla ki neden takıldığını görelim
         // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
 
-        // +--- ANA STRATEJİ KİLİDİ (SWEEP VEYA RANGE EQ ONAYI ŞART) ---+
-        if (!isSweep && !internalDeviation) {
-            console.log(`[STRA-VETO] ${sym} | Yön: ${direction} | Neden: Likidite Süpürmesi (Sweep) veya Range Ortası (EQ/OTE) onayı yok. Salt momentum/golden cross sinyalleri reddedildi.`);
+        // +--- ANA STRATEJİ KİLİDİ (SADECE KUSURSUZ SWEEP ONAYI ŞART) ---+
+        if (!isSweep) {
+            console.log(`[STRA-VETO] ${sym} | Yön: ${direction} | Neden: Kusursuz Likidite Süpürmesi (Sweep) onayı yok. Range ortası ve Salt Momentum sinyalleri reddedildi.`);
             return null;
         }
         
