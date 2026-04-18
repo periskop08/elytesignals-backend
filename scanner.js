@@ -1048,13 +1048,7 @@ async function analyzeCoin(symbolInfo) {
             }
         }
 
-        if (internalDeviation) {
-            // Range Ortası Özel Dinamik Hedefleme (Hızlı Kapama Modeli)
-            targetP = internalTarget;
-            dynamicStop = internalStop;
-            risk = Math.abs(currentPrice - dynamicStop);
-            reward = Math.abs(targetP - currentPrice);
-        } else if (direction === 'LONG') {
+        if (direction === 'LONG') {
             dynamicStop = currentPrice - (currentATR * slMultiplier);
             risk = currentPrice - dynamicStop;
 
