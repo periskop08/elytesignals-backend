@@ -643,6 +643,20 @@ async function analyzeCoin(symbolInfo) {
         const volumes = klines.map(k => k.volume);
 
         const currentPrice = closes[closes.length - 1];
+
+        // --- 5-MUM FRACTAL SWING (CHoCH) TESPİTİ ---
+        let swingHighs = [];
+        let swingLows = [];
+        for (let i = 2; i < highs.length - 2; i++) {
+            if (highs[i] > highs[i-2] && highs[i] > highs[i-1] && 
+                highs[i] > highs[i+1] && highs[i] > highs[i+2]) {
+                swingHighs.push({index: i, price: highs[i]});
+            }
+            if (lows[i] < lows[i-2] && lows[i] < lows[i-1] && 
+                lows[i] < lows[i+1] && lows[i] < lows[i+2]) {
+                swingLows.push({index: i, price: lows[i]});
+            }
+        }
         const rangeHigh = Math.max(...highs);
         const rangeLow = Math.min(...lows);
         const eq = (rangeHigh + rangeLow) / 2;
@@ -1226,6 +1240,28 @@ async function analyzeCoin(symbolInfo) {
         if (hasOrderBlock && checkFVG && isStrongTrend) {
             qualityScore += 10;
             warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
+        }
+
+        // 3. CHoCH (CHANGE OF CHARACTER) WICK BREAK BONUSU
+        let checkCHoCH = false;
+        let signalRvol = (volumes[volumes.length - 1] / (volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20)) || 0;
+        
+        if (direction === 'LONG' && swingHighs.length > 0) {
+            const lastSwingHigh = swingHighs[swingHighs.length - 1]; 
+            // Wick Break (Fitil fırlaması) + Hacim Onayı (RVOL > 1.2)
+            if (highs[highs.length - 1] > lastSwingHigh.price && signalRvol > 1.2) {
+                qualityScore += 30;
+                warnings.push('Makro: Teyitli Bullish CHoCH (Wick Break) (+30)');
+                checkCHoCH = true;
+            }
+        } else if (direction === 'SHORT' && swingLows.length > 0) {
+            const lastSwingLow = swingLows[swingLows.length - 1]; 
+            // Wick Break (Fitil kırılımı) + Hacim Onayı (RVOL > 1.2)
+            if (lows[lows.length - 1] < lastSwingLow.price && signalRvol > 1.2) {
+                qualityScore += 30;
+                warnings.push('Makro: Teyitli Bearish CHoCH (Wick Break) (+30)');
+                checkCHoCH = true;
+            }
         }
         
         let hasSweepSynergy = warnings.some(w => w.includes('Liquidity Sweep'));
