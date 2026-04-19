@@ -288,6 +288,8 @@ app.get('/api/signals/stats', async (req, res) => {
     let totalProfit = 0;
     let totalWinPercentage = 0;
     let totalLossPercentage = 0;
+    let totalWinUsd = 0;
+    let totalLossUsd = 0;
 
     signals.forEach(s => {
         const entry = parseFloat(s.entryPrice);
@@ -310,15 +312,19 @@ app.get('/api/signals/stats', async (req, res) => {
 
         if (s.status === 'WIN') {
             wins++;
-            totalProfit += realNet !== null ? realNet : (RR * R); // Win gives RR * R OR real net
+            let winUsd = realNet !== null ? realNet : (RR * R);
+            totalWinUsd += winUsd;
+            totalProfit += winUsd;
             if (s.type === 'LONG') {
-                totalWinPercentage += ((target - entry) / entry) * 100 * 10;
+                totalWinPercentage += ((target - entry) / entry) * 100 * 20; // 20x for percentages if needed later
             } else {
-                totalWinPercentage += ((entry - target) / entry) * 100 * 10;
+                totalWinPercentage += ((entry - target) / entry) * 100 * 20;
             }
         } else if (s.status === 'LOSS') {
             losses++;
-            totalProfit += realNet !== null ? realNet : (-R); // Loss loses 1R OR real net
+            let lossUsd = realNet !== null ? realNet : (-R);
+            totalLossUsd += lossUsd;
+            totalProfit += lossUsd;
             if (s.type === 'LONG') {
                 totalLossPercentage += ((entry - stop) / entry) * 100 * 10;
             } else {
@@ -339,6 +345,8 @@ app.get('/api/signals/stats', async (req, res) => {
         totalProfit,
         totalWinPercentage,
         totalLossPercentage,
+        totalWinUsd,
+        totalLossUsd,
         winRate: (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0,
         activeLong,
         activeShort,
