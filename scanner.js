@@ -832,8 +832,13 @@ async function analyzeCoin(symbolInfo) {
 
         // Kullanıcı Emri: Şartsız Joker İptal Edildi. Yalnızca Sweep Varsa +15
         if (dipDeviation || tepeDeviation || internalDeviation) {
-            qualityScore += 15;
-            warnings.push("Tetik: Kusursuz Sweep Jokeri (+15)");
+            if (trapCurrentADX > 25) {
+                qualityScore += 7;
+                warnings.push("Tetik: Kusursuz Sweep Jokeri (Trend Baskısı Yarı Puan) (+7)");
+            } else {
+                qualityScore += 15;
+                warnings.push("Tetik: Kusursuz Sweep Jokeri (+15)");
+            }
         }
 
         // 1. ZEMIN / BÖLGE SLOTU (Max +40)
@@ -875,7 +880,12 @@ async function analyzeCoin(symbolInfo) {
 
         if (direction === 'LONG' && dipDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
         if (direction === 'SHORT' && tepeDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
-        if (isKillerWick) { triggerScore = Math.max(triggerScore, 20); warnings.push("Tetik: Katil Fitil (+20)"); }
+        if (isKillerWick) { 
+            let p = (trapCurrentADX > 25) ? 10 : 20;
+            triggerScore = Math.max(triggerScore, p); 
+            let warningText = p === 10 ? "Tetik: Katil Fitil (Trend Baskısı Yarı Puan) (+10)" : "Tetik: Katil Fitil (+20)";
+            warnings.push(warningText); 
+        }
 
         const currentOpen = opens[opens.length - 1];
         const currentClose = closes[closes.length - 1];
@@ -900,7 +910,12 @@ async function analyzeCoin(symbolInfo) {
             const maxHigh = Math.max(...highs.slice(sweepLookback, closes.length - 1));
             if (currentHigh > maxHigh && currentClose < maxHigh) isSweep = true;
         }
-        if (isSweep) { qualityScore += 15; warnings.push("Tuzak: Likidite Süpürmesi (Sweep) (+15)"); }
+        if (isSweep) { 
+            let p = (trapCurrentADX > 25) ? 7 : 15;
+            qualityScore += p; 
+            let warningText = p === 7 ? "Tuzak: Likidite Süpürmesi (Trend Baskısı Yarı Puan) (+7)" : "Tuzak: Likidite Süpürmesi (Sweep) (+15)";
+            warnings.push(warningText); 
+        }
 
         if ((direction === 'LONG' && currentClose < currentOpen && currentVol < avgVol * 0.5) || 
             (direction === 'SHORT' && currentClose > currentOpen && currentVol < avgVol * 0.5)) {
@@ -915,15 +930,18 @@ async function analyzeCoin(symbolInfo) {
                     if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
                     else if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 } else {
-                    if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
+                    if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { 
+                        console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var, SHORT işlem reddedildi.`);
+                        return null; // Alpha Veto Kuralı
+                    }
                     else if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 }
             }
         }
         
-        // 200 SMA ANA TREND ÇATIŞMASI CEZASI (Optimize: -15 Puan)
-        if (direction === 'LONG' && currentPrice < curSma200) { qualityScore -= 15; warnings.push("Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-15)"); }
-        else if (direction === 'SHORT' && currentPrice > curSma200) { qualityScore -= 15; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-15)"); }
+        // 200 SMA ANA TREND ÇATIŞMASI CEZASI (Optimize: -50 Puan)
+        if (direction === 'LONG' && currentPrice < curSma200) { qualityScore -= 50; warnings.push("Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-50)"); }
+        else if (direction === 'SHORT' && currentPrice > curSma200) { qualityScore -= 50; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-50)"); }
 
         let trend4h = "neutral";
         try {
@@ -1169,11 +1187,13 @@ async function analyzeCoin(symbolInfo) {
 
         // Tetik Slotu Kararı (İkisi de 20 puandır, toplanmaz)
         if (hasKillerWick || hasEngulfing) {
-            qualityScore += 20;
+            let p = (trapCurrentADX > 25 && hasKillerWick && !hasEngulfing) ? 10 : 20;
+            qualityScore += p;
             if (hasKillerWick && hasEngulfing) {
                 warnings.push('Tetikleyici: Wick + Engulfing Confluence (+20)');
             } else if (hasKillerWick) {
-                warnings.push('Tetikleyici: Killer Wick (+20)');
+                let warningText = p === 10 ? 'Tetikleyici: Killer Wick (Trend Baskısı Yarı Puan) (+10)' : 'Tetikleyici: Killer Wick (+20)';
+                warnings.push(warningText);
             } else {
                 warnings.push('Tetikleyici: Kurumsal Engulfing (+20)');
             }
@@ -1199,8 +1219,10 @@ async function analyzeCoin(symbolInfo) {
             }
         }
         if (hasSweep) {
-            qualityScore += 15;
-            warnings.push('Tuzak: Liquidity Sweep (Stop Temizliği) (+15)');
+            let p = (trapCurrentADX > 25) ? 7 : 15;
+            qualityScore += p;
+            let warningText = p === 7 ? 'Tuzak: Liquidity Sweep (Trend Baskısı Yarı Puan) (+7)' : 'Tuzak: Liquidity Sweep (Stop Temizliği) (+15)';
+            warnings.push(warningText);
         }
 
         // 4. Volume Shelter (Hacim Sığınağı) -> +12 Puan
