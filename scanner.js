@@ -810,7 +810,7 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
-        if (direction === 'LONG' && globalVol < 6000000) {
+        if (direction === 'LONG' && globalVol < 5000000) {
             console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (LONG: ${globalVol})`);
             return null;
         }
