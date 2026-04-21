@@ -814,7 +814,7 @@ async function analyzeCoin(symbolInfo) {
             console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (LONG: ${globalVol})`);
             return null;
         }
-        if (direction === 'SHORT' && globalVol < 2500000) {
+        if (direction === 'SHORT' && globalVol < 3000000) {
             console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (SHORT: ${globalVol})`);
             return null;
         }
