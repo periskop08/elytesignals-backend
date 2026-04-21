@@ -364,7 +364,8 @@ app.get('/api/signals/stats', async (req, res) => {
 app.get('/api/signals/history', async (req, res) => {
     try {
         const { status, symbol } = req.query; // 'WIN', 'LOSS' veya 'BREAKEVEN' ve opsiyonel 'symbol'
-        let query = "SELECT * FROM signals WHERE status IN ('WIN', 'LOSS', 'BREAKEVEN')";
+        const ZODYAK_MILESTONE = "'2026-04-21 20:35:00'"; 
+        let query = `SELECT * FROM signals WHERE status IN ('WIN', 'LOSS', 'BREAKEVEN') AND createdAt >= ${ZODYAK_MILESTONE}`;
         let params = [];
         
         if (status) {
