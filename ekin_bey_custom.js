@@ -41,14 +41,12 @@ async function run() {
     
     // 17-18-19-20-21 Nisan'da Stop Olan İşlemler
     const sqlLosses = `
-        SELECT ut.symbol, ut.type, ut.pnl, s.qualityScore, s.warnings, ut.closedAt, s.createdAt
-        FROM user_trades ut 
-        JOIN signals s ON ut.signalId = s.id 
-        WHERE ut.status = 'CLOSED' 
-          AND ut.closeReason = 'NATIVE_SL'
-          AND date(ut.closedAt) >= '2026-04-17' 
-          AND date(ut.closedAt) <= '2026-04-21'
-        ORDER BY ut.closedAt DESC`;
+        SELECT symbol, type, qualityScore, warnings, updatedAt as closedAt, createdAt
+        FROM signals 
+        WHERE status = 'LOSS' 
+          AND date(updatedAt) >= '2026-04-17' 
+          AND date(updatedAt) <= '2026-04-21'
+        ORDER BY updatedAt DESC`;
 
     const losses = await runQuery(sqlLosses);
 
