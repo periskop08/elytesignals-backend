@@ -925,16 +925,21 @@ async function analyzeCoin(symbolInfo) {
         // 4. MAKRO / TREND SLOTU
         if (!symbolInfo.isAsset) {
             const btc1d = globalMarketState.btc1dObj;
+            const eth1d = globalMarketState.eth1dObj;
             if (btc1d) {
+                const isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
+                const isBtcBear = (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR');
+                const isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
+
                 if (direction === 'LONG') {
-                    if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
-                    else if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
+                    if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
+                    else if (isBtcBull) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 } else {
-                    if (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL') { 
-                        console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var, SHORT işlem reddedildi.`);
+                    if (isBtcBull && isEthBull) { 
+                        console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
                         return null; // Alpha Veto Kuralı
                     }
-                    else if (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR') { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
+                    else if (isBtcBear) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 }
             }
         }
