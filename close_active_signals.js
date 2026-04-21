@@ -17,6 +17,20 @@ async function closeActiveSignals() {
             const priceMap = {};
             bybitRes.data.result.list.forEach(t => priceMap[t.symbol] = parseFloat(t.lastPrice));
 
+            try {
+                const bingxRes = await axios.get('https://open-api.bingx.com/openApi/swap/v2/quote/ticker');
+                if (bingxRes.data && bingxRes.data.data) {
+                    bingxRes.data.data.forEach(t => {
+                        const sym = t.symbol.replace('-', '');
+                        if (!priceMap[sym]) {
+                            priceMap[sym] = parseFloat(t.lastPrice);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("BingX price fetch error:", err.message);
+            }
+
             let processed = 0;
             console.log("Processing trades...");
 
