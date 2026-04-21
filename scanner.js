@@ -923,13 +923,15 @@ async function analyzeCoin(symbolInfo) {
         }
 
         // 4. MAKRO / TREND SLOTU
+        let isBtcBull = false;
+        let isEthBull = false;
         if (!symbolInfo.isAsset) {
             const btc1d = globalMarketState.btc1dObj;
             const eth1d = globalMarketState.eth1dObj;
             if (btc1d) {
-                const isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
+                isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
+                isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
                 const isBtcBear = (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR');
-                const isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
 
                 if (direction === 'LONG') {
                     if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
@@ -944,9 +946,19 @@ async function analyzeCoin(symbolInfo) {
             }
         }
         
-        // 200 SMA ANA TREND ÇATIŞMASI CEZASI (Optimize: -50 Puan)
-        if (direction === 'LONG' && currentPrice < curSma200) { qualityScore -= 50; warnings.push("Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-50)"); }
-        else if (direction === 'SHORT' && currentPrice > curSma200) { qualityScore -= 50; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-50)"); }
+        // 200 SMA ANA TREND ÇATIŞMASI CEZASI
+        if (direction === 'LONG' && currentPrice < curSma200) { 
+            let penalty = 50;
+            if (isBtcBull && isEthBull) {
+                if (dipDeviation) { penalty = 20; }
+                else { penalty = 25; }
+            }
+            qualityScore -= penalty; 
+            warnings.push(`Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-${penalty})`); 
+        }
+        else if (direction === 'SHORT' && currentPrice > curSma200) { 
+            qualityScore -= 50; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-50)"); 
+        }
 
         let trend4h = "neutral";
         try {
