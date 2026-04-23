@@ -27,8 +27,8 @@ async function sendTelegramMessage(text) {
         for (const chunk of chunks) {
             await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                 chat_id: PERISKOP_TELEGRAM_ID,
-                text: chunk,
-                parse_mode: 'Markdown'
+                text: chunk
+                // parse_mode: 'Markdown' (REMOVED due to chunking issues)
             });
         }
     } catch(e) {
@@ -83,8 +83,10 @@ async function run() {
     try {
         const result = await model.generateContent(prompt);
         let response = result.response.text();
+        const fs = require('fs');
+        fs.writeFileSync('report.txt', response);
         await sendTelegramMessage(response);
-        console.log("Rapor Telegram üzerinden patrona (Periskop'a) başarıyla gönderildi!");
+        console.log("Rapor Telegram üzerinden patrona (Periskop'a) başarıyla gönderildi ve report.txt dosyasına yazıldı.");
     } catch(e) {
         console.error("Gemini Error:", e.message);
     }
