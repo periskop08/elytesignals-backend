@@ -947,7 +947,7 @@ async function analyzeCoin(symbolInfo) {
             const btc1d = globalMarketState.btc1dObj;
             const eth1d = globalMarketState.eth1dObj;
             if (btc1d) {
-                const isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
+                isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
                 isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
                 const isBtcBear = (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR');
                 const btc4hTrend = globalMarketState.btc4h;
@@ -968,8 +968,13 @@ async function analyzeCoin(symbolInfo) {
                     }
                 } else {
                     if (isBtcBull && isEthBull) { 
-                        console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
-                        return null; // Alpha Veto Kuralı
+                        if (is4hBear && is1hBear) {
+                            qualityScore -= 20;
+                            warnings.push("Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
+                        } else {
+                            console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
+                            return null; // Alpha Veto Kuralı
+                        }
                     }
                     else if (isBtcBear) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                 }
