@@ -39,24 +39,23 @@ async function sendTelegramMessage(text) {
 async function run() {
     console.log("👨‍💼 Ekin Bey özel otopsi görevi için uyandırıldı...");
     
-    // 17-18-19-20-21 Nisan'da Stop Olan İşlemler
+    // Son Günlerde (21 Nisan sonrası) Stop Olan İşlemler
     const sqlLosses = `
         SELECT symbol, type, qualityScore, warnings, updatedAt as closedAt, createdAt
         FROM signals 
         WHERE status = 'LOSS' 
-          AND date(updatedAt) >= '2026-04-17' 
-          AND date(updatedAt) <= '2026-04-21'
+          AND date(updatedAt) >= '2026-04-21' 
         ORDER BY updatedAt DESC`;
 
     const losses = await runQuery(sqlLosses);
 
     if (losses.length === 0) {
         console.log("Belirtilen tarihlerde Stop olan işlem bulunamadı.");
-        await sendTelegramMessage("👨‍💼 *Merhaba Brocum, Ben Ekin Bey.*\n\n17-21 Nisan tarihleri arasında sistemimizde Stop (Loss) olan hiçbir işlem bulunamadı. Görünüşe göre sistemimiz kusursuz çalışmış!");
+        await sendTelegramMessage("👨‍💼 *Merhaba Brocum, Ben Ekin Bey.*\n\nSon günlerde sistemimizde Stop (Loss) olan hiçbir işlem bulunamadı. Görünüşe göre sistemimiz kusursuz çalışmış!");
         return;
     }
 
-    let contextData = "--- 17-21 NİSAN STOP OLAN İŞLEMLER ---\n";
+    let contextData = "--- SON GÜNLERDE STOP OLAN İŞLEMLER ---\n";
     losses.forEach((l, i) => {
         contextData += `${i+1}. ${l.symbol} (${l.type}) | Skor: ${l.qualityScore} | Tarih: ${l.closedAt} | Uyarılar: ${l.warnings}\n`;
     });
@@ -64,12 +63,12 @@ async function run() {
     console.log(`Veritabanında ${losses.length} adet Stop olmuş işlem tespit edildi. Gemini'ye bağlanılıyor...`);
 
     const prompt = `Sen PeriskopAI nicel (quant) hedge fonunun Baş Stratejisti ve Risk Yöneticisisin (CRO) Ekin Bey'sin.
-    Aşağıda, algoritmamızın 17-21 Nisan 2026 tarihleri arasında açıp KAYBETTİĞİ (Stop olduğu) işlemlerin detaylı dökümünü veriyorum.
+    Aşağıda, algoritmamızın son günlerde (21-23 Nisan 2026) açıp KAYBETTİĞİ (Stop olduğu) işlemlerin detaylı dökümünü veriyorum.
     "Uyarılar (warnings)" kısmı, o işlemin teknik tetikleyicilerini gösterir.
 
     ${contextData}
 
-    GÖREVİN: Bu zararlı işlemleri inceleyerek detaylı bir otopsi ve strateji raporu hazırlamak.
+    GÖREVİN: Bu zararlı işlemleri inceleyerek detaylı bir otopsi ve strateji raporu hazırlamak. (Bugün yürürlüğe koyduğumuz 4H/1H Şelale cezası ve Devre kesici kalkanlarını düşünerek raporla).
     Lütfen raporunu aşağıdaki başlıklarda oluştur:
 
     1. 🔍 OTOPSİ: Neden stop olduk? Hangi teknik indikatörler, paternler veya uyarılar (warnings) bizi bu hatalara sürükledi?
@@ -77,7 +76,7 @@ async function run() {
     3. 🛠️ EYLEM PLANI: Sistemin algoritmasına eklememiz veya çıkarmamız gereken net 3 kural nedir?
 
     KESİN KURALLAR:
-    - Selamlama olarak "👨‍💼 *Merhaba Brocum, Ben Ekin Bey.* 17-21 Nisan tarihlerine ait özel otopsi raporumu sunuyorum:" diye başla.
+    - Selamlama olarak "👨‍💼 *Merhaba Brocum, Ben Ekin Bey.* Son günlere ait özel otopsi raporumu sunuyorum:" diye başla.
     - Mail veya mektup formatı kullanma.
     - Çok net, acımasız ve tamamen teknik tespitlere odaklan. Paramızı neden kaybettiğimizi çekinmeden söyle.`;
 
