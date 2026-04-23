@@ -125,6 +125,7 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 }
 
+let recentLongTimestamps = [];
 let globalMarketState = {
     btcTrend: 'NEUTRAL',
     btc1h: 'NEUTRAL',
@@ -792,6 +793,23 @@ async function analyzeCoin(symbolInfo) {
             direction = currentPrice > curSma200 ? 'LONG' : 'SHORT';
         }
 
+        // 🛡️ AKILLI DEVRE KESİCİ (SMART CIRCUIT BREAKER)
+        if (direction === 'LONG') {
+            const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
+            recentLongTimestamps = recentLongTimestamps.filter(ts => ts > twoHoursAgo);
+            
+            if (recentLongTimestamps.length >= 3) {
+                const btcTrend = globalMarketState.btcTrend;
+                const ethTrend = globalMarketState.ethTrend;
+                const isStrongBull = btcTrend === 'STRONG_BULL' && ethTrend === 'STRONG_BULL';
+                
+                if (!isStrongBull) {
+                    console.log(`[DEVRE-KESICI] ${sym} LONG VETO! (Son 2 saatte ${recentLongTimestamps.length} LONG verildi ve piyasa STRONG_BULL değil).`);
+                    return null;
+                }
+            }
+        }
+
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
 
@@ -929,13 +947,25 @@ async function analyzeCoin(symbolInfo) {
             const btc1d = globalMarketState.btc1dObj;
             const eth1d = globalMarketState.eth1dObj;
             if (btc1d) {
-                isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
+                const isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
                 isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
                 const isBtcBear = (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR');
+                const btc4hTrend = globalMarketState.btc4h;
+                const btc1hTrend = globalMarketState.btc1h;
+                const is4hBear = (btc4hTrend === 'BEAR' || btc4hTrend === 'STRONG_BEAR');
+                const is1hBear = (btc1hTrend === 'BEAR' || btc1hTrend === 'STRONG_BEAR');
 
                 if (direction === 'LONG') {
                     if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
-                    else if (isBtcBull) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
+                    else if (isBtcBull) { 
+                        if (is4hBear && is1hBear) {
+                            qualityScore -= 20; 
+                            warnings.push("Makro: Şelale Düşüşü (4H ve 1H Ayı) Ceza (-20)");
+                        } else {
+                            qualityScore -= 15; 
+                            warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); 
+                        }
+                    }
                 } else {
                     if (isBtcBull && isEthBull) { 
                         console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
@@ -1490,6 +1520,10 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                     continue; // Skip DB insertion and everything else
                 }
                 // +--- END SHADOW BLOCK ---+
+
+                if (signal.type === 'LONG') {
+                    recentLongTimestamps.push(Date.now());
+                }
 
                 const insertResult = await db.run(
                     "INSERT INTO signals (symbol, type, entryPrice, targetPrice, stopPrice, qualityScore, warnings, rvol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
