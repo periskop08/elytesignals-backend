@@ -978,33 +978,37 @@ async function analyzeCoin(symbolInfo) {
                     isCascadingDrop = true;
                 }
 
-                if (direction === 'LONG') {
-                    if (isCascadingDrop) {
-                        console.log(`[VETO-CASCADE] ${sym} -> BTC 1H trendi art arda NÖTR -> BEAR -> STRONG_BEAR kırılımı yaptı. Şelale riski nedeniyle LONG veto edildi.`);
-                        return null; // VETO LONG
-                    }
-
-                    if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
-                    else if (isBtcBull) { 
-                        if (is4hBear && is1hBear) {
-                            qualityScore -= 20; 
-                            warnings.push("Makro: Şelale Düşüşü (4H ve 1H Ayı) Ceza (-20)");
-                        } else {
-                            qualityScore -= 15; 
-                            warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); 
+                if (sym !== 'BTCUSDT' && sym !== 'ETHUSDT') {
+                    if (direction === 'LONG') {
+                        if (isCascadingDrop) {
+                            console.log(`[VETO-CASCADE] ${sym} -> BTC 1H trendi art arda NÖTR -> BEAR -> STRONG_BEAR kırılımı yaptı. Şelale riski nedeniyle LONG veto edildi.`);
+                            return null; // VETO LONG
                         }
+
+                        if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
+                        else if (isBtcBull) { 
+                            if (is4hBear && is1hBear) {
+                                qualityScore -= 20; 
+                                warnings.push("Makro: Şelale Düşüşü (4H ve 1H Ayı) Ceza (-20)");
+                            } else {
+                                qualityScore -= 15; 
+                                warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); 
+                            }
+                        }
+                    } else {
+                        if (isBtcBull && isEthBull) { 
+                            if ((is4hBear && is1hBear) || isCascadingDrop) {
+                                qualityScore -= 20;
+                                warnings.push(isCascadingDrop ? "Makro: VIP Kapısı Açıldı (1H Şelale Çöküşü) Ceza (-20)" : "Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
+                            } else {
+                                console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
+                                return null; // Alpha Veto Kuralı
+                            }
+                        }
+                        else if (isBtcBear) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
                     }
                 } else {
-                    if (isBtcBull && isEthBull) { 
-                        if ((is4hBear && is1hBear) || isCascadingDrop) {
-                            qualityScore -= 20;
-                            warnings.push(isCascadingDrop ? "Makro: VIP Kapısı Açıldı (1H Şelale Çöküşü) Ceza (-20)" : "Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
-                        } else {
-                            console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
-                            return null; // Alpha Veto Kuralı
-                        }
-                    }
-                    else if (isBtcBear) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
+                    warnings.push("👑 Kral Muafiyeti: Makro Korelasyon Cezaları Devre Dışı");
                 }
             }
         }
