@@ -973,10 +973,8 @@ async function analyzeCoin(symbolInfo) {
                 const is4hBear = (btc4hTrend === 'BEAR' || btc4hTrend === 'STRONG_BEAR');
                 const is1hBear = (btc1hTrend === 'BEAR' || btc1hTrend === 'STRONG_BEAR');
 
-                const hist = globalMarketState.btc1hHistory || [];
-                const n = hist.length;
                 let isCascadingDrop = false;
-                if (n >= 3 && hist[n-3] === 'NEUTRAL' && hist[n-2] === 'BEAR' && hist[n-1] === 'STRONG_BEAR') {
+                if (btc1hTrend === 'STRONG_BEAR') {
                     isCascadingDrop = true;
                 }
 
