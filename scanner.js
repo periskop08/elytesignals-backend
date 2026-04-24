@@ -129,6 +129,7 @@ let recentLongTimestamps = [];
 let globalMarketState = {
     btcTrend: 'NEUTRAL',
     btc1h: 'NEUTRAL',
+    btc1hHistory: ['NEUTRAL'],
     btc4h: 'NEUTRAL',
     btc1d: 'NEUTRAL',
     ethTrend: 'NEUTRAL',
@@ -248,9 +249,16 @@ async function analyzeGlobalMarket() {
             finalBtc = 'STRONG_BEAR';
         }
 
+        let newHistory = globalMarketState.btc1hHistory || [];
+        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== btc1hObj.trend) {
+            newHistory.push(btc1hObj.trend);
+            if (newHistory.length > 5) newHistory.shift();
+        }
+
         globalMarketState = {
             btcTrend: finalBtc,
             btc1h: btc1hObj.trend,
+            btc1hHistory: newHistory,
             btc4h: btc4hObj.trend,
             btc1d: btc1dObj.trend,
             btc1dObj: btc1dObj,
@@ -956,6 +964,13 @@ async function analyzeCoin(symbolInfo) {
                 const is1hBear = (btc1hTrend === 'BEAR' || btc1hTrend === 'STRONG_BEAR');
 
                 if (direction === 'LONG') {
+                    const hist = globalMarketState.btc1hHistory || [];
+                    const n = hist.length;
+                    if (n >= 3 && hist[n-3] === 'NEUTRAL' && hist[n-2] === 'BEAR' && hist[n-1] === 'STRONG_BEAR') {
+                        console.log(`[VETO-CASCADE] ${sym} -> BTC 1H trendi art arda NÖTR -> BEAR -> STRONG_BEAR kırılımı yaptı. Şelale riski nedeniyle LONG veto edildi.`);
+                        return null; // VETO LONG
+                    }
+
                     if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
                     else if (isBtcBull) { 
                         if (is4hBear && is1hBear) {
