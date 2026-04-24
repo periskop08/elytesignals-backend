@@ -963,10 +963,15 @@ async function analyzeCoin(symbolInfo) {
                 const is4hBear = (btc4hTrend === 'BEAR' || btc4hTrend === 'STRONG_BEAR');
                 const is1hBear = (btc1hTrend === 'BEAR' || btc1hTrend === 'STRONG_BEAR');
 
+                const hist = globalMarketState.btc1hHistory || [];
+                const n = hist.length;
+                let isCascadingDrop = false;
+                if (n >= 3 && hist[n-3] === 'NEUTRAL' && hist[n-2] === 'BEAR' && hist[n-1] === 'STRONG_BEAR') {
+                    isCascadingDrop = true;
+                }
+
                 if (direction === 'LONG') {
-                    const hist = globalMarketState.btc1hHistory || [];
-                    const n = hist.length;
-                    if (n >= 3 && hist[n-3] === 'NEUTRAL' && hist[n-2] === 'BEAR' && hist[n-1] === 'STRONG_BEAR') {
+                    if (isCascadingDrop) {
                         console.log(`[VETO-CASCADE] ${sym} -> BTC 1H trendi art arda NÖTR -> BEAR -> STRONG_BEAR kırılımı yaptı. Şelale riski nedeniyle LONG veto edildi.`);
                         return null; // VETO LONG
                     }
@@ -983,9 +988,9 @@ async function analyzeCoin(symbolInfo) {
                     }
                 } else {
                     if (isBtcBull && isEthBull) { 
-                        if (is4hBear && is1hBear) {
+                        if ((is4hBear && is1hBear) || isCascadingDrop) {
                             qualityScore -= 20;
-                            warnings.push("Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
+                            warnings.push(isCascadingDrop ? "Makro: VIP Kapısı Açıldı (1H Şelale Çöküşü) Ceza (-20)" : "Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
                         } else {
                             console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
                             return null; // Alpha Veto Kuralı
