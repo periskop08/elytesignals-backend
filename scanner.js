@@ -816,6 +816,16 @@ async function analyzeCoin(symbolInfo) {
                     return null;
                 }
             }
+        } else if (direction === 'SHORT') {
+            try {
+                const activeShorts = await db.get("SELECT COUNT(*) as count FROM signals WHERE status = 'ACTIVE' AND type = 'SHORT'");
+                if (activeShorts && activeShorts.count >= 4) {
+                    console.log(`[DEVRE-KESICI] ${sym} SHORT VETO! Sistemde maksimum kapasiteye ulaşıldı (${activeShorts.count} aktif SHORT). Kâr alımı (TP) bekleniyor.`);
+                    return null;
+                }
+            } catch(e) {
+                console.error("[DEVRE-KESICI] SHORT count error: ", e);
+            }
         }
 
         // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
