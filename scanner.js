@@ -138,6 +138,8 @@ let globalMarketState = {
     timestamp: 0
 };
 
+const BLACKLIST = ['AVAXUSDT', 'LINEAUSDT', 'SAFEUSDT', 'XLMUSDT'];
+
 const CONFIG = {
     minRR: 1.5,           // 1.5-2.0 arası (Eski katı kural)
     obLookback: 30,       // 14-50 arası  
@@ -1479,6 +1481,8 @@ async function runScan() {
         for (let i = 0; i < allPairs.length; i++) {
             const symbolInfo = allPairs[i];
             const symbol = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
+
+            if (BLACKLIST.includes(symbol)) continue;
 
             // BingX API (Rate Limit 429) Tuzağına Düşmemek İçin Gecikme Zırhı
             await new Promise(resolve => setTimeout(resolve, 45));
