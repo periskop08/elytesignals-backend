@@ -138,7 +138,7 @@ let globalMarketState = {
     timestamp: 0
 };
 
-const BLACKLIST = ['AVAXUSDT', 'LINEAUSDT', 'SAFEUSDT', 'XLMUSDT'];
+const BLACKLIST = ['AVAXUSDT', 'LINEAUSDT', 'SAFEUSDT', 'XLMUSDT', 'TONCOINUSDT', 'SQDUSDT'];
 
 const CONFIG = {
     minRR: 1.5,           // 1.5-2.0 arası (Eski katı kural)
