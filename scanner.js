@@ -1126,9 +1126,9 @@ async function analyzeCoin(symbolInfo) {
             return null;
         }
         
-        // Zodyak Altın Kesişim Limiti (Baraj: Sadece 48 ve Üzeri Elite Kurulumlar)
-        if (qualityScore < 48) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 48+) | Neden: Skor Yetersiz`);
+        // Zodyak Altın Kesişim Limiti (Baraj: Sadece 90 ve Üzeri Elite Kurulumlar)
+        if (qualityScore < 90) {
+            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: 90+) | Neden: Skor Yetersiz`);
             return null; // Elit puan limitinin altında kalanları reddet
         }
 
@@ -1387,7 +1387,7 @@ async function analyzeCoin(symbolInfo) {
         // (Bu kontrol kodun üst kısmına [SKOR-ELENDI] logu ile birleştirilerek taşındı)
 
         // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= 48) {
+        if (qualityScore >= 90) {
             const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
             qualityScore += demirRes.scoreMod;
             if (demirRes.msg) {
@@ -1395,8 +1395,8 @@ async function analyzeCoin(symbolInfo) {
             }
 
             // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < 48) {
-                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (48+) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
+            if (qualityScore < 90) {
+                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (90+) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
                 return null;
             }
         }
