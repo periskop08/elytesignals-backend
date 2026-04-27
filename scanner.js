@@ -227,22 +227,28 @@ function calculateTrendFromKlines(klines) {
 async function analyzeGlobalMarket() {
     try {
         console.log('[GLOBAL SENSOR] Fetching macro market and dominance data...');
-        const [btc1h, btc4h, btc1d, eth4h, eth1d, dom4h, cgDom] = await Promise.all([
+        const [btc1h, btc4h, btc1d, eth1h, eth4h, eth1d, dom1h, dom4h, dom1d, cgDom] = await Promise.all([
             fetchBybitKlinesGlobal('BTCUSDT', '60'),
             fetchBybitKlinesGlobal('BTCUSDT', '240'),
             fetchBybitKlinesGlobal('BTCUSDT', 'D'),
+            fetchBybitKlinesGlobal('ETHUSDT', '60'),
             fetchBybitKlinesGlobal('ETHUSDT', '240'),
             fetchBybitKlinesGlobal('ETHUSDT', 'D'),
+            fetchBinanceKlines('BTCDOMUSDT', '1h'),
             fetchBinanceKlines('BTCDOMUSDT', '4h'),
+            fetchBinanceKlines('BTCDOMUSDT', '1d'),
             fetchCoinGeckoDominance()
         ]);
 
         const btc1hObj = calculateTrendFromKlines(btc1h);
         const btc4hObj = calculateTrendFromKlines(btc4h);
         const btc1dObj = calculateTrendFromKlines(btc1d);
+        const eth1hObj = calculateTrendFromKlines(eth1h);
         const eth4hObj = calculateTrendFromKlines(eth4h);
         const eth1dObj = calculateTrendFromKlines(eth1d);
+        const dom1hObj = calculateTrendFromKlines(dom1h);
         const dom4hObj = calculateTrendFromKlines(dom4h);
+        const dom1dObj = calculateTrendFromKlines(dom1d);
 
         let finalBtc = btc4hObj.trend;
         if ((btc4hObj.trend === 'BULL' || btc4hObj.trend === 'STRONG_BULL') && (btc1dObj.trend === 'BULL' || btc1dObj.trend === 'STRONG_BULL')) {
@@ -264,9 +270,15 @@ async function analyzeGlobalMarket() {
             btc4h: btc4hObj.trend,
             btc1d: btc1dObj.trend,
             btc1dObj: btc1dObj,
+            eth1h: eth1hObj.trend,
+            eth4h: eth4hObj.trend,
             ethTrend: eth4hObj.trend,
+            eth1d: eth1dObj.trend,
             eth1dObj: eth1dObj,
+            dom1h: dom1hObj.trend,
+            dom4h: dom4hObj.trend,
             btcDomTrend: dom4hObj.trend,
+            dom1d: dom1dObj.trend,
             cgDom: cgDom,
             timestamp: Date.now()
         };
