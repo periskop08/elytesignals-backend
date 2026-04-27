@@ -1012,8 +1012,12 @@ async function analyzeCoin(symbolInfo) {
                     } else {
                         if (isBtcBull && isEthBull) { 
                             if ((is4hBear && is1hBear) || isCascadingDrop) {
-                                qualityScore -= 20;
-                                warnings.push(isCascadingDrop ? "Makro: VIP Kapısı Açıldı (1H Şelale Çöküşü) Ceza (-20)" : "Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
+                                if (isCascadingDrop) {
+                                    warnings.push("Makro: VIP Kapısı Açıldı (1H Şelale Çöküşü) [Ceza Muafiyeti]");
+                                } else {
+                                    qualityScore -= 20;
+                                    warnings.push("Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
+                                }
                             } else {
                                 console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
                                 return null; // Alpha Veto Kuralı
