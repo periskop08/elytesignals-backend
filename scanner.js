@@ -1193,12 +1193,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = targetP - currentPrice;
 
-            // 1:2 R:R Cap Uyumlu Kesinti (Tıraşlama) veya Ranging Limit 1.0R
-            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 2.0);
+            // 1:2 R:R Cap Uyumlu Kesinti (Tıraşlama)
+            let maxReward = risk * 2.0;
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice + reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:2 Max)');
+                warnings.push('TP Capped (1:2 Max)');
             }
         } else {
             dynamicStop = currentPrice + (currentATR * slMultiplier);
@@ -1218,12 +1218,12 @@ async function analyzeCoin(symbolInfo) {
 
             reward = currentPrice - targetP;
 
-            // 1:2 R:R Cap veya Ranging Limit 1.0R
-            let maxReward = trapIsRangingLimit ? (risk * 1.0) : (risk * 2.0);
+            // 1:2 R:R Cap Uyumlu Kesinti
+            let maxReward = risk * 2.0;
             if (reward > maxReward) {
                 reward = maxReward;
                 targetP = currentPrice - reward;
-                warnings.push(trapIsRangingLimit ? 'TP Capped (1.0R Ranging)' : 'TP Capped (1:2 Max)');
+                warnings.push('TP Capped (1:2 Max)');
             }
         }
 
