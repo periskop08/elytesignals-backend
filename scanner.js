@@ -1710,30 +1710,10 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                         bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Otonom Karar Gecikmesi Koruma Kalkanı Devrede*\n\n🎯 İşlem: #${signal.symbol} (${signal.type})\nLLM analizi sürerken piyasa %0.3'ten fazla kaydığı (Slippage) için borsa emri otomatik OLARAK AÇILMADI!\n\nSenaryo İptali. Manuel Giriş yapabilirsiniz.`, { parse_mode: 'Markdown' });
                                     }
                                 } else {
-                                    // +--- DYNAMIC POSITION SIZING (RİSK ÇARPANI VE KALİTE) ---+
+                                    // +--- KULLANICI TALEBİ: SABİT 10$ RİSK ($20 KAZANÇ) ---+
                                     let riskMultiplier = 1.0;
-                                    try {
-                                        if (signal.qualityScore >= 85) riskMultiplier = 1.3;
-                                        else if (signal.qualityScore >= 75) riskMultiplier = 1.0;
-                                        else if (signal.qualityScore >= 65) riskMultiplier = 0.75;
-                                        else riskMultiplier = 0.5;
-
-                                        const history = await db.all("SELECT status FROM user_trades WHERE status IN ('CLOSED_WIN', 'CLOSED_LOSS') ORDER BY closedAt DESC LIMIT 20");
-                                        if (history && history.length >= 10) {
-                                            const wins = history.filter(h => h.status === 'CLOSED_WIN').length;
-                                            const winRate = wins / history.length;
-                                            
-                                            if (winRate < 0.35) {
-                                                riskMultiplier *= 0.5;
-                                                console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Portföy Defansa Çekildi.`);
-                                            } else if (winRate > 0.60) {
-                                                riskMultiplier *= 1.5;
-                                                console.log(`[DYNAMIC SIZING] Son 20 işlem WR %${Math.round(winRate*100)}! Momentum Sürülüyor.`);
-                                            }
-                                        }
-                                    } catch(e) {}
-
-                                    console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Risk x${riskMultiplier})`);
+                                    
+                                    console.log(`[AUTO-TRADE] Borsaya Emir Gönderiliyor: ${signal.symbol} (Sabit Risk x1.0 - $10)`);
                                     try {
                                         // KULLANICI TALEBİ: Borsaya otopilot emir gönderimi YENİDEN AKTİF EDİLDİ
                                         const orderId = await placeOrder(signal.symbol, signal.type, signal.entryPrice, signal.targetPrice, signal.stopPrice, riskMultiplier);
