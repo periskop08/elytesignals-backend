@@ -1802,8 +1802,10 @@ async function sendNightlyReport() {
     try {
         let todayStr = new Date().toISOString().split('T')[0];
 
-        // 1. Yeni Sinyaller (Son 24 Saat)
-        const newSignals = await db.all("SELECT status FROM signals WHERE createdAt >= datetime('now', '-24 hours')");
+        const ZODYAK_MILESTONE = "'2026-04-29 13:46:00'";
+
+        // 1. Yeni Sinyaller (Son 24 Saat) - Milattan Öncesini Alma
+        const newSignals = await db.all(`SELECT status FROM signals WHERE createdAt >= datetime('now', '-24 hours') AND createdAt >= ${ZODYAK_MILESTONE}`);
         let newWins = 0, newLosses = 0, newActives = 0;
         newSignals.forEach(s => {
             if (s.status === 'WIN') newWins++;
@@ -1811,8 +1813,8 @@ async function sendNightlyReport() {
             else newActives++;
         });
 
-        // 2. Geçmişten Gelenler (Açık olanlar veya Son 24 Saatte Güncellenenler)
-        const carryOverSignals = await db.all("SELECT status FROM signals WHERE createdAt < datetime('now', '-24 hours') AND (status = 'ACTIVE' OR updatedAt >= datetime('now', '-24 hours'))");
+        // 2. Geçmişten Gelenler (Açık olanlar veya Son 24 Saatte Güncellenenler) - Milattan Öncesini Alma
+        const carryOverSignals = await db.all(`SELECT status FROM signals WHERE createdAt < datetime('now', '-24 hours') AND createdAt >= ${ZODYAK_MILESTONE} AND (status = 'ACTIVE' OR updatedAt >= datetime('now', '-24 hours'))`);
         let oldWins = 0, oldLosses = 0, oldActives = 0;
         carryOverSignals.forEach(s => {
             if (s.status === 'WIN') oldWins++;
@@ -1821,7 +1823,6 @@ async function sendNightlyReport() {
         });
 
         // 3. Overall Win Rate (ZODYAK_MILESTONE sonrası)
-        const ZODYAK_MILESTONE = "'2026-04-29 13:46:00'";
         const allTimeSignals = await db.all(`SELECT status FROM signals WHERE status IN ('WIN', 'LOSS') AND createdAt >= ${ZODYAK_MILESTONE}`);
         let allTimeWins = 0, allTimeLosses = 0;
         allTimeSignals.forEach(s => {
