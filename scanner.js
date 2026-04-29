@@ -1798,54 +1798,62 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
     }
 }
 async function sendNightlyReport() {
-    console.log('[SCANNER] Generating Nightly Quality Score Report...');
+    console.log('[SCANNER] Generating Dynamic Nightly Report...');
     try {
-        let yesterdaysDate = new Date();
-        // UTC'de olduğumuz varsayımı ile: dünü almak için
-        yesterdaysDate.setDate(yesterdaysDate.getDate() - 1);
-        const dayString = yesterdaysDate.toISOString().split('T')[0];
+        let todayStr = new Date().toISOString().split('T')[0];
 
-        const allSignals = await db.all("SELECT qualityScore, status, symbol FROM signals WHERE date(createdAt) = ?", [dayString]);
-
-        const detailedData = {};
-        let totalWins = 0; let totalLosses = 0; let totalActive = 0;
-
-        allSignals.forEach(s => {
-            if (!detailedData[s.qualityScore]) detailedData[s.qualityScore] = { WIN: 0, LOSS: 0, ACTIVE: 0 };
-            detailedData[s.qualityScore][s.status]++;
-            if (s.status === 'WIN') totalWins++;
-            if (s.status === 'LOSS') totalLosses++;
-            if (s.status === 'ACTIVE') totalActive++;
+        // 1. Yeni Sinyaller (Son 24 Saat)
+        const newSignals = await db.all("SELECT status FROM signals WHERE createdAt >= datetime('now', '-24 hours')");
+        let newWins = 0, newLosses = 0, newActives = 0;
+        newSignals.forEach(s => {
+            if (s.status === 'WIN') newWins++;
+            else if (s.status === 'LOSS') newLosses++;
+            else newActives++;
         });
 
-        let totalClosed = totalWins + totalLosses;
-        let winRate = totalClosed > 0 ? ((totalWins / totalClosed) * 100).toFixed(1) : 0;
+        // 2. Geçmişten Gelenler (Açık olanlar veya Son 24 Saatte Güncellenenler)
+        const carryOverSignals = await db.all("SELECT status FROM signals WHERE createdAt < datetime('now', '-24 hours') AND (status = 'ACTIVE' OR updatedAt >= datetime('now', '-24 hours'))");
+        let oldWins = 0, oldLosses = 0, oldActives = 0;
+        carryOverSignals.forEach(s => {
+            if (s.status === 'WIN') oldWins++;
+            else if (s.status === 'LOSS') oldLosses++;
+            else oldActives++;
+        });
 
-        // Sabit her sinyale 30$ kasa attıysak PnL hesabı
-        // Basitçe: her Win %3 kar (yaklaşık), her Loss %1.5 zarar = spotta. vs..
-        // Tam rakamlar için Price hesabı eklemedik ama kaba Karşılaştırma verebiliriz.
-        let totalSignalsOfDayLog = totalWins + totalLosses + totalActive;
+        // 3. Overall Win Rate (ZODYAK_MILESTONE sonrası)
+        const ZODYAK_MILESTONE = "'2026-04-29 13:46:00'";
+        const allTimeSignals = await db.all(`SELECT status FROM signals WHERE status IN ('WIN', 'LOSS') AND createdAt >= ${ZODYAK_MILESTONE}`);
+        let allTimeWins = 0, allTimeLosses = 0;
+        allTimeSignals.forEach(s => {
+            if (s.status === 'WIN') allTimeWins++;
+            else if (s.status === 'LOSS') allTimeLosses++;
+        });
 
-        let reportText = `🤖 *Periskop AI - Gün Sonu Özeti*\n`;
-        reportText += `📅 *Tarih:* ${dayString}\n\n`;
-        reportText += `📈 *Günlük İstatistikler:*\n`;
-        reportText += `📊 Toplam İşlem: ${totalSignalsOfDayLog}\n`;
-        reportText += `✅ Başarılı: ${totalWins} İşlem\n`;
-        reportText += `⛔ Stop: ${totalLosses} İşlem\n`;
-        reportText += `⏳ Açık: ${totalActive} İşlem\n`;
-        reportText += `🎯 *Başarı Oranı: %${winRate}*\n\n`;
+        let dailyClosed = newWins + newLosses + oldWins + oldLosses;
+        let dailyWins = newWins + oldWins;
+        let dailyWinRate = dailyClosed > 0 ? ((dailyWins / dailyClosed) * 100).toFixed(1) : 0;
 
-        if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
-            await telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, reportText, { parse_mode: 'Markdown' });
-            console.log('[SCANNER] Nightly report & Backup status successfully sent to Telegram.');
-        }
+        let allTimeClosed = allTimeWins + allTimeLosses;
+        let overallWinRate = allTimeClosed > 0 ? ((allTimeWins / allTimeClosed) * 100).toFixed(1) : 0;
 
-        let scores = Object.keys(detailedData).sort((a, b) => b - a);
-        if (scores.length === 0) {
-            reportText += `Dün piyasada pozisyon açılmadı.\n\n`;
-        }
+        let reportText = `🤖 *Periskop AI - Dinamik Gün Sonu Özeti*\n`;
+        reportText += `📅 *Tarih:* ${todayStr}\n\n`;
 
-        reportText += `_Elyte Signals Otomasyonu ile 03:00'te üretilmiştir._\n\n`;
+        reportText += `🆕 *Bugünün Yeni İşlemleri (Son 24 Saat):*\n`;
+        reportText += `📊 Üretilen: ${newSignals.length} İşlem\n`;
+        reportText += `✅ Başarılı: ${newWins} İşlem\n`;
+        reportText += `⛔ Stop: ${newLosses} İşlem\n`;
+        reportText += `⏳ Açık (Yarına Devreden): ${newActives} İşlem\n\n`;
+
+        reportText += `🔄 *Geçmişten Gelen Açık İşlemler:*\n`;
+        reportText += `✅ Bugün Başarıyla Kapanan (TP): ${oldWins} İşlem\n`;
+        reportText += `⛔ Bugün Stop Olan (SL): ${oldLosses} İşlem\n`;
+        reportText += `⏳ Halen Bekleyen Eski İşlem: ${oldActives} İşlem\n\n`;
+
+        reportText += `🎯 *Günlük Başarı Oranı (Bugün Kapananlar): %${dailyWinRate}*\n`;
+        reportText += `🏆 *Genel Sistem Başarı Oranı (WR): %${overallWinRate}*\n\n`;
+
+        reportText += `_Elyte Signals Otomasyonu ile üretilmiştir._\n\n`;
 
         // YEDEKLEME İŞLEMİ (Mesajı Gece Raporuna Göm)
         try {
@@ -1855,7 +1863,10 @@ async function sendNightlyReport() {
             reportText += backupErrorStr;
         }
 
-
+        if (telegramBot && process.env.TELEGRAM_VIP_GROUP_ID) {
+            await telegramBot.sendMessage(process.env.TELEGRAM_VIP_GROUP_ID, reportText, { parse_mode: 'Markdown' });
+            console.log('[SCANNER] Nightly report & Backup status successfully sent to Telegram.');
+        }
 
         // --- GOOGLE SHEETS YEDEKLEME (Yeni Yapı) ---
         try {
