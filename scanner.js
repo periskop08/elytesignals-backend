@@ -1631,56 +1631,6 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                 // --- AUTO TRADING BLOCK START ---
                 if (process.env.BINGX_API_KEY && process.env.PERISKOP_TELEGRAM_ID && !symbolInfo.isAsset) {
                     try {
-                        // +--- PORTFOLIO HEDGING & EXPOSURE LIMITS ---+
-                        let activeTradesList = await db.all("SELECT * FROM user_trades WHERE status = 'ACTIVE'");
-                        let activeCount = activeTradesList.length;
-                        
-                        let dominantDirection = null; // 'LONG' or 'SHORT'
-                        let maxAllowedInThisDirection = 2; // Default if choppy/no leaders
-
-                        let btcEthProfitableLong = false;
-                        let btcEthProfitableShort = false;
-
-                        for (const trade of activeTradesList) {
-                            if (trade.symbol === 'BTCUSDT' || trade.symbol === 'ETHUSDT') {
-                                try {
-                                    let cp = null;
-                                    if (trade.symbol === 'BTCUSDT') cp = globalBtcPrice;
-                                    if (trade.symbol === 'ETHUSDT') cp = globalEthPrice;
-                                    
-                                    if (cp) {
-                                        if (trade.type === 'LONG' && cp > trade.entryPrice) btcEthProfitableLong = true;
-                                        if (trade.type === 'SHORT' && cp < trade.entryPrice) btcEthProfitableShort = true;
-                                    }
-                                } catch(e) {
-                                    console.error("[SCANNER] Sessiz Hata (Portfolio):", e.message);
-                                }
-                            }
-                        }
-
-                        if (btcEthProfitableLong) dominantDirection = 'LONG';
-                        else if (btcEthProfitableShort) dominantDirection = 'SHORT';
-
-                        let currentDirectionCount = activeTradesList.filter(t => t.type === signal.type).length;
-                        
-                        if (dominantDirection) {
-                            if (signal.type === dominantDirection) {
-                                maxAllowedInThisDirection = 5; // Trend Riding
-                            } else {
-                                maxAllowedInThisDirection = 3; // Hedging (Sigorta)
-                            }
-                        }
-
-                        if (currentDirectionCount >= maxAllowedInThisDirection) {
-                            telegramLimitWarning = `🛡 *Portföy Koruma Kalkanı Devrede*\nOtopilotumuzda hâlihazırda maksimum limite ulaştığımız için (${currentDirectionCount} adet aktif ${signal.type} işlem), bu elit sinyal borsa hesabınızda otomatik olarak AÇILMADI. Riski yönetmek kaydıyla isterseniz işlemi kendiniz manuel olarak açabilirsiniz.`;
-                            console.log(`[AUTO-TRADE] Limit (${currentDirectionCount}/${maxAllowedInThisDirection}) dolu! Sinyal Yönü: ${signal.type}. Sinyal havuza eklendi (Macro limit kısıtlaması).`);
-                            if (bot && CONFIG.telegramAdminId) {
-                                bot.sendMessage(CONFIG.telegramAdminId, `⚠️ *Portföy Riski Koruması*\n\n🎯 #${signal.symbol} elit bir sinyal oluşturdu ancak otopilotta aktif işlem limiti (${currentDirectionCount}/${maxAllowedInThisDirection}) dolduğu için borsa emri AÇILMADI.`);
-                            }
-                        } else if (activeCount >= CONFIG.maxActiveTrades) {
-                            // Genel borsa API patlaması olmasın diye global üst limit de 15 vs olarak korunabilir, ama şimdilik limitleri biz ayarladık.
-                            console.log(`[AUTO-TRADE] Global Limit (${CONFIG.maxActiveTrades}) dolu! Sinyal havuza eklendi.`);
-                        } else {
                             // Aynı gün içinde aynı coine girildi mi? (Sinyal 2. veya 3. kez mi düşüyor?)
                             const todayStr = new Date().toISOString().split('T')[0];
                             const existingSignalsToday = await db.all(
@@ -1738,7 +1688,6 @@ Eğer derslerden biriyle doğrudan çelişmiyorsa sadece "ONAY" yaz.`;
                                 } else {
                                     console.log(`[AUTO-TRADE] Atlandı: ${signal.symbol} için bugün önceden sinyal üretilmiş (${existingSignalsToday.length}. kez geliyor). Sadece panele yansıtıldı.`);
                                 }
-                        }
                     } catch (e) {
                         console.error("[AUTO-TRADE] Hata:", e.message);
                     }
