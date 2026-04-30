@@ -1232,8 +1232,8 @@ async function analyzeCoin(symbolInfo) {
         let minSlPct = (currentATR / currentPrice) * 100 * 0.8; 
         
         // PERISKOP RISK MATRIX: Kademeli Filtreleme
-        // 1. Minimum (Noise) ve Maksimum SL % Kesicisi
-        if (riskPct > CONFIG.maxSlPct || riskPct < minSlPct) {
+        // 1. Minimum (Noise) ve Maksimum SL % Kesicisi (Ek olarak kesin 1.0% altı SL mesafesi VETO edilir)
+        if (riskPct > CONFIG.maxSlPct || riskPct < minSlPct || riskPct < 1.0) {
             return null; 
         }
         // 2. Dinamik R:R Talebi
