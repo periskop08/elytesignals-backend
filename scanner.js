@@ -834,8 +834,8 @@ async function analyzeCoin(symbolInfo) {
             try {
                 const activeShorts = await db.get("SELECT COUNT(*) as count FROM signals WHERE status = 'ACTIVE' AND type = 'SHORT'");
                 if (activeShorts && activeShorts.count >= 4) {
-                    console.log(`[DEVRE-KESICI] ${sym} SHORT VETO! Sistemde maksimum kapasiteye ulaşıldı (${activeShorts.count} aktif SHORT). Kâr alımı (TP) bekleniyor.`);
-                    return null;
+                    console.log(`[DEVRE-KESICI] ${sym} SHORT VETO! Sistemde maksimum kapasiteye ulaşıldı ama Veto GEÇİCİ İPTAL EDİLDİ.`);
+                    // return null;
                 }
             } catch(e) {
                 console.error("[DEVRE-KESICI] SHORT count error: ", e);
@@ -1019,8 +1019,9 @@ async function analyzeCoin(symbolInfo) {
                                     warnings.push("Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
                                 }
                             } else {
-                                console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), SHORT işlem reddedildi.`);
-                                return null; // Alpha Veto Kuralı
+                                console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), ama SHORT veto GEÇİCİ İPTAL EDİLDİ.`);
+                                // return null; // Alpha Veto Kuralı
+                                warnings.push("Geçici Veto İptali: Alpha Veto Devre Dışı");
                             }
                         }
                         else if (isBtcBear) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
