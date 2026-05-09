@@ -827,11 +827,8 @@ async function analyzeCoin(symbolInfo) {
         let signalStatus = 'ACTIVE';
         if (normalizedScore >= 90) { // Sadece 90-100 barajındakiler işleme girer
             signalStatus = 'ACTIVE';
-        } else if (normalizedScore >= 60) {
-            signalStatus = 'WATCHLIST';
-            totalWarnings.push("Düşük Skor: İzleme Listesine Alındı (WATCHLIST)");
         } else {
-            return null; // REJECT
+            return null; // REJECT (90 altı her şey çöpe)
         }
 
         // DEVRE KESİCİ KONTROLÜ
