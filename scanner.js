@@ -687,15 +687,20 @@ function calculateTriggerScore(closes, highs, lows, opens, direction, swingHighs
     let warnings = [];
     const currentJ = closes.length - 1;
     
-    // 1. Sweep Kontrolü
+    // 1. Sweep Kontrolü (Son 5 mum içinde aranır)
     let sweepDetected = false;
-    if (currentJ >= 10) {
-        let min10Low = Math.min(...lows.slice(currentJ-10, currentJ));
-        let max10High = Math.max(...highs.slice(currentJ-10, currentJ));
-        if (direction === 'LONG' && lows[currentJ] < min10Low && closes[currentJ] > opens[currentJ]) {
-            sweepDetected = true;
-        } else if (direction === 'SHORT' && highs[currentJ] > max10High && closes[currentJ] < opens[currentJ]) {
-            sweepDetected = true;
+    for (let i = 0; i <= 5; i++) {
+        let checkJ = currentJ - i;
+        if (checkJ >= 10) {
+            let min10Low = Math.min(...lows.slice(checkJ-10, checkJ));
+            let max10High = Math.max(...highs.slice(checkJ-10, checkJ));
+            if (direction === 'LONG' && lows[checkJ] < min10Low && closes[checkJ] > opens[checkJ]) {
+                sweepDetected = true;
+                break;
+            } else if (direction === 'SHORT' && highs[checkJ] > max10High && closes[checkJ] < opens[checkJ]) {
+                sweepDetected = true;
+                break;
+            }
         }
     }
     if (sweepDetected) { score += 15; warnings.push("Trigger: Likidite Süpürmesi (+15)"); }
