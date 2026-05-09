@@ -822,10 +822,12 @@ async function analyzeCoin(symbolInfo) {
         };
 
         // FINAL KARAR: ACTIVE, WATCHLIST, REJECT
+        let normalizedScore = Math.round((finalScore / 43.25) * 100);
+        
         let signalStatus = 'ACTIVE';
-        if (finalScore >= 18) { // Normalize edilmiş puan eşiği (18x5 = 90). Baraj 90-100 arası ACTIVE
+        if (normalizedScore >= 90) { // Sadece 90-100 barajındakiler işleme girer
             signalStatus = 'ACTIVE';
-        } else if (finalScore >= 12) {
+        } else if (normalizedScore >= 60) {
             signalStatus = 'WATCHLIST';
             totalWarnings.push("Düşük Skor: İzleme Listesine Alındı (WATCHLIST)");
         } else {
@@ -845,7 +847,7 @@ async function analyzeCoin(symbolInfo) {
             entryPrice: currentPrice,
             targetPrice: targetP,
             stopPrice: dynamicStop,
-            qualityScore: Math.round(finalScore * 5), // Geriye dönük uyumluluk için x5 (100 üzerinden gibi)
+            qualityScore: normalizedScore, // 100 üzerinden net skor
             warnings: JSON.stringify(totalWarnings),
             macroState: globalMarketState,
             breakdown: breakdown,
