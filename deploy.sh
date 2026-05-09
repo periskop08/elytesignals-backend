@@ -21,6 +21,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "🔄 AWS Sunucusunda Değişiklikler Çekiliyor ve PM2 Yeniden Başlatılıyor..."
-ssh -o StrictHostKeyChecking=no -i $PEM_KEY ubuntu@51.20.7.21 'cd ~/backend && git pull origin main && pm2 restart all'
+ssh -o StrictHostKeyChecking=no -i $PEM_KEY ubuntu@51.20.7.21 'cd ~/backend && git pull origin main && pm2 restart ElyteBackend'
 
 echo "✅ Deployment Tamamlandı! Veritabanı %100 Güvende."
