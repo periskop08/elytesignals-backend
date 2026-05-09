@@ -823,7 +823,7 @@ async function analyzeCoin(symbolInfo) {
 
         // FINAL KARAR: ACTIVE, WATCHLIST, REJECT
         let signalStatus = 'ACTIVE';
-        if (finalScore >= 18) { // Normalize edilmiş puan eşiği (örn: 18-25 arası iyi)
+        if (finalScore >= 18) { // Normalize edilmiş puan eşiği (18x5 = 90). Baraj 90-100 arası ACTIVE
             signalStatus = 'ACTIVE';
         } else if (finalScore >= 12) {
             signalStatus = 'WATCHLIST';
@@ -1141,7 +1141,7 @@ async function sendNightlyReport() {
     try {
         let todayStr = new Date().toISOString().split('T')[0];
 
-        const ZODYAK_MILESTONE = "'2026-04-29 13:46:00'";
+        const ZODYAK_MILESTONE = "'2026-05-09 10:35:00'";
 
         // 1. Yeni Sinyaller (Son 24 Saat) - Milattan Öncesini Alma
         const newSignals = await db.all(`SELECT status FROM signals WHERE createdAt >= datetime('now', '-24 hours') AND createdAt >= ${ZODYAK_MILESTONE}`);
