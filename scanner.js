@@ -644,792 +644,199 @@ async function backfillTrades() {
     }
 }
 
+// --- YENI 3-KATMANLI SKORLAMA YARDIMCI FONKSIYONLARI ---
+function calculateContextScore(currentPrice, curSma200, globalMarketState, currentADX, rvol, globalVol, direction) {
+    let score = 0;
+    let warnings = [];
+    
+    // 1. HTF Trend Aligned (200 SMA)
+    if (direction === 'LONG') {
+        if (currentPrice > curSma200) { score += 15; warnings.push("Context: Trend Yönünde LONG (+15)"); }
+        else { score -= 10; warnings.push("Context: Trende Karşı LONG (-10)"); }
+    } else {
+        if (currentPrice < curSma200) { score += 15; warnings.push("Context: Trend Yönünde SHORT (+15)"); }
+        else { score -= 10; warnings.push("Context: Trende Karşı SHORT (-10)"); }
+    }
+
+    // 2. BTC/ETH Makro Uyumu
+    const btc1d = globalMarketState.btc1dObj;
+    const eth1d = globalMarketState.eth1dObj;
+    let isBtcBull = btc1d && (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
+    let isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
+    let isBtcBear = btc1d && (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR');
+    let isEthBear = eth1d && (eth1d.trend === 'BEAR' || eth1d.trend === 'STRONG_BEAR');
+    
+    if (direction === 'LONG' && isBtcBull && isEthBull) { score += 15; warnings.push("Context: Makro Boğa Uyumu (+15)"); }
+    else if (direction === 'SHORT' && isBtcBear && isEthBear) { score += 15; warnings.push("Context: Makro Ayı Uyumu (+15)"); }
+    else { score -= 5; warnings.push("Context: Makro Uyumsuzluğu (-5)"); }
+
+    // 3. ADX Rejimi
+    if (currentADX >= 20) { score += 10; warnings.push("Context: Sağlam ADX İvmesi (+10)"); }
+    else { score += 5; warnings.push("Context: Düşük ADX (Range) (+5)"); }
+
+    // 4. Hacim Yeterliliği
+    if (rvol > 1.2) { score += 10; warnings.push("Context: Yüksek Göreceli Hacim (+10)"); }
+    if (direction === 'LONG' && globalVol < 2000000) { score -= 20; warnings.push("Context: Düşük Hacim (-20)"); }
+    if (direction === 'SHORT' && globalVol < 1500000) { score -= 20; warnings.push("Context: Düşük Hacim (-20)"); }
+
+    return { score, warnings };
+}
+
+function calculateTriggerScore(closes, highs, lows, opens, direction, swingHighs, swingLows) {
+    let score = 0;
+    let warnings = [];
+    const currentJ = closes.length - 1;
+    
+    // 1. Sweep Kontrolü
+    let sweepDetected = false;
+    if (currentJ >= 10) {
+        let min10Low = Math.min(...lows.slice(currentJ-10, currentJ));
+        let max10High = Math.max(...highs.slice(currentJ-10, currentJ));
+        if (direction === 'LONG' && lows[currentJ] < min10Low && closes[currentJ] > opens[currentJ]) {
+            sweepDetected = true;
+        } else if (direction === 'SHORT' && highs[currentJ] > max10High && closes[currentJ] < opens[currentJ]) {
+            sweepDetected = true;
+        }
+    }
+    if (sweepDetected) { score += 15; warnings.push("Trigger: Likidite Süpürmesi (+15)"); }
+
+    // 2. BOS / CHoCH Onayı (Second Confirmation)
+    let chochDetected = false;
+    if (direction === 'LONG' && swingHighs.length > 0) {
+        if (highs[currentJ] > swingHighs[swingHighs.length - 1].price) chochDetected = true;
+    } else if (direction === 'SHORT' && swingLows.length > 0) {
+        if (lows[currentJ] < swingLows[swingLows.length - 1].price) chochDetected = true;
+    }
+    if (chochDetected) { score += 20; warnings.push("Trigger: CHoCH / BOS Kırılımı (+20)"); }
+
+    // 3. Killer Wick & Engulfing
+    let isKillerWick = false;
+    let candleSize = highs[currentJ] - lows[currentJ] || 1;
+    if (direction === 'LONG') {
+        let lowerWick = Math.min(opens[currentJ], closes[currentJ]) - lows[currentJ];
+        if (lowerWick/candleSize > 0.40) isKillerWick = true;
+    } else {
+        let upperWick = highs[currentJ] - Math.max(opens[currentJ], closes[currentJ]);
+        if (upperWick/candleSize > 0.40) isKillerWick = true;
+    }
+    if (isKillerWick) { score += 10; warnings.push("Trigger: Killer Wick (+10)"); }
+
+    return { score, warnings, sweepDetected, chochDetected };
+}
+
+function calculateExecutionScore(riskPct, rr, currentVol, avgVol) {
+    let score = 0;
+    let warnings = [];
+    
+    // Retest / Entry quality (Basit varsayım)
+    if (riskPct < 3.0) { score += 10; warnings.push("Execution: Dar Stop / Güvenli Entry (+10)"); }
+    
+    // Hacim Onayı
+    if (currentVol > avgVol) { score += 10; warnings.push("Execution: Ortalamanın Üstünde Hacim (+10)"); }
+    
+    // Risk Ödül (RR) Puanı
+    if (rr >= 2.0) { score += 10; warnings.push("Execution: Yüksek RR Potansiyeli (+10)"); }
+    else { score += 5; warnings.push("Execution: Yeterli RR (+5)"); }
+
+    return { score, warnings };
+}
+
 async function analyzeCoin(symbolInfo) {
     try {
         const sym = typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol;
         const klinesFull = await fetchCandles(symbolInfo, 60, 250);
-        if (!klinesFull || klinesFull.length < 200) {
-            return null;
-        }
+        if (!klinesFull || klinesFull.length < 200) return null;
 
         const closesFull = klinesFull.map(k => k.close);
         const sma200Values = SMA.calculate({ period: 200, values: closesFull });
         const curSma200 = sma200Values[sma200Values.length - 1];
 
-        // Orijinal indikatör uyumu için son 100 işlem mumunu kesiyoruz
         const klines = klinesFull.slice(-100);
-
         const opens = klines.map(k => k.open);
         const highs = klines.map(k => k.high);
         const lows = klines.map(k => k.low);
         const closes = klines.map(k => k.close);
         const volumes = klines.map(k => k.volume);
-
         const currentPrice = closes[closes.length - 1];
 
-        // --- 5-MUM FRACTAL SWING (CHoCH) TESPİTİ ---
+        // Fractal Swing / Market Structure
         let swingHighs = [];
         let swingLows = [];
         for (let i = 2; i < highs.length - 2; i++) {
-            if (highs[i] > highs[i-2] && highs[i] > highs[i-1] && 
-                highs[i] > highs[i+1] && highs[i] > highs[i+2]) {
+            if (highs[i] > highs[i-2] && highs[i] > highs[i-1] && highs[i] > highs[i+1] && highs[i] > highs[i+2]) {
                 swingHighs.push({index: i, price: highs[i]});
             }
-            if (lows[i] < lows[i-2] && lows[i] < lows[i-1] && 
-                lows[i] < lows[i+1] && lows[i] < lows[i+2]) {
+            if (lows[i] < lows[i-2] && lows[i] < lows[i-1] && lows[i] < lows[i+1] && lows[i] < lows[i+2]) {
                 swingLows.push({index: i, price: lows[i]});
             }
         }
-        const rangeHigh = Math.max(...highs);
-        const rangeLow = Math.min(...lows);
-        const eq = (rangeHigh + rangeLow) / 2;
 
         const atrRes = ATR.calculate({ high: highs, low: lows, close: closes, period: 14 });
         const currentATR = atrRes[atrRes.length - 1] || (currentPrice * 0.015);
-
-        let avgATR = currentATR;
-        if (atrRes.length >= 14) {
-            const last14 = atrRes.slice(-14);
-            avgATR = last14.reduce((acc, val) => acc + val, 0) / 14;
-        }
-
-        // TEMEL HESAPLAMALAR
-        const recentLows = lows.slice(-6);
-        const recentHighs = highs.slice(-6);
-        let recentMin = Math.min(...recentLows);
-        let recentMax = Math.max(...recentHighs);
-        let dipDeviation = false;
-        let tepeDeviation = false;
-
-        // MATEMATİKSEL LİKİDİTE KONTROLÜ (SWEEP & RECLAIM ZORUNLU TABAN KURAL)
-        let sweepIdxLong = -1;
-        let trapWickSize = 0;
-        const trapCurrentLow = lows[lows.length - 1];
-        const trapCurrentHigh = highs[highs.length - 1];
-        const trapCurrentOpen = opens[opens.length - 1];
-
-        // LOKAL TREND ANALİZİ (Boğa Rallisinde Dibi Bulabilmek için 24 Mumluk Lokal Pencere)
-        const localLows = lows.slice(-24);
-        const localHighs = highs.slice(-24);
-        const localRangeLow = Math.min(...localLows);
-        const localRangeHigh = Math.max(...localHighs);
-
-        if (recentMin <= localRangeLow * 1.005 && currentPrice > localRangeLow) {
-            let sweepIdx = lows.lastIndexOf(recentMin);
-            if (sweepIdx !== -1) {
-                // CHOCH Onayı Kaldırıldı (Fon Büyütme Agresif Modu) - Sadece dönmesi yeterli
-                dipDeviation = true;
-                sweepIdxLong = sweepIdx;
-                trapWickSize = Math.min(trapCurrentOpen, currentPrice) - trapCurrentLow;
-            }
-        }
-
-        let sweepIdxShort = -1;
-        if (recentMax >= localRangeHigh * 0.995 && currentPrice < localRangeHigh) {
-            let sweepIdx = highs.lastIndexOf(recentMax);
-            if (sweepIdx !== -1) {
-                // CHOCH Onayı Kaldırıldı (Fon Büyütme Agresif Modu) - Sadece dönmesi yeterli
-                tepeDeviation = true;
-                sweepIdxShort = sweepIdx;
-                trapWickSize = trapCurrentHigh - Math.max(trapCurrentOpen, currentPrice);
-            }
-        }
-
-        // 🚀 RANGE BREAKOUT (Trend Kırılımı) KONTROLÜ (Özel İstek) 🚀
-        // Sadece Makro Piyasa destekliyorsa kırılımlara bypass izni ver (Fakeout/Fake Kırılım Koruması)
-        const prevRangeHigh = Math.max(...highs.slice(0, -1));
-        const prevRangeLow = Math.min(...lows.slice(0, -1));
-
-        const isMacroBull = globalMarketState.btcTrend && globalMarketState.btcTrend.includes('BULL') && 
-                            globalMarketState.ethTrend && globalMarketState.ethTrend.includes('BULL');
-                            
-        const isMacroBear = globalMarketState.btcTrend && globalMarketState.btcTrend.includes('BEAR') && 
-                            globalMarketState.ethTrend && globalMarketState.ethTrend.includes('BEAR');
-
-        if (currentPrice > prevRangeHigh && isMacroBull) {
-            dipDeviation = true; // BTC ve ETH Boğa iken yukarı kırılıma (LONG) sonsuz güven!
-        } else if (currentPrice < prevRangeLow && isMacroBear) {
-            tepeDeviation = true; // BTC ve ETH Ayı iken aşağı çöküşe (SHORT) sonsuz güven!
-        }
-
-        // --- ADX ve RVOL (Hacim) Çekimi ---
         const trapAdxRes = ADX.calculate({high: highs, low: lows, close: closes, period: 14});
-        const trapCurrentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
-        const trapIsRangingLimit = trapCurrentADX < 20;
-
+        const currentADX = trapAdxRes.length > 0 ? trapAdxRes[trapAdxRes.length - 1].adx : 25;
+        
         const currentVol = volumes[volumes.length - 1] || 0;
         const avgVol = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
         const rvol = currentVol / (avgVol || 1);
-
-        // 🚀 RANGE ORTASI (Sub-Range OTE Bouncing) v6.1 KONTROLÜ 🚀
-        // Gemini & Perplexity Modeli: Sıkışan piyasada %61.8 Fib seviyesinden sekip, hacimli reddedilme yakalaması.
-        let internalDeviation = false;
-        let internalDirection = '';
-        let internalTarget = 0;
-        let internalStop = 0;
-
-        const subLows = lows.slice(-20);
-        const subHighs = highs.slice(-20);
-        const subRangeLow = Math.min(...subLows);
-        const subRangeHigh = Math.max(...subHighs);
-        const subRangeMiddle = (subRangeHigh + subRangeLow) / 2;
-        const eqDistance = Math.abs(currentPrice - subRangeMiddle) / currentPrice;
-
-        if (trapCurrentADX >= 15 && trapCurrentADX <= 25) { // ADX 15-25 aralığına çekildi (Ölü piyasalardan kaçış, temiz range avı)
-            // SHORT OTE (Range'in üst %61.8 bölgesi)
-            const oteShort = subRangeLow + (subRangeHigh - subRangeLow) * 0.618;
-            if (highs[highs.length - 1] >= oteShort && currentPrice < subRangeHigh) {
-                const wickSize = highs[highs.length - 1] - Math.max(opens[opens.length - 1], currentPrice);
-                const bodySize = Math.abs(currentPrice - opens[opens.length - 1]) || 0.0001;
-                if (wickSize > bodySize * 1.2) {
-                    internalDeviation = true;
-                    internalDirection = 'SHORT';
-                    internalTarget = subRangeLow; // Karşı uca vur kaç
-                    internalStop = subRangeHigh * 1.005; // Zirveyi kırarsa kaç (Max 8h time limit simulation)
-                }
-            }
-            
-            // LONG OTE (Range'in alt %38.2 bölgesi)
-            const oteLong = subRangeLow + (subRangeHigh - subRangeLow) * 0.382;
-            if (lows[lows.length - 1] <= oteLong && currentPrice > subRangeLow) {
-                const wickSize = Math.min(opens[opens.length - 1], currentPrice) - lows[lows.length - 1];
-                const bodySize = Math.abs(currentPrice - opens[opens.length - 1]) || 0.0001;
-                if (wickSize > bodySize * 1.2) {
-                    internalDeviation = true;
-                    internalDirection = 'LONG';
-                    internalTarget = subRangeHigh; // Karşı uca vur kaç
-                    internalStop = subRangeLow * 0.995; // Dibi kırarsa kaç (Max 8h time limit simulation)
-                }
-            }
-        }
-
-        // KULLANICI EMRİ: Sweep Veto (İptal Edildi)
-        // if (!dipDeviation && !tepeDeviation && !internalDeviation) {
-        //      console.log(`[VETO] ${sym} -> Ne Sweep var ne de Breakout (Zirve/Dip sessizliği)`);
-        //      return null;
-        // }
-
-        let direction = dipDeviation ? 'LONG' : (tepeDeviation ? 'SHORT' : internalDirection);
-        // Sweep olmadığı için yön boş kalmasın diye ana trend bazlı zorunlu yön tayini:
-        if (!direction) {
-            direction = currentPrice > curSma200 ? 'LONG' : 'SHORT';
-        }
-
-        // 🛡️ AKILLI DEVRE KESİCİ (SMART CIRCUIT BREAKER)
-        if (direction === 'LONG') {
-            const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
-            recentLongTimestamps = recentLongTimestamps.filter(ts => ts > twoHoursAgo);
-            
-            if (recentLongTimestamps.length >= 3) {
-                const btcTrend = globalMarketState.btcTrend;
-                const ethTrend = globalMarketState.ethTrend;
-                const isStrongBull = btcTrend === 'STRONG_BULL' && ethTrend === 'STRONG_BULL';
-                
-                if (!isStrongBull) {
-                    console.log(`[DEVRE-KESICI] ${sym} LONG VETO! (Son 2 saatte ${recentLongTimestamps.length} LONG verildi ve piyasa STRONG_BULL değil).`);
-                    return null;
-                }
-            }
-        } else if (direction === 'SHORT') {
-            try {
-                const activeShorts = await db.get("SELECT COUNT(*) as count FROM signals WHERE status = 'ACTIVE' AND type = 'SHORT'");
-                if (activeShorts && activeShorts.count >= 4) {
-                    console.log(`[DEVRE-KESICI] ${sym} SHORT VETO! Sistemde maksimum kapasiteye ulaşıldı ama Veto GEÇİCİ İPTAL EDİLDİ.`);
-                    // return null;
-                }
-            } catch(e) {
-                console.error("[DEVRE-KESICI] SHORT count error: ", e);
-            }
-        }
-
-        // 🔥 ASİMETRİK LİKİDİTE (DUAL LIQUIDITY) FİLTRESİ
         const globalVol = typeof symbolInfo === 'object' && symbolInfo.volume ? symbolInfo.volume : 999999999;
 
+        // Yön Belirleme (Basit Dip/Tepe veya SMA Eğilimi)
+        let direction = currentPrice > curSma200 ? 'LONG' : 'SHORT';
+        if (lows[lows.length - 1] < Math.min(...lows.slice(-6, -1))) direction = 'LONG';
+        if (highs[highs.length - 1] > Math.max(...highs.slice(-6, -1))) direction = 'SHORT';
 
-        // Ranging Makro Çatışması Hard-Block İptal Edildi (Kullanıcı İsteği: Skor Cezası Olarak Hesaplanacak)
-        // Eğer piyasa ADX<20 altında ve trende tersse, Zodyak Puanlamasında Toplam -25 Puan ceza yiyecek.
-        // Ama +25 (OB), +15 (FVG), +20 (Wick) gibi kusursuz kurallar bir araya gelip 55 barajını aşarsa işleme girebilecek.
-
-        // 🚨 MERCAN BEY (ANOMALİ DEDEKTÖRÜ & İSTİHBARAT) 🚨
-        const diff = (currentPrice - trapCurrentOpen) / trapCurrentOpen;
-        if (Math.abs(diff) >= 0.10 && globalVol >= 5000000) {
-            try {
-                const { fireMercanBey } = require('./mercan_bey');
-                fireMercanBey(sym, diff > 0 ? 'PUMP' : 'DUMP', diff);
-            } catch(e) { console.error(`[ERROR] Mercan Bey: ${e.message}`); }
-        }
-
-        // HACİM & LİKİDİTE KORUMASI (Demir Bey'in Mirası)
-        if (direction === 'LONG' && globalVol < 2000000) {
-            console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (LONG: ${globalVol})`);
-            return null;
-        }
-        if (direction === 'SHORT' && globalVol < 1500000) {
-            console.log(`[VETO-VOL] ${sym} -> Hacim çok düşük (SHORT: ${globalVol})`);
-            return null;
-        }
-
-        // --- SKORLAMA (SCORING) ALTYAPISI (ZODYAK V2.9.0) ---
-        let qualityScore = 0;
-        let warnings = [];
-        let breakdown = { ob: false, fvg: false, rvol: rvol, adx: trapCurrentADX, rr: 0, trend4h: "neutral", globalVol: globalVol };
-
-        // Sub-Range OTE Bouncing Puan Ödülü Tarafından
-        if (internalDeviation) {
-            qualityScore += 22;
-            warnings.push("Sub-Range OTE Bouncing (+22)");
-        }
-
-        // Kullanıcı Emri: Şartsız Joker İptal Edildi. Yalnızca Sweep Varsa +15
-        if (dipDeviation || tepeDeviation || internalDeviation) {
-            if (trapCurrentADX > 25) {
-                qualityScore += 7;
-                warnings.push("Tetik: Kusursuz Sweep Jokeri (Trend Baskısı Yarı Puan) (+7)");
-            } else {
-                qualityScore += 15;
-                warnings.push("Tetik: Kusursuz Sweep Jokeri (+15)");
-            }
-        }
-
-        // 1. ZEMIN / BÖLGE SLOTU (Max +40)
-        const trapObZone = direction === 'LONG' ? [rangeLow - (avgATR * 1.5), rangeLow + (avgATR * 1.5)] : [rangeHigh - (avgATR * 1.5), rangeHigh + (avgATR * 1.5)];
-        const trapObCandlesStart = closes.length - CONFIG.obLookback - 6;
-        let hasOB = false;
-        for (let i = trapObCandlesStart; i <= closes.length - 6; i++) {
-            if (i < 0) continue;
-            if (direction === 'LONG' && closes[i] < opens[i] && closes[i] <= trapObZone[1] && closes[i] >= trapObZone[0]) {
-                if (highs[i+1] > highs[i]) { hasOB = true; break; }
-            } else if (direction === 'SHORT' && closes[i] > opens[i] && closes[i] >= trapObZone[0] && closes[i] <= trapObZone[1]) {
-                if (lows[i+1] < lows[i]) { hasOB = true; break; }
-            }
-        }
-        if (hasOB) {
-            qualityScore += 25;
-            warnings.push("Zemin: Order Block Desteği (+25)");
-            breakdown.ob = true;
-        }
-
-        let hasFVG = false;
-        const lastIdx = closes.length - 1;
-        for (let i = lastIdx - 2; i <= lastIdx; i++) {
-            if (i >= 2) {
-                if (direction === 'LONG' && highs[i-2] < lows[i]) hasFVG = true; 
-                if (direction === 'SHORT' && lows[i-2] > highs[i]) hasFVG = true; 
-            }
-        }
-        if (hasFVG) {
-            qualityScore += 15;
-            warnings.push("Zemin: FVG Boşluğu (+15)");
-            breakdown.fvg = true;
-        }
-
-        // 2. TETİKLEME / KURŞUN SLOTU (Max +20 Puan Sınırı)
-        let triggerScore = 0;
-        let isKillerWick = false;
-        let isEngulfing = false;
-
-        if (direction === 'LONG' && dipDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
-        if (direction === 'SHORT' && tepeDeviation && trapWickSize > avgATR * 1.2) isKillerWick = true;
-        if (isKillerWick) { 
-            let p = (trapCurrentADX > 25) ? 10 : 20;
-            triggerScore = Math.max(triggerScore, p); 
-            let warningText = p === 10 ? "Tetik: Katil Fitil (Trend Baskısı Yarı Puan) (+10)" : "Tetik: Katil Fitil (+20)";
-            warnings.push(warningText); 
-        }
-
-        const currentOpen = opens[opens.length - 1];
-        const currentClose = closes[closes.length - 1];
-        const prevOpen = opens[opens.length - 2];
-        const prevClose = closes[closes.length - 2];
-        if (direction === 'LONG' && currentClose > currentOpen && prevClose < prevOpen && currentClose > prevOpen && currentOpen < prevClose) isEngulfing = true;
-        if (direction === 'SHORT' && currentClose < currentOpen && prevClose > prevOpen && currentClose < prevOpen && currentOpen > prevClose) isEngulfing = true;
-        if (isEngulfing) { triggerScore = Math.max(triggerScore, 20); warnings.push("Tetik: Yutan Mum (Engulfing) (+20)"); }
-
-        qualityScore += triggerScore;
-
-        const currentHigh = highs[highs.length - 1];
-        const currentLow = lows[lows.length - 1];
-
-        // 3. TUZAK / CONTEXT SLOTU
-        let isSweep = false;
-        const sweepLookback = Math.max(0, closes.length - 11);
-        if (direction === 'LONG') {
-            const minLow = Math.min(...lows.slice(sweepLookback, closes.length - 1));
-            if (currentLow < minLow && currentClose > minLow) isSweep = true;
-        } else {
-            const maxHigh = Math.max(...highs.slice(sweepLookback, closes.length - 1));
-            if (currentHigh > maxHigh && currentClose < maxHigh) isSweep = true;
-        }
-        if (isSweep) { 
-            let p = (trapCurrentADX > 25) ? 7 : 15;
-            qualityScore += p; 
-            let warningText = p === 7 ? "Tuzak: Likidite Süpürmesi (Trend Baskısı Yarı Puan) (+7)" : "Tuzak: Likidite Süpürmesi (Sweep) (+15)";
-            warnings.push(warningText); 
-        }
-
-        if ((direction === 'LONG' && currentClose < currentOpen && currentVol < avgVol * 0.5) || 
-            (direction === 'SHORT' && currentClose > currentOpen && currentVol < avgVol * 0.5)) {
-            qualityScore += 12; warnings.push("Tuzak: Volume Shelter (Hacim Kuruması) (+12)");
-        }
-
-        // 4. MAKRO / TREND SLOTU
-        let isBtcBull = false;
-        let isEthBull = false;
-        if (!symbolInfo.isAsset) {
-            const btc1d = globalMarketState.btc1dObj;
-            const eth1d = globalMarketState.eth1dObj;
-            if (btc1d) {
-                isBtcBull = (btc1d.trend === 'BULL' || btc1d.trend === 'STRONG_BULL');
-                isEthBull = eth1d && (eth1d.trend === 'BULL' || eth1d.trend === 'STRONG_BULL');
-                const isBtcBear = (btc1d.trend === 'BEAR' || btc1d.trend === 'STRONG_BEAR');
-                const btc4hTrend = globalMarketState.btc4h;
-                const btc1hTrend = globalMarketState.btc1h;
-                const is4hBear = (btc4hTrend === 'BEAR' || btc4hTrend === 'STRONG_BEAR');
-                const is1hBear = (btc1hTrend === 'BEAR' || btc1hTrend === 'STRONG_BEAR');
-
-                let isCascadingDrop = false;
-                if (btc1hTrend === 'STRONG_BEAR') {
-                    isCascadingDrop = true;
-                }
-
-                if (sym !== 'BTCUSDT' && sym !== 'ETHUSDT') {
-                    if (direction === 'LONG') {
-                        if (isCascadingDrop) {
-                            console.log(`[VETO-CASCADE] ${sym} -> BTC 1H trendi art arda NÖTR -> BEAR -> STRONG_BEAR kırılımı yaptı. Şelale riski nedeniyle LONG veto edildi.`);
-                            return null; // VETO LONG
-                        }
-
-                        if (isBtcBear) { qualityScore += 15; warnings.push("Makro: Bağımsız Alpha Uyanışı (BTC'ye İsyankar) (+15)"); }
-                        else if (isBtcBull) { 
-                            if (is4hBear && is1hBear) {
-                                qualityScore -= 20; 
-                                warnings.push("Makro: Şelale Düşüşü (4H ve 1H Ayı) Ceza (-20)");
-                            } else {
-                                qualityScore -= 15; 
-                                warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); 
-                            }
-                        }
-                    } else {
-                        if (isBtcBull && isEthBull) { 
-                            if ((is4hBear && is1hBear) || isCascadingDrop) {
-                                if (isCascadingDrop) {
-                                    warnings.push("Makro: VIP Kapısı Açıldı (1H Şelale Çöküşü) [Ceza Muafiyeti]");
-                                } else {
-                                    qualityScore -= 20;
-                                    warnings.push("Makro: VIP Kapısı Açıldı (Boğa Piyasasında 4H/1H Şelale SHORT) Ceza (-20)");
-                                }
-                            } else {
-                                console.log(`[VETO-ALPHA] ${sym} -> Bağımsız Alpha Uyanışı var (BTC ve ETH Boğa), ama SHORT veto GEÇİCİ İPTAL EDİLDİ.`);
-                                // return null; // Alpha Veto Kuralı
-                                warnings.push("Geçici Veto İptali: Alpha Veto Devre Dışı");
-                            }
-                        }
-                        else if (isBtcBear) { qualityScore -= 15; warnings.push("Makro: Sıradan Sürü Psikolojisi (BTC Uyumlu) Ceza (-15)"); }
-                    }
-                } else {
-                    warnings.push("👑 Kral Muafiyeti: Makro Korelasyon Cezaları Devre Dışı");
-                }
-            }
-        }
+        // 3 KATMANLI SKORLAMA (Perplexity Mimarisi)
+        let ctx = calculateContextScore(currentPrice, curSma200, globalMarketState, currentADX, rvol, globalVol, direction);
+        let trg = calculateTriggerScore(closes, highs, lows, opens, direction, swingHighs, swingLows);
         
-        // 200 SMA ANA TREND ÇATIŞMASI CEZASI
-        if (direction === 'LONG' && currentPrice < curSma200) { 
-            let penalty = 50;
-            if (isBtcBull && isEthBull) {
-                if (dipDeviation) { penalty = 20; }
-                else { penalty = 25; }
-            }
-            qualityScore -= penalty; 
-            warnings.push(`Makro: 200 SMA Altı Ana Trend Karşıtı LONG (-${penalty})`); 
-        }
-        else if (direction === 'SHORT' && currentPrice > curSma200) { 
-            qualityScore -= 50; warnings.push("Makro: 200 SMA Üstü Ana Trend Karşıtı SHORT (-50)"); 
-        }
-
-        let trend4h = "neutral";
-        try {
-            const klines4h = await fetchCandles(symbolInfo, 240, 50);
-            if (klines4h && klines4h.length >= 50) {
-                const closes4h = klines4h.map(k => k.close);
-                const sma4h = SMA.calculate({ values: closes4h, period: 50 });
-                const currentPrice4H = closes4h[closes4h.length - 1];
-                const sma50_4H = sma4h[sma4h.length - 1];
-                if (currentPrice4H > sma50_4H) trend4h = "bullish";
-                else if (currentPrice4H < sma50_4H) trend4h = "bearish";
-                
-                if (direction === 'LONG' && trend4h === 'bullish') { qualityScore += 15; warnings.push("Makro: 4H Zaman Dilimi Uyumu (+15)"); }
-                else if (direction === 'LONG' && trend4h === 'bearish') { qualityScore -= 5; warnings.push("Makro: 4H Zaman Dilimi Çatışması (-5)"); }
-                else if (direction === 'SHORT' && trend4h === 'bearish') { qualityScore += 15; warnings.push("Makro: 4H Zaman Dilimi Uyumu (+15)"); }
-                else if (direction === 'SHORT' && trend4h === 'bullish') { qualityScore -= 5; warnings.push("Makro: 4H Zaman Dilimi Çatışması (-5)"); }
-            }
-        } catch(e) { console.error(`[ERROR] 4H Trend Klines (${sym}): ${e.message}`); }
-
-        const adxResult = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
-        const currentADX = adxResult.length > 0 ? adxResult[adxResult.length - 1].adx : 0;
-        if (currentADX >= 20) { qualityScore += 10; warnings.push("Makro: Sağlıklı ADX İvmesi (+10)"); }
-        else if (currentADX < 20) { qualityScore += 12; warnings.push("🟢 Range Mean Reversion (+12)"); }
-
-        // 5. İNDİKATÖR MANTIĞI & CEZA HUKUKU
-        const ichiRes = IchimokuCloud.calculate({ high: highs, low: lows, conversionPeriod: 9, basePeriod: 26, spanPeriod: 52, displacement: 26 });
-        if (ichiRes && ichiRes.length > 0) {
-            const currentIchi = ichiRes[ichiRes.length - 1];
-            if (direction === 'LONG' && currentPrice > currentIchi.spanA && currentPrice > currentIchi.spanB && currentIchi.conversion > currentIchi.base) {
-                qualityScore += 15; warnings.push("İndikatör: Ichimoku Bull Onayı (+15)");
-            } else if (direction === 'SHORT' && currentPrice < currentIchi.spanA && currentPrice < currentIchi.spanB && currentIchi.conversion < currentIchi.base) {
-                qualityScore += 15; warnings.push("İndikatör: Ichimoku Bear Onayı (+15)");
-            }
-        }
-
-        const stochRSIRes = StochasticRSI.calculate({ values: closes, rsiPeriod: 14, stochasticPeriod: 14, kPeriod: 3, dPeriod: 3 });
-        if (stochRSIRes && stochRSIRes.length > 0) {
-            const lastStoch = stochRSIRes[stochRSIRes.length - 1];
-            if (direction === 'LONG') {
-                if (lastStoch.k > 80) { qualityScore -= 10; warnings.push("İndikatör: StochRSI Aşırı Alım FOMO Cezası (-10)"); }
-            } else if (direction === 'SHORT') {
-                if (lastStoch.k < 20) { qualityScore -= 10; warnings.push("İndikatör: StochRSI Aşırı Satım FOMO Cezası (-10)"); }
-            }
-        }
-
-        try {
-            const dailyKlines = await fetchCandles(symbolInfo, 1440, 200);
-            if (dailyKlines && dailyKlines.length >= 200) {
-                const dailyCloses = dailyKlines.map(k => k.close);
-                const sma50_1dArr = SMA.calculate({ period: 50, values: dailyCloses });
-                const sma200_1dArr = SMA.calculate({ period: 200, values: dailyCloses });
-                if (sma50_1dArr.length > 0 && sma200_1dArr.length > 0) {
-                    const sma50_1d = sma50_1dArr[sma50_1dArr.length - 1];
-                    const sma200_1d = sma200_1dArr[sma200_1dArr.length - 1];
-                    if (direction === 'LONG' && sma50_1d > sma200_1d && currentPrice > sma200_1d) { qualityScore += 10; warnings.push("İndikatör: 1D Golden Cross (+10)"); }
-                    else if (direction === 'SHORT' && sma50_1d < sma200_1d && currentPrice < sma200_1d) { qualityScore += 10; warnings.push("İndikatör: 1D Bear Cross (+10)"); }
-                }
-            }
-        } catch(e) { console.error(`[ERROR] 1D Klines (${sym}): ${e.message}`); }
-
-        // 7. ORDER FLOW BÖLÜMÜ (MİKRO-ANATOMİ)
-        if (currentHigh > currentLow && currentVol > 0) {
-            const buyVol = currentVol * ((currentClose - currentLow) / (currentHigh - currentLow));
-            const sellVol = currentVol * ((currentHigh - currentClose) / (currentHigh - currentLow));
-            const buyRatio = buyVol / (currentVol || 1);
-            const sellRatio = sellVol / (currentVol || 1);
-
-            if (direction === 'LONG') {
-                if (buyRatio > 0.60) { qualityScore += 15; warnings.push("Order Flow: Aggressive Bull (+15)"); }
-                else if (sellRatio > 0.60) { qualityScore -= 15; warnings.push("Order Flow: Aggressive Bear Reject Cezası (-15)"); }
-            } else if (direction === 'SHORT') {
-                if (sellRatio > 0.60) { qualityScore += 15; warnings.push("Order Flow: Aggressive Bear (+15)"); }
-                else if (buyRatio > 0.60) { qualityScore -= 15; warnings.push("Order Flow: Aggressive Bull Reject Cezası (-15)"); }
-            }
-        }
-
-        // 8. FİNANSAL ÇEŞİTLİLİK (PORTFÖY YIĞILMA CEZASI)
-        try {
-            const activeTrades = await db.all("SELECT type FROM user_trades WHERE status = 'ACTIVE'");
-            let sameDirCount = 0;
-            for(let t of activeTrades) {
-                if (t.type === direction) sameDirCount++;
-            }
-            if (sameDirCount >= 2) {
-                qualityScore -= 12;
-                warnings.push(`Portföy: Aynı Yönde ${sameDirCount} İşlem Yığılma Cezası (-12)`);
-            }
-        } catch(e) { console.error(`[ERROR] Active Trades Portföy Check (${sym}): ${e.message}`); }
-
-        // Daima logla ki neden takıldığını görelim
-        // console.log(`[DEBUG] ${sym} | Yön: ${direction} | Puan: ${qualityScore} | Uyarılar: ${warnings.join(', ')}`);
-
-        // +--- ANA STRATEJİ KİLİDİ (SADECE KUSURSUZ SWEEP ONAYI ŞART) ---+
-        if (!isSweep) {
-            // console.log(`[STRA-VETO] ${sym} | Yön: ${direction} | Neden: Kusursuz Likidite Süpürmesi (Sweep) onayı yok. Range ortası ve Salt Momentum sinyalleri reddedildi.`);
-            return null;
-        }
-        
-        let currentBaraj = 90;
-        if (direction === 'SHORT' && globalMarketState.btc1h === 'STRONG_BEAR' && globalMarketState.eth1h === 'STRONG_BEAR') {
-            currentBaraj = 75;
-        }
-
-        // Zodyak Altın Kesişim Limiti (Baraj: Sadece 90 ve Üzeri Elite Kurulumlar)
-        if (qualityScore < currentBaraj) {
-            console.log(`[SKOR-ELENDI] ${sym} | Yön: ${direction} | Puan: ${qualityScore} (Baraj: ${currentBaraj}+) | Neden: Skor Yetersiz`);
-            return null; // Elit puan limitinin altında kalanları reddet
-        }
-
-        // 6. RISK / REWARD (R:R) HESAPLAMASI & 1:3 CAP
-        let targetP = eq;
-        let dynamicStop = 0;
-        let risk = 0, reward = 0;
         let slMultiplier = (sym === 'XAUUSD' || sym === 'XAGUSD' || sym === 'USOIL') ? 2.5 : 1.5;
-
-        // Gap Fill Analysis for Stocks & Commodities
-        let hasGap = false;
-        let gapTarget = 0;
-        if (sym === 'AAPL' || sym === 'TSLA' || sym === 'NASDAQ' || sym === 'XAUUSD' || sym === 'XAGUSD' || sym === 'USOIL') {
-            for (let g = 1; g < 15; g++) {
-                const gapSize = opens[closes.length - g] - closes[closes.length - g - 1];
-                if (direction === 'LONG' && gapSize < -(currentPrice * 0.005)) { // Gap down
-                    hasGap = true; gapTarget = closes[closes.length - g - 1]; break;
-                } else if (direction === 'SHORT' && gapSize > (currentPrice * 0.005)) { // Gap up
-                    hasGap = true; gapTarget = closes[closes.length - g - 1]; break;
-                }
-            }
-        }
-
-        if (direction === 'LONG') {
-            dynamicStop = currentPrice - (currentATR * slMultiplier);
-            risk = currentPrice - dynamicStop;
-
-            // Varsayılan Hedef: 1:2 Risk Ödül Oranı (10$ Risk = 20$ Kazanç)
-            targetP = currentPrice + (risk * 2.0);
-
-            // Hisselerde Gap Fill Hedefi
-            if (hasGap && gapTarget > currentPrice) {
-                targetP = gapTarget;
-                warnings.push('Gap Fill TP Target Set');
-            }
-
-            // FVG varsa hedefi daraltma
-            if (hasFVG && targetP > currentPrice + (currentPrice * 0.02)) {
-                targetP = currentPrice + (currentPrice * 0.02); // Minimum FVG safe zone
-            }
-
-            reward = targetP - currentPrice;
-
-            // 1:2 R:R Cap Uyumlu Kesinti (Tıraşlama)
-            let maxReward = risk * 2.0;
-            if (reward > maxReward) {
-                reward = maxReward;
-                targetP = currentPrice + reward;
-                warnings.push('TP Capped (1:2 Max)');
-            }
-        } else {
-            dynamicStop = currentPrice + (currentATR * slMultiplier);
-            risk = dynamicStop - currentPrice;
-
-            // Varsayılan Hedef: 1:2 Risk Ödül Oranı (10$ Risk = 20$ Kazanç)
-            targetP = currentPrice - (risk * 2.0);
-
-            if (hasGap && gapTarget < currentPrice) {
-                targetP = gapTarget;
-                warnings.push('Gap Fill TP Target Set');
-            }
-
-            if (hasFVG && targetP < currentPrice - (currentPrice * 0.02)) {
-                targetP = currentPrice - (currentPrice * 0.02);
-            }
-
-            reward = currentPrice - targetP;
-
-            // 1:2 R:R Cap Uyumlu Kesinti
-            let maxReward = risk * 2.0;
-            if (reward > maxReward) {
-                reward = maxReward;
-                targetP = currentPrice - reward;
-                warnings.push('TP Capped (1:2 Max)');
-            }
-        }
-
-
+        let dynamicStop = direction === 'LONG' ? currentPrice - (currentATR * slMultiplier) : currentPrice + (currentATR * slMultiplier);
+        let risk = Math.abs(currentPrice - dynamicStop);
+        let targetP = direction === 'LONG' ? currentPrice + (risk * 2.0) : currentPrice - (risk * 2.0);
         let riskPct = (risk / currentPrice) * 100;
-        let minSlPct = (currentATR / currentPrice) * 100 * 0.8; 
+        let rr = 2.0;
         
-        // PERISKOP RISK MATRIX: Kademeli Filtreleme
-        // 1. Minimum (Noise) ve Maksimum SL % Kesicisi (Ek olarak kesin 1.0% altı SL mesafesi VETO edilir)
-        if (riskPct > CONFIG.maxSlPct || riskPct < minSlPct || riskPct < 1.0) {
-            return null; 
-        }
-        // 2. Dinamik R:R Talebi
-        let requiredRR = CONFIG.minRR;
-        if (riskPct > CONFIG.premiumSlThreshold) {
-            requiredRR = CONFIG.premiumRR;
-            warnings.push(`Premium RR Required (>%${CONFIG.premiumSlThreshold} Risk)`);
-        }
+        let exe = calculateExecutionScore(riskPct, rr, currentVol, avgVol);
 
-        let requiredReward = risk * requiredRR;
-        let organicRR = risk > 0 ? (reward / risk) : 0; // Doğal hedef R:R'si
-        let finalRR = organicRR;
-        
-        breakdown.rr = parseFloat(finalRR.toFixed(2));
+        // FINAL SKOR: %40 Context + %35 Trigger + %25 Execution
+        let finalScore = (ctx.score * 0.40) + (trg.score * 0.35) + (exe.score * 0.25);
+        let totalWarnings = [...ctx.warnings, ...trg.warnings, ...exe.warnings];
 
-        // --- PERPLEXITY ELITE FILTER (v2.0) + CHATGPT SWEEP/ENGULFING ---
-        let currentJ = closes.length - 1;
-
-        // BÖLÜM A: TETİKLEME (Kurşun) Slotu -> Maksimum +20 Puan (Wick veya Engulfing)
-        // 1. Killer Wick (Katil Fitil) Kontrolü
-        let hasKillerWick = false;
-        for (let j = closes.length - 3; j <= closes.length - 1; j++) {
-            if (j >= 0) {
-                let candleSize = highs[j] - lows[j] || 1;
-                if (direction === 'LONG') {
-                    let minCloseOpen = Math.min(opens[j], closes[j]);
-                    let lowerWick = minCloseOpen - lows[j];
-                    let wickRatio = lowerWick / candleSize;
-                    if (wickRatio > 0.40 && closes[j] > ((highs[j] + lows[j])/2)) {
-                        hasKillerWick = true; break;
-                    }
-                } else {
-                    let maxCloseOpen = Math.max(opens[j], closes[j]);
-                    let upperWick = highs[j] - maxCloseOpen;
-                    let wickRatio = upperWick / candleSize;
-                    if (wickRatio > 0.40 && closes[j] < ((highs[j] + lows[j])/2)) {
-                        hasKillerWick = true; break;
-                    }
-                }
-            }
-        }
-
-        // 2. Engulfing (Yutan Mum) Kontrolü
-        let hasEngulfing = false;
-        if (currentJ >= 1) {
-            let pOpen = opens[currentJ-1]; let pClose = closes[currentJ-1];
-            let cOpen = opens[currentJ]; let cClose = closes[currentJ];
-            if (direction === 'LONG') {
-                if (pClose < pOpen && cClose > cOpen && cClose >= pOpen && cOpen <= pClose) {
-                    hasEngulfing = true;
-                }
-            } else {
-                if (pClose > pOpen && cClose < cOpen && cClose <= pOpen && cOpen >= pClose) {
-                    hasEngulfing = true;
-                }
-            }
-        }
-
-        // Tetik Slotu Kararı (İkisi de 20 puandır, toplanmaz)
-        if (hasKillerWick || hasEngulfing) {
-            let p = (trapCurrentADX > 25 && hasKillerWick && !hasEngulfing) ? 10 : 20;
-            qualityScore += p;
-            if (hasKillerWick && hasEngulfing) {
-                warnings.push('Tetikleyici: Wick + Engulfing Confluence (+20)');
-            } else if (hasKillerWick) {
-                let warningText = p === 10 ? 'Tetikleyici: Killer Wick (Trend Baskısı Yarı Puan) (+10)' : 'Tetikleyici: Killer Wick (+20)';
-                warnings.push(warningText);
-            } else {
-                warnings.push('Tetikleyici: Kurumsal Engulfing (+20)');
-            }
-        }
-
-        // BÖLÜM B: TUZAK (Context) Slotu -> Hacim ve Likidite
-        // 3. Liquidity Sweep (Stop Patlatma Mıknatısı) -> +15 Puan
-        let hasSweep = false;
-        if (currentJ >= 10) {
-            let past10Lows = lows.slice(currentJ-10, currentJ);
-            let past10Highs = highs.slice(currentJ-10, currentJ);
-            let min10Low = Math.min(...past10Lows);
-            let max10High = Math.max(...past10Highs);
-            
-            if (direction === 'LONG') {
-                if (lows[currentJ] < min10Low && closes[currentJ] > opens[currentJ] && closes[currentJ] > ((highs[currentJ]+lows[currentJ])/2)) {
-                    hasSweep = true;
-                }
-            } else {
-                if (highs[currentJ] > max10High && closes[currentJ] < opens[currentJ] && closes[currentJ] < ((highs[currentJ]+lows[currentJ])/2)) {
-                    hasSweep = true;
-                }
-            }
-        }
-        if (hasSweep) {
-            let p = (trapCurrentADX > 25) ? 7 : 15;
-            qualityScore += p;
-            let warningText = p === 7 ? 'Tuzak: Liquidity Sweep (Trend Baskısı Yarı Puan) (+7)' : 'Tuzak: Liquidity Sweep (Stop Temizliği) (+15)';
-            warnings.push(warningText);
-        }
-
-        // 4. Volume Shelter (Hacim Sığınağı) -> +12 Puan
-        let shortTermVolAvg = volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
-        let lastVol = volumes[currentJ];
-        if (direction === 'LONG' && lastVol < shortTermVolAvg * 0.9 && closes[currentJ] < opens[currentJ]) {
-            qualityScore += 12;
-            warnings.push('Tuzak: Volume Shelter (Zayıf Satış) (+12)');
-        } else if (direction === 'SHORT' && lastVol < shortTermVolAvg * 0.9 && closes[currentJ] > opens[currentJ]) {
-            qualityScore += 12;
-            warnings.push('Tuzak: Volume Shelter (Zayıf Alış) (+12)');
-        }
-        // --- YENİ CRO STRATEJİ RAPORU KONTROLLERİ ---
-        
-        // 1. Ekstra Trend Karşıtı Ceza (Teyitsizlik Cezası)
-        let isCounterTrend = false;
-        if (warnings.some(w => w.includes('200 SMA (-25)') || w.includes('Counter-trend 4H'))) isCounterTrend = true;
-        
-        let checkKillerWick = warnings.some(w => w.includes('Killer Wick'));
-        let checkFVG = warnings.some(w => w.includes('FVG'));
-        let hasVolSpike = warnings.some(w => w.includes('Order Flow Aggressive'));
-        
-        if (isCounterTrend && !checkKillerWick && !checkFVG && !hasVolSpike) {
-            qualityScore -= 15;
-            warnings.push('Trend Karşıtı Teyitsizlik Cezası (-15)');
-        }
-
-        // 2. Altın Üçgen Bonusu (Sinerji)
-        let hasOrderBlock = warnings.some(w => w.includes('Order Block'));
-        let isStrongTrend = currentADX >= 15;
-        if (hasOrderBlock && checkFVG && isStrongTrend) {
-            qualityScore += 10;
-            warnings.push('Sinerji: Altın Üçgen Bonusu (+10)');
-        }
-
-        // 3. CHoCH (CHANGE OF CHARACTER) WICK BREAK BONUSU
-        let checkCHoCH = false;
-        let signalRvol = (volumes[volumes.length - 1] / (volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20)) || 0;
-        
-        if (direction === 'LONG' && swingHighs.length > 0) {
-            const lastSwingHigh = swingHighs[swingHighs.length - 1]; 
-            // Wick Break (Fitil fırlaması) + Hacim Onayı (RVOL > 1.2)
-            if (highs[highs.length - 1] > lastSwingHigh.price && signalRvol > 1.2) {
-                qualityScore += 30;
-                warnings.push('Makro: Teyitli Bullish CHoCH (Wick Break) (+30)');
-                checkCHoCH = true;
-            }
-        } else if (direction === 'SHORT' && swingLows.length > 0) {
-            const lastSwingLow = swingLows[swingLows.length - 1]; 
-            // Wick Break (Fitil kırılımı) + Hacim Onayı (RVOL > 1.2)
-            if (lows[lows.length - 1] < lastSwingLow.price && signalRvol > 1.2) {
-                qualityScore += 30;
-                warnings.push('Makro: Teyitli Bearish CHoCH (Wick Break) (+30)');
-                checkCHoCH = true;
-            }
+        // İkinci Teyit (BOS/CHoCH) Zorunluluğu
+        // Sweep tek başına yetmez, BOS/CHoCH veya yüksek final skoru lazım
+        if (trg.sweepDetected && !trg.chochDetected) {
+            finalScore -= 15; // Sweep var ama kırılım yoksa ağır ceza
+            totalWarnings.push("Ceza: Sweep Teyitsiz (BOS/CHoCH Eksik) (-15)");
         }
         
-        let hasSweepSynergy = warnings.some(w => w.includes('Liquidity Sweep'));
-        if (hasOrderBlock && hasSweepSynergy) {
-            qualityScore += 10;
-            warnings.push('Sinerji: Keskin Nişancı Bonusu (+10)');
+        // Zayıf Sweep engellemesi
+        if (!trg.sweepDetected && !trg.chochDetected) {
+            return null; // Kurulum yok
         }
 
-        // 3. Çatışma Cezası (İptal Edildi - VETO Kuralları Yeterli)
-        // V3.3: ADX < 20 veya StochRSI extreme durumları üst satırlarda doğrudan reddedildiği için redundant ceza kaldırıldı.
-        
-        // --- END CRO STRATEJİ RAPORU KONTROLLERİ ---
-        // --- END PERPLEXITY & CHATGPT FILTER ---
+        let breakdown = { 
+            ob: false, fvg: false, rvol: parseFloat(rvol.toFixed(2)), 
+            adx: parseFloat(currentADX.toFixed(2)), rr: 2.0, 
+            globalVol: globalVol, ctxScore: ctx.score, trgScore: trg.score, exeScore: exe.score
+        };
 
-        // SONUÇ: TETİKLENME (TRIGGER) - MIXED SCORE SİSTEMİ
-        // Eski Sınırlar: LONG 55 | SHORT CONFIG.minScore (55)
-        // if (direction === 'LONG' && qualityScore < 55) return null;
-        // if (direction === 'SHORT' && qualityScore < CONFIG.minScore) return null;
-
-        // V3.3 (Hacim ve Ağ Optimizasyonu) Yeni Baraj 45 (Ticari Hacmi Koruma Refleksi)
-        // (Bu kontrol kodun üst kısmına [SKOR-ELENDI] logu ile birleştirilerek taşındı)
-
-        // 🚨 DEMİR BEY (LİKİDİTE VE KAYMA KALKANI - SOFT-FAIL) 🚨
-        if (qualityScore >= currentBaraj) {
-            const demirRes = { scoreMod: 0, msg: "Demir Bey Uyku Modunda (Onaylı)" };
-            qualityScore += demirRes.scoreMod;
-            if (demirRes.msg) {
-                warnings.push(`[Demir Bey: ${demirRes.msg}]`);
-            }
-
-            // Demir Bey cezayı kesip baraj altına çekerse iptal et (FOK Koruması)
-            if (qualityScore < currentBaraj) {
-                console.log(`[VETO-FINAL] ${sym} işlemi final barajını (${currentBaraj}+) ihlal ettiği için sisteme sokulmadı. Final Puan: ${qualityScore}`);
-                return null;
-            }
+        // FINAL KARAR: ACTIVE, WATCHLIST, REJECT
+        let signalStatus = 'ACTIVE';
+        if (finalScore >= 18) { // Normalize edilmiş puan eşiği (örn: 18-25 arası iyi)
+            signalStatus = 'ACTIVE';
+        } else if (finalScore >= 12) {
+            signalStatus = 'WATCHLIST';
+            totalWarnings.push("Düşük Skor: İzleme Listesine Alındı (WATCHLIST)");
+        } else {
+            return null; // REJECT
         }
 
-        // Log the detailed summary to console exactly as requested for Backtesting
+        // DEVRE KESİCİ KONTROLÜ
+        if (riskPct > 5.0 || riskPct < 0.5) return null; // Anormal SL mesafesi
+
         console.log(JSON.stringify({
-            symbol: sym,
-            direction,
-            qualityScore,
-            breakdown,
-            warnings
+            symbol: sym, direction, finalScore: finalScore.toFixed(2), status: signalStatus, warnings: totalWarnings
         }, null, 2));
 
         return {
@@ -1438,12 +845,14 @@ async function analyzeCoin(symbolInfo) {
             entryPrice: currentPrice,
             targetPrice: targetP,
             stopPrice: dynamicStop,
-            qualityScore: qualityScore,
-            warnings: JSON.stringify(warnings),
+            qualityScore: Math.round(finalScore * 5), // Geriye dönük uyumluluk için x5 (100 üzerinden gibi)
+            warnings: JSON.stringify(totalWarnings),
             macroState: globalMarketState,
             breakdown: breakdown,
-            isAsset: symbolInfo.isAsset || false
+            isAsset: symbolInfo.isAsset || false,
+            status: signalStatus // YENİ WATCHLIST DESTEĞİ
         };
+
     } catch (e) {
         console.error(`[FATAL ERROR] analyzeCoin (${typeof symbolInfo === 'string' ? symbolInfo : symbolInfo.symbol}):`, e.message);
     }
