@@ -239,7 +239,7 @@ app.get('/api/shadow-stats', async (req, res) => {
 app.get('/api/signals/stats', async (req, res) => {
   try {
     const days = req.query.days ? parseInt(req.query.days) : null;
-    const ZODYAK_MILESTONE = "'2026-05-09 10:35:00'"; // YENİ SIFIRLAMA NOKTASI (V4 3-Katmanlı Algoritma Sonrası)
+    const ZODYAK_MILESTONE = "'2026-05-09 10:45:00'"; // YENİ SIFIRLAMA NOKTASI (V4 3-Katmanlı Algoritma Sonrası)
     let timeFilter = ` AND createdAt >= ${ZODYAK_MILESTONE}`;
     if (days) {
          timeFilter += ` AND createdAt >= datetime('now', '-${days} days')`;
@@ -364,7 +364,7 @@ app.get('/api/signals/stats', async (req, res) => {
 app.get('/api/signals/history', async (req, res) => {
     try {
         const { status, symbol } = req.query; // 'WIN', 'LOSS' veya 'BREAKEVEN' ve opsiyonel 'symbol'
-        const ZODYAK_MILESTONE = "'2026-05-09 10:35:00'";
+        const ZODYAK_MILESTONE = "'2026-05-09 10:45:00'";
         let query = `SELECT * FROM signals WHERE status IN ('WIN', 'LOSS', 'BREAKEVEN') AND createdAt >= ${ZODYAK_MILESTONE}`;
         let params = [];
         
@@ -1151,7 +1151,7 @@ app.get('/api/favorites/:telegramId', async (req, res) => {
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
 
-        const ZODYAK_MILESTONE = "'2026-05-09 10:35:00'";
+        const ZODYAK_MILESTONE = "'2026-05-09 10:45:00'";
         const query = `
             SELECT f.id as favoriteId, s.*, 
                    COALESCE(f.customStatus, s.status) as status,

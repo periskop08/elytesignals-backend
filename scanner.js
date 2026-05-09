@@ -1143,7 +1143,7 @@ async function sendNightlyReport() {
     try {
         let todayStr = new Date().toISOString().split('T')[0];
 
-        const ZODYAK_MILESTONE = "'2026-05-09 10:35:00'";
+        const ZODYAK_MILESTONE = "'2026-05-09 10:45:00'";
 
         // 1. Yeni Sinyaller (Son 24 Saat) - Milattan Öncesini Alma
         const newSignals = await db.all(`SELECT status FROM signals WHERE createdAt >= datetime('now', '-24 hours') AND createdAt >= ${ZODYAK_MILESTONE}`);
